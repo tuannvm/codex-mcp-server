@@ -1,0 +1,64 @@
+{
+  "name": "codex-mcp-server",
+  "version": "0.1.0",
+  "description": "MCP server wrapper for OpenAI Codex CLI",
+  "main": "dist/index.js",
+  "bin": {
+    "codex-mcp-server": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "format": "prettier --write src/**/*.ts",
+    "format:check": "prettier --check src/**/*.ts",
+    "clean": "rm -rf dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tuannvm/codex-mcp-server.git"
+  },
+  "keywords": [
+    "mcp",
+    "codex",
+    "openai",
+    "claude",
+    "ai",
+    "cli"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/tuannvm/codex-mcp-server/issues"
+  },
+  "homepage": "https://github.com/tuannvm/codex-mcp-server#readme",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.3",
+    "chalk": "^5.6.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.39.1",
+    "@typescript-eslint/parser": "^8.39.1",
+    "eslint": "^9.33.0",
+    "jest": "^30.0.5",
+    "prettier": "^3.6.2",
+    "ts-jest": "^29.4.1",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.2"
+  }
+}

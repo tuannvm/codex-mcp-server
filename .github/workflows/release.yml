@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build project
+        run: npm run build
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Create release commit for version bump
+        run: |
+          # Create commit with bump type indicator for anothrNick to detect
+          git commit --allow-empty -m "chore: release #${{ github.event.inputs.bump_type }}"
+          git push origin main
+
+      - name: Create version tag
+        id: tag
+        uses: anothrNick/github-tag-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BUMP: ${{ github.event.inputs.bump_type }}
+          WITH_V: true
+          RELEASE_BRANCHES: main
+          VERBOSE: true
+
+      - name: Update package.json to match tag
+        if: steps.tag.outputs.new_tag != ''
+        run: |
+          # Extract version number from tag (remove 'v' prefix)
+          NEW_VERSION=${TAG_VERSION#v}
+          # Update package.json with the exact version from the tag
+          npm version $NEW_VERSION --no-git-tag-version --allow-same-version
+          # Commit the package.json update
+          git add package.json package-lock.json
+          git commit -m "chore: sync package.json with tag ${{ steps.tag.outputs.new_tag }}"
+          git push origin main
+        env:
+          TAG_VERSION: ${{ steps.tag.outputs.new_tag }}
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get the previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+          
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "## What's Changed" > CHANGELOG.md
+            git log $PREVIOUS_TAG..HEAD --pretty=format:"* %s (%h)" --no-merges >> CHANGELOG.md
+          else
+            echo "## What's Changed" > CHANGELOG.md
+            echo "* Initial release" >> CHANGELOG.md
+          fi
+          
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          cat CHANGELOG.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        if: steps.tag.outputs.new_tag != ''
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tag.outputs.new_tag }}
+          release_name: Release ${{ steps.tag.outputs.new_tag }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+
+      - name: Publish to npm
+        if: steps.tag.outputs.new_tag != ''
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Upload build artifacts
+        if: steps.tag.outputs.new_tag != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ steps.tag.outputs.new_tag }}
+          path: |
+            dist/
+            package.json
+            README.md
