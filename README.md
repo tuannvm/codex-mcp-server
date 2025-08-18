@@ -20,7 +20,7 @@ MCP server wrapper for OpenAI Codex CLI that enables Claude Code to leverage Cod
 [![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Codex_MCP_Server-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=codex-cli&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22codex-mcp-server%22%5D%7D)
 
 #### Cursor
-[![Install in Cursor](https://img.shields.io/badge/Cursor-Install_Codex_MCP_Server-00D8FF?style=flat-square&logo=cursor&logoColor=white)](cursor://anysphere.cursor-deeplink/mcp/install?name=codex-cli&config=eyJjb2RleC1jbGkiOnsiY29tbWFuZCI6Im5weCIsImFyZ3MiOlsiLXkiLCJjb2RleC1tY3Atc2VydmVyIl19fQ==)
+[![Install in Cursor](https://img.shields.io/badge/Cursor-Install_Codex_MCP_Server-00D8FF?style=flat-square&logo=cursor&logoColor=white)](https://cursor.com/install-mcp?name=codex-cli&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsImNvZGV4LW1jcC1zZXJ2ZXIiXX0=)
 
 ### Manual Installation
 
