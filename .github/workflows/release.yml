@@ -98,9 +98,12 @@ jobs:
             echo "* Initial release" >> CHANGELOG.md
           fi
           
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          cat CHANGELOG.md >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          # Use proper GitHub Actions multiline output format
+          {
+            echo "changelog<<CHANGELOG_EOF"
+            cat CHANGELOG.md
+            echo "CHANGELOG_EOF"
+          } >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         if: steps.tag.outputs.new_tag != ''
