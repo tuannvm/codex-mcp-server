@@ -2,6 +2,26 @@
 
 MCP server wrapper for OpenAI Codex CLI that enables Claude Code to leverage Codex's AI capabilities directly.
 
+```mermaid
+graph LR
+    A[Claude Code] --> B[Codex MCP Server]
+    
+    B --> C[codex tool]
+    B --> D[ping tool] 
+    B --> E[help tool]
+    
+    C --> F[Codex CLI]
+    F --> G[OpenAI API]
+    
+    style A fill:#FF6B35
+    style B fill:#4A90E2
+    style C fill:#00D4AA
+    style D fill:#00D4AA
+    style E fill:#00D4AA
+    style F fill:#FFA500
+    style G fill:#FF9500
+```
+
 ## Prerequisites
 
 - **OpenAI Codex CLI** must be pre-installed and configured
