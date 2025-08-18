@@ -43,13 +43,11 @@ export class CodexMcpServer {
       const { name, arguments: args } = request.params;
       
       try {
-        const toolName = name as ToolName;
-        
-        if (!this.isValidToolName(toolName)) {
+        if (!this.isValidToolName(name)) {
           throw new Error(`Unknown tool: ${name}`);
         }
 
-        const handler = toolHandlers[toolName];
+        const handler = toolHandlers[name];
         return await handler.execute(args);
       } catch (error) {
         return {

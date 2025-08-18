@@ -9,13 +9,14 @@ import {
 } from '../types.js';
 import { ToolExecutionError, ValidationError } from '../errors.js';
 import { executeCommand } from '../utils/command.js';
+import { ZodError } from 'zod';
 
 export class CodexToolHandler {
   async execute(args: unknown): Promise<ToolResult> {
     try {
       const { prompt }: CodexToolArgs = CodexToolSchema.parse(args);
 
-      const result = await executeCommand(`codex exec "${prompt}"`);
+      const result = await executeCommand('codex', ['exec', prompt]);
 
       return {
         content: [
@@ -26,7 +27,7 @@ export class CodexToolHandler {
         ],
       };
     } catch (error) {
-      if (error instanceof Error && error.name === 'ZodError') {
+      if (error instanceof ZodError) {
         throw new ValidationError(TOOLS.CODEX, error.message);
       }
       throw new ToolExecutionError(
@@ -52,7 +53,7 @@ export class PingToolHandler {
         ],
       };
     } catch (error) {
-      if (error instanceof Error && error.name === 'ZodError') {
+      if (error instanceof ZodError) {
         throw new ValidationError(TOOLS.PING, error.message);
       }
       throw new ToolExecutionError(
@@ -69,7 +70,7 @@ export class HelpToolHandler {
     try {
       HelpToolSchema.parse(args);
 
-      const result = await executeCommand('codex --help');
+      const result = await executeCommand('codex', ['--help']);
 
       return {
         content: [
@@ -80,7 +81,7 @@ export class HelpToolHandler {
         ],
       };
     } catch (error) {
-      if (error instanceof Error && error.name === 'ZodError') {
+      if (error instanceof ZodError) {
         throw new ValidationError(TOOLS.HELP, error.message);
       }
       throw new ToolExecutionError(
