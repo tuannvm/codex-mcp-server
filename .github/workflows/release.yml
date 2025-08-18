@@ -107,7 +107,7 @@ jobs:
 
       - name: Publish to npm
         if: steps.tag.outputs.new_tag != ''
-        run: npm publish --access public
+        run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
