@@ -1,6 +1,6 @@
 {
   "name": "codex-mcp-server",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "MCP server wrapper for OpenAI Codex CLI",
   "main": "dist/index.js",
   "bin": {
