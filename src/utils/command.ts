@@ -9,9 +9,9 @@ const execAsync = promisify(exec);
 export async function executeCommand(command: string): Promise<CommandResult> {
   try {
     console.log(chalk.blue('Executing:'), command);
-    
+
     const result = await execAsync(command);
-    
+
     if (result.stderr) {
       console.warn(chalk.yellow('Command stderr:'), result.stderr);
     }

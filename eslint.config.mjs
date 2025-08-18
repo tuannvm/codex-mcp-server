@@ -28,6 +28,7 @@ export default [
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
       'no-console': 'off',
+      'eol-last': ['error', 'always'],
     },
   },
   {
@@ -58,6 +59,7 @@ export default [
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
+      'eol-last': ['error', 'always'],
     },
   },
   {

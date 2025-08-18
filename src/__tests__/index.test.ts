@@ -21,7 +21,12 @@ jest.mock('../utils/command.js', () => ({
 
 import { TOOLS } from '../types.js';
 import { toolDefinitions } from '../tools/definitions.js';
-import { toolHandlers, CodexToolHandler, PingToolHandler, HelpToolHandler } from '../tools/handlers.js';
+import {
+  toolHandlers,
+  CodexToolHandler,
+  PingToolHandler,
+  HelpToolHandler,
+} from '../tools/handlers.js';
 import { CodexMcpServer } from '../server.js';
 
 const execAsync = promisify(exec);
@@ -35,29 +40,31 @@ describe('Codex MCP Server', () => {
   describe('Tool Definitions', () => {
     test('should have all required tools defined', () => {
       expect(toolDefinitions).toHaveLength(3);
-      
-      const toolNames = toolDefinitions.map(tool => tool.name);
+
+      const toolNames = toolDefinitions.map((tool) => tool.name);
       expect(toolNames).toContain(TOOLS.CODEX);
       expect(toolNames).toContain(TOOLS.PING);
       expect(toolNames).toContain(TOOLS.HELP);
     });
 
     test('codex tool should have required prompt parameter', () => {
-      const codexTool = toolDefinitions.find(tool => tool.name === TOOLS.CODEX);
+      const codexTool = toolDefinitions.find(
+        (tool) => tool.name === TOOLS.CODEX
+      );
       expect(codexTool).toBeDefined();
       expect(codexTool?.inputSchema.required).toContain('prompt');
       expect(codexTool?.description).toContain('Execute Codex CLI');
     });
 
     test('ping tool should have optional message parameter', () => {
-      const pingTool = toolDefinitions.find(tool => tool.name === TOOLS.PING);
+      const pingTool = toolDefinitions.find((tool) => tool.name === TOOLS.PING);
       expect(pingTool).toBeDefined();
       expect(pingTool?.inputSchema.required).toEqual([]);
       expect(pingTool?.description).toContain('Test MCP server connection');
     });
 
     test('help tool should have no required parameters', () => {
-      const helpTool = toolDefinitions.find(tool => tool.name === TOOLS.HELP);
+      const helpTool = toolDefinitions.find((tool) => tool.name === TOOLS.HELP);
       expect(helpTool).toBeDefined();
       expect(helpTool?.inputSchema.required).toEqual([]);
       expect(helpTool?.description).toContain('Get Codex CLI help');
@@ -74,7 +81,7 @@ describe('Codex MCP Server', () => {
     test('ping handler should return message', async () => {
       const handler = new PingToolHandler();
       const result = await handler.execute({ message: 'test' });
-      
+
       expect(result.content).toHaveLength(1);
       expect(result.content[0].type).toBe('text');
       expect(result.content[0].text).toBe('test');
@@ -83,7 +90,7 @@ describe('Codex MCP Server', () => {
     test('ping handler should use default message', async () => {
       const handler = new PingToolHandler();
       const result = await handler.execute({});
-      
+
       expect(result.content[0].text).toBe('pong');
     });
   });

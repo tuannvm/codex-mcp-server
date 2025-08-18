@@ -29,7 +29,11 @@ export class CodexToolHandler {
       if (error instanceof Error && error.name === 'ZodError') {
         throw new ValidationError(TOOLS.CODEX, error.message);
       }
-      throw new ToolExecutionError(TOOLS.CODEX, 'Failed to execute codex command', error);
+      throw new ToolExecutionError(
+        TOOLS.CODEX,
+        'Failed to execute codex command',
+        error
+      );
     }
   }
 }
@@ -51,7 +55,11 @@ export class PingToolHandler {
       if (error instanceof Error && error.name === 'ZodError') {
         throw new ValidationError(TOOLS.PING, error.message);
       }
-      throw new ToolExecutionError(TOOLS.PING, 'Failed to execute ping command', error);
+      throw new ToolExecutionError(
+        TOOLS.PING,
+        'Failed to execute ping command',
+        error
+      );
     }
   }
 }
@@ -75,7 +83,11 @@ export class HelpToolHandler {
       if (error instanceof Error && error.name === 'ZodError') {
         throw new ValidationError(TOOLS.HELP, error.message);
       }
-      throw new ToolExecutionError(TOOLS.HELP, 'Failed to execute help command', error);
+      throw new ToolExecutionError(
+        TOOLS.HELP,
+        'Failed to execute help command',
+        error
+      );
     }
   }
 }
