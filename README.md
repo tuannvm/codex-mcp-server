@@ -13,9 +13,6 @@ MCP server wrapper for OpenAI Codex CLI that enables Claude Code to leverage Cod
 
 ### One-Click Installation
 
-#### Claude Code
-[![Install in Claude Code](https://img.shields.io/badge/Claude_Code-Install_Codex_MCP_Server-FF6B35?style=flat-square&logo=anthropic&logoColor=white)](https://claude.ai/code?mcp_install=%7B%22name%22%3A%22codex-cli%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22codex-mcp-server%22%5D%7D)
-
 #### VS Code
 [![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Codex_MCP_Server-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://vscode.dev/redirect/mcp/install?name=codex-cli&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22codex-mcp-server%22%5D%7D)
 
@@ -23,15 +20,32 @@ MCP server wrapper for OpenAI Codex CLI that enables Claude Code to leverage Cod
 [![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Codex_MCP_Server-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=codex-cli&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22codex-mcp-server%22%5D%7D)
 
 #### Cursor
-[![Install in Cursor](https://img.shields.io/badge/Cursor-Install_Codex_MCP_Server-00D8FF?style=flat-square&logo=cursor&logoColor=white)](https://cursor.sh/mcp/install?name=codex-cli&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22codex-mcp-server%22%5D%7D)
+[![Install in Cursor](https://img.shields.io/badge/Cursor-Install_Codex_MCP_Server-00D8FF?style=flat-square&logo=cursor&logoColor=white)](cursor://anysphere.cursor-deeplink/mcp/install?name=codex-cli&config=eyJjb2RleC1jbGkiOnsiY29tbWFuZCI6Im5weCIsImFyZ3MiOlsiLXkiLCJjb2RleC1tY3Atc2VydmVyIl19fQ==)
 
 ### Manual Installation
 
-Add to Claude Code manually:
-
+#### Claude Code
 ```bash
 claude mcp add codex-cli -- npx -y codex-mcp-server
 ```
+
+#### Claude Desktop
+Add to your Claude Desktop configuration file:
+
+**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows:** `%APPDATA%/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "codex-cli": {
+      "command": "npx",
+      "args": ["-y", "codex-mcp-server"]
+    }
+  }
+}
+```
+
 
 ## Usage in Claude Code
 
