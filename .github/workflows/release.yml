@@ -86,24 +86,12 @@ jobs:
 
       - name: Generate changelog
         id: changelog
-        run: |
-          # Get the previous tag
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
-          
-          if [ -n "$PREVIOUS_TAG" ]; then
-            echo "## What's Changed" > CHANGELOG.md
-            git log $PREVIOUS_TAG..HEAD --pretty=format:"* %s (%h)" --no-merges >> CHANGELOG.md
-          else
-            echo "## What's Changed" > CHANGELOG.md
-            echo "* Initial release" >> CHANGELOG.md
-          fi
-          
-          # Use proper GitHub Actions multiline output format
-          {
-            echo "changelog<<CHANGELOG_EOF"
-            cat CHANGELOG.md
-            echo "CHANGELOG_EOF"
-          } >> $GITHUB_OUTPUT
+        uses: mikepenz/release-changelog-builder-action@v4
+        with:
+          toTag: ${{ steps.tag.outputs.new_tag }}
+          failOnError: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release
         if: steps.tag.outputs.new_tag != ''
