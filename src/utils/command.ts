@@ -15,7 +15,7 @@ export async function executeCommand(
 
     const result = await execFileAsync(file, args, {
       shell: false,
-      maxBuffer: 10 * 1024 * 1024, // 10MB
+      maxBuffer: 64 * 1024 * 1024, // 64MB
     });
 
     if (result.stderr) {

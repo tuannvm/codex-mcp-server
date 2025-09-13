@@ -52,7 +52,8 @@ describe('Codex MCP Server', () => {
         (tool) => tool.name === TOOLS.CODEX
       );
       expect(codexTool).toBeDefined();
-      expect(codexTool?.inputSchema.required).toContain('prompt');
+      // prompt is now optional to allow pageToken-only calls
+      expect(codexTool?.inputSchema.required).toEqual([]);
       expect(codexTool?.description).toContain('Execute Codex CLI');
     });
 

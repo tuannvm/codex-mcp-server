@@ -9,21 +9,70 @@ import {
 } from '../types.js';
 import { ToolExecutionError, ValidationError } from '../errors.js';
 import { executeCommand } from '../utils/command.js';
+
 import { ZodError } from 'zod';
+import { saveChunk, takeChunk } from '../utils/cursorStore.js';
 
 export class CodexToolHandler {
   async execute(args: unknown): Promise<ToolResult> {
     try {
-      const { prompt }: CodexToolArgs = CodexToolSchema.parse(args);
+      const { prompt, pageSize, pageToken }: CodexToolArgs =
+        CodexToolSchema.parse(args);
 
-      const result = await executeCommand('codex', ['exec', prompt]);
+      const DEFAULT_PAGE = Number(process.env.CODEX_PAGE_SIZE ?? 40000);
+      const pageLen = Math.max(
+        1000,
+        Math.min(Number(pageSize ?? DEFAULT_PAGE), 200000)
+      );
 
+      // Subsequent page request
+      if (pageToken) {
+        const remaining = takeChunk(String(pageToken));
+        if (!remaining) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: 'No data found for pageToken (it may have expired).',
+              },
+            ],
+          };
+        }
+        const head = remaining.slice(0, pageLen);
+        const tail = remaining.slice(pageLen);
+        const meta = tail.length ? { nextPageToken: saveChunk(tail) } : {};
+        return {
+          content: [
+            { type: 'text', text: head },
+            { type: 'json', text: JSON.stringify(meta) },
+          ],
+        };
+      }
+
+      // First page request must have a prompt
+      const cleanPrompt = String(prompt ?? '').trim();
+      if (!cleanPrompt) {
+        throw new ValidationError(
+          TOOLS.CODEX,
+          "Missing required 'prompt' (or provide a 'pageToken')."
+        );
+      }
+
+      const result = await executeCommand('codex', ['exec', cleanPrompt]);
+
+      const output = result.stdout || 'No output from Codex';
+
+      if (output.length <= pageLen) {
+        return { content: [{ type: 'text', text: output }] };
+      }
+
+      const head = output.slice(0, pageLen);
+      const tail = output.slice(pageLen);
+      const meta = { nextPageToken: saveChunk(tail) };
       return {
         content: [
-          {
-            type: 'text',
-            text: result.stdout || 'No output from Codex',
-          },
+          { type: 'text', text: head },
+          { type: 'json', text: JSON.stringify(meta) },
         ],
       };
     } catch (error) {

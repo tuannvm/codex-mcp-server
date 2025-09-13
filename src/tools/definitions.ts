@@ -3,7 +3,8 @@ import { TOOLS, type ToolDefinition } from '../types.js';
 export const toolDefinitions: ToolDefinition[] = [
   {
     name: TOOLS.CODEX,
-    description: 'Execute Codex CLI in non-interactive mode for AI assistance',
+    description:
+      'Execute Codex CLI in non-interactive mode for AI assistance (supports pagination for large outputs)',
     inputSchema: {
       type: 'object',
       properties: {
@@ -11,8 +12,17 @@ export const toolDefinitions: ToolDefinition[] = [
           type: 'string',
           description: 'The coding task, question, or analysis request',
         },
+        pageSize: {
+          type: 'number',
+          description: 'Approximate characters per page (default 40000)',
+        },
+        pageToken: {
+          type: 'string',
+          description:
+            'Opaque token returned by a previous call to fetch the next page',
+        },
       },
-      required: ['prompt'],
+      required: [], // prompt becomes optional to allow pageToken-only follow-ups
     },
   },
   {

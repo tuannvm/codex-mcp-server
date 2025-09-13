@@ -7,7 +7,7 @@ export const TOOLS = {
   HELP: 'help',
 } as const;
 
-export type ToolName = typeof TOOLS[keyof typeof TOOLS];
+export type ToolName = (typeof TOOLS)[keyof typeof TOOLS];
 
 // Tool definition interface
 export interface ToolDefinition {
@@ -22,10 +22,9 @@ export interface ToolDefinition {
 
 // Tool result interface matching MCP SDK expectations
 export interface ToolResult {
-  content: Array<{
-    type: 'text';
-    text: string;
-  }>;
+  content: Array<
+    { type: 'text'; text: string } | { type: 'json'; text: string }
+  >;
   isError?: boolean;
   _meta?: Record<string, unknown>;
 }
@@ -38,7 +37,9 @@ export interface ServerConfig {
 
 // Zod schemas for tool arguments
 export const CodexToolSchema = z.object({
-  prompt: z.string(),
+  prompt: z.string().optional(),
+  pageSize: z.number().int().min(1000).max(200000).optional(),
+  pageToken: z.string().optional(),
 });
 
 export const PingToolSchema = z.object({
