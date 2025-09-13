@@ -44,7 +44,14 @@ export class CodexToolHandler {
         return {
           content: [
             { type: 'text', text: head },
-            { type: 'json', text: JSON.stringify(meta) },
+            ...(meta.nextPageToken
+              ? ([
+                  {
+                    type: 'text',
+                    text: `{"nextPageToken":"${meta.nextPageToken}"}`,
+                  },
+                ] as const)
+              : []),
           ],
         };
       }
@@ -72,7 +79,7 @@ export class CodexToolHandler {
       return {
         content: [
           { type: 'text', text: head },
-          { type: 'json', text: JSON.stringify(meta) },
+          { type: 'text', text: `{"nextPageToken":"${meta.nextPageToken}"}` },
         ],
       };
     } catch (error) {
