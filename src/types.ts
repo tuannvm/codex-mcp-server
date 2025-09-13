@@ -3,6 +3,7 @@ import { z } from 'zod';
 // Tool constants
 export const TOOLS = {
   CODEX: 'codex',
+  LIST_SESSIONS: 'listSessions',
   PING: 'ping',
   HELP: 'help',
 } as const;
@@ -39,7 +40,12 @@ export const CodexToolSchema = z.object({
   prompt: z.string().optional(),
   pageSize: z.number().int().min(1000).max(200000).optional(),
   pageToken: z.string().optional(),
+  sessionId: z.string().optional(),
+  resetSession: z.boolean().optional(),
 });
+
+export const ListSessionsToolSchema = z.object({});
+export type ListSessionsToolArgs = z.infer<typeof ListSessionsToolSchema>;
 
 export const PingToolSchema = z.object({
   message: z.string().optional(),

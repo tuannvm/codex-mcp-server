@@ -6,24 +6,41 @@ import {
   CodexToolSchema,
   PingToolSchema,
   HelpToolSchema,
+  ListSessionsToolSchema,
 } from '../types.js';
 import { ToolExecutionError, ValidationError } from '../errors.js';
 import { executeCommand, executeCommandStreamed } from '../utils/command.js';
 
 import { ZodError } from 'zod';
 import { saveChunk, peekChunk, advanceChunk } from '../utils/cursorStore.js';
+import {
+  appendTurn,
+  getTranscript,
+  clearSession,
+  listSessionIds,
+} from '../utils/sessionStore.js';
 
 export class CodexToolHandler {
   async execute(args: unknown): Promise<ToolResult> {
     try {
-      const { prompt, pageSize, pageToken }: CodexToolArgs =
-        CodexToolSchema.parse(args);
+      const {
+        prompt,
+        pageSize,
+        pageToken,
+        sessionId,
+        resetSession,
+      }: CodexToolArgs = CodexToolSchema.parse(args);
 
       const DEFAULT_PAGE = Number(process.env.CODEX_PAGE_SIZE ?? 40000);
       const pageLen = Math.max(
         1000,
         Math.min(Number(pageSize ?? DEFAULT_PAGE), 200000)
       );
+
+      if (sessionId && resetSession) {
+        clearSession(sessionId);
+        // do not return here; user may supply a fresh prompt in the same call
+      }
 
       // Subsequent page request
       if (pageToken) {
@@ -70,21 +87,50 @@ export class CodexToolHandler {
         );
       }
 
+      // Build an effective prompt with session context if provided
+      let effectivePrompt = cleanPrompt;
+      if (sessionId) {
+        const prior = getTranscript(sessionId) ?? [];
+        if (prior.length > 0) {
+          // Simple stitched transcript; compact and neutral to avoid ballooning prompt size
+          const stitched = prior
+            .map(
+              (t) => `${t.role === 'user' ? 'User' : 'Assistant'}: ${t.text}`
+            )
+            .join('\n');
+          effectivePrompt = `You are continuing a coding session. Here is the previous context:
+${stitched}
+
+Now continue with the user's latest request:
+${cleanPrompt}`;
+        }
+      }
+
       // Use streamed execution to avoid maxBuffer and handle very large outputs.
       const result = await executeCommandStreamed('codex', [
         'exec',
-        cleanPrompt,
+        effectivePrompt,
       ]);
 
       const output = result.stdout || 'No output from Codex';
 
       if (output.length <= pageLen) {
+        // Append turns to session after successful run (if enabled)
+        if (sessionId) {
+          appendTurn(sessionId, 'user', cleanPrompt);
+          appendTurn(sessionId, 'assistant', output);
+        }
         return { content: [{ type: 'text', text: output }] };
       }
 
       const head = output.slice(0, pageLen);
       const tail = output.slice(pageLen);
       const meta = { nextPageToken: saveChunk(tail) };
+      // Append full output to session (not only the head), so future context is complete
+      if (sessionId) {
+        appendTurn(sessionId, 'user', cleanPrompt);
+        appendTurn(sessionId, 'assistant', output);
+      }
       return {
         content: [
           { type: 'text', text: head },
@@ -99,6 +145,26 @@ export class CodexToolHandler {
       throw new ToolExecutionError(
         TOOLS.CODEX,
         'Failed to execute codex command',
+        error
+      );
+    }
+  }
+}
+
+export class ListSessionsToolHandler {
+  async execute(args: unknown): Promise<ToolResult> {
+    try {
+      ListSessionsToolSchema.parse(args);
+      const ids = listSessionIds();
+      const text = ids.length ? ids.join('\n') : 'No active sessions.';
+      return { content: [{ type: 'text', text }] };
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw new ValidationError(TOOLS.LIST_SESSIONS, error.message);
+      }
+      throw new ToolExecutionError(
+        TOOLS.LIST_SESSIONS,
+        'Failed to list sessions',
         error
       );
     }
@@ -162,6 +228,7 @@ export class HelpToolHandler {
 // Tool handler registry
 export const toolHandlers = {
   [TOOLS.CODEX]: new CodexToolHandler(),
+  [TOOLS.LIST_SESSIONS]: new ListSessionsToolHandler(),
   [TOOLS.PING]: new PingToolHandler(),
   [TOOLS.HELP]: new HelpToolHandler(),
 } as const;

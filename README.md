@@ -7,6 +7,7 @@ graph LR
     A[Claude Code] --> B[Codex MCP Server]
 
     B --> C[codex tool]
+    B --> H[listSessions tool]
     B --> D[ping tool]
     B --> E[help tool]
 
@@ -20,6 +21,8 @@ graph LR
     style E fill:#00D4AA
     style F fill:#FFA500
     style G fill:#FF9500
+    style H fill:#00D4AA
+
 ```
 
 ## Prerequisites
@@ -91,6 +94,12 @@ Use the codex tool to explain this function:
 - `prompt` (optional): Your coding question or request. Required on the first call.
 - `pageSize` (optional, number): Approximate characters per page (default 40,000).
 - `pageToken` (optional, string): Opaque token returned from a previous call to fetch the next chunk of output.
+- `sessionId` (optional, string): Stable ID to enable conversational context across calls.
+- `resetSession` (optional, boolean): If true, clears the session identified by sessionId.
+
+### `listSessions` - List Active Sessions
+
+Useful for debugging or selecting a session to clear.
 
 ### `ping` - Connection Test
 
