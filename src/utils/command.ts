@@ -1,4 +1,4 @@
-import { execFile } from 'child_process';
+import { execFile, spawn } from 'child_process';
 import { promisify } from 'util';
 import chalk from 'chalk';
 import { CommandExecutionError } from '../errors.js';
@@ -33,4 +33,68 @@ export async function executeCommand(
       error
     );
   }
+}
+
+/**
+ * Streamed execution to avoid maxBuffer limits and begin processing output as it arrives.
+ * Accumulates stdout into a single string by default; callers may hook into onChunk
+ * to implement custom chunking if desired.
+ */
+export async function executeCommandStreamed(
+  file: string,
+  args: string[] = [],
+  onChunk?: (chunk: string) => void
+): Promise<CommandResult> {
+  console.error(chalk.blue('Executing (streamed):'), file, args.join(' '));
+
+  return new Promise<CommandResult>((resolve, reject) => {
+    const child = spawn(file, args, { shell: false });
+    let stdout = '';
+    let stderr = '';
+
+    // Ensure strings
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+
+    child.stdout.on('data', (d: string) => {
+      stdout += d;
+      try {
+        onChunk?.(d);
+      } catch (e) {
+        // Non-fatal: continue running even if onChunk throws.
+        console.error(chalk.yellow('onChunk error:'), e);
+      }
+    });
+
+    child.stderr.on('data', (d: string) => {
+      stderr += d;
+    });
+
+    child.on('error', (err) => {
+      reject(
+        new CommandExecutionError(
+          [file, ...args].join(' '),
+          'Spawn failed',
+          err
+        )
+      );
+    });
+
+    child.on('close', (code) => {
+      if (stderr) {
+        console.error(chalk.yellow('Command stderr:'), stderr);
+      }
+      if (code === 0) {
+        resolve({ stdout, stderr });
+      } else {
+        reject(
+          new CommandExecutionError(
+            [file, ...args].join(' '),
+            `Exited with code ${code}`,
+            stderr || code
+          )
+        );
+      }
+    });
+  });
 }

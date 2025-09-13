@@ -8,10 +8,10 @@ import {
   HelpToolSchema,
 } from '../types.js';
 import { ToolExecutionError, ValidationError } from '../errors.js';
-import { executeCommand } from '../utils/command.js';
+import { executeCommand, executeCommandStreamed } from '../utils/command.js';
 
 import { ZodError } from 'zod';
-import { saveChunk, takeChunk } from '../utils/cursorStore.js';
+import { saveChunk, peekChunk, advanceChunk } from '../utils/cursorStore.js';
 
 export class CodexToolHandler {
   async execute(args: unknown): Promise<ToolResult> {
@@ -27,7 +27,7 @@ export class CodexToolHandler {
 
       // Subsequent page request
       if (pageToken) {
-        const remaining = takeChunk(String(pageToken));
+        const remaining = peekChunk(String(pageToken));
         if (!remaining) {
           return {
             content: [
@@ -40,19 +40,24 @@ export class CodexToolHandler {
         }
         const head = remaining.slice(0, pageLen);
         const tail = remaining.slice(pageLen);
-        const meta = tail.length ? { nextPageToken: saveChunk(tail) } : {};
+        // advance in-place; keep token stable for idempotent retries
+        advanceChunk(String(pageToken), head.length);
+        const meta = tail.length
+          ? { nextPageToken: String(pageToken) }
+          : undefined;
         return {
           content: [
             { type: 'text', text: head },
-            ...(meta.nextPageToken
-              ? ([
+            ...(meta?.nextPageToken
+              ? [
                   {
-                    type: 'text',
+                    type: 'text' as const,
                     text: `{"nextPageToken":"${meta.nextPageToken}"}`,
                   },
-                ] as const)
+                ]
               : []),
           ],
+          ...(meta ? { meta } : {}),
         };
       }
 
@@ -65,7 +70,11 @@ export class CodexToolHandler {
         );
       }
 
-      const result = await executeCommand('codex', ['exec', cleanPrompt]);
+      // Use streamed execution to avoid maxBuffer and handle very large outputs.
+      const result = await executeCommandStreamed('codex', [
+        'exec',
+        cleanPrompt,
+      ]);
 
       const output = result.stdout || 'No output from Codex';
 
@@ -81,6 +90,7 @@ export class CodexToolHandler {
           { type: 'text', text: head },
           { type: 'text', text: `{"nextPageToken":"${meta.nextPageToken}"}` },
         ],
+        meta,
       };
     } catch (error) {
       if (error instanceof ZodError) {

@@ -22,11 +22,10 @@ export interface ToolDefinition {
 
 // Tool result interface matching MCP SDK expectations
 export interface ToolResult {
-  content: Array<
-    { type: 'text'; text: string } | { type: 'json'; text: string }
-  >;
+  content: Array<{ type: 'text'; text: string }>;
   isError?: boolean;
-  _meta?: Record<string, unknown>;
+  // Many clients/SDKs accept an optional top-level meta bag; harmless if ignored.
+  meta?: Record<string, unknown>;
 }
 
 // Server configuration

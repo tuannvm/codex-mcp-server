@@ -39,28 +39,31 @@ export class CodexMcpServer {
     });
 
     // Call tool handler
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-      
-      try {
-        if (!this.isValidToolName(name)) {
-          throw new Error(`Unknown tool: ${name}`);
+    this.server.setRequestHandler(
+      CallToolRequestSchema,
+      async (request, extra) => {
+        const { name, arguments: args } = request.params;
+        try {
+          if (!this.isValidToolName(name)) {
+            throw new Error(`Unknown tool: ${name}`);
+          }
+          const handler = toolHandlers[name];
+          // Ensure the return value matches the expected type
+          const result = await handler.execute(args);
+          return { ...result };
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: handleError(error, `tool "${name}"`),
+              },
+            ],
+            isError: true,
+          };
         }
-
-        const handler = toolHandlers[name];
-        return await handler.execute(args);
-      } catch (error) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: handleError(error, `tool "${name}"`),
-            },
-          ],
-          isError: true,
-        };
       }
-    });
+    );
   }
 
   private isValidToolName(name: string): name is ToolName {
@@ -71,5 +74,23 @@ export class CodexMcpServer {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
     console.error(chalk.green(`${this.config.name} started successfully`));
+
+    // Graceful shutdown so editors/clients don't see abrupt failures on reload/stop.
+    const shutdown = async (signal: NodeJS.Signals) => {
+      try {
+        console.error(
+          chalk.yellow(`Received ${signal}, shutting down MCP server...`)
+        );
+        await this.server.close();
+      } catch (err) {
+        console.error(chalk.red('Error during shutdown:'), err);
+      } finally {
+        // Let stdio flush, then exit
+        setTimeout(() => process.exit(0), 10);
+      }
+    };
+
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
   }
 }

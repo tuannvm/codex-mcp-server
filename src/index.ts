@@ -5,7 +5,7 @@ import { CodexMcpServer } from './server.js';
 
 const SERVER_CONFIG = {
   name: 'codex-mcp-server',
-  version: '0.0.6',
+  version: '0.1.0',
 } as const;
 
 async function main(): Promise<void> {
