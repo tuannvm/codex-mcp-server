@@ -1,7 +1,7 @@
 {
-  "name": "codex-mcp-server",
+  "name": "@comfucios/codex-mcp-server",
   "version": "0.1.0",
-  "description": "MCP server wrapper for OpenAI Codex CLI",
+  "description": "MCP server wrapper for OpenAI Codex CLI (comfucios fork)",
   "main": "dist/index.js",
   "bin": {
     "codex-mcp-server": "dist/index.js"
@@ -23,11 +23,12 @@
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write src/**/*.ts",
     "format:check": "prettier --check src/**/*.ts",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tuannvm/codex-mcp-server.git"
+    "url": "git+https://github.com/comfucios/codex-mcp-server.git"
   },
   "keywords": [
     "mcp",
@@ -37,13 +38,20 @@
     "ai",
     "cli"
   ],
-  "author": "",
+  "author": "Ioannis Karasavvaidis <ioannis@studio110.eu>",
   "license": "ISC",
   "type": "module",
   "bugs": {
-    "url": "https://github.com/tuannvm/codex-mcp-server/issues"
+    "url": "https://github.com/comfucios/codex-mcp-server/issues"
   },
-  "homepage": "https://github.com/tuannvm/codex-mcp-server#readme",
+  "homepage": "https://github.com/comfucios/codex-mcp-server#readme",
+  "engines": {
+    "node": ">=18.18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "packageManager": "npm@10",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.3",
     "chalk": "^5.6.0",
