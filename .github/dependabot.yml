@@ -6,7 +6,17 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 10
     reviewers:
-      - "tuannvm"
+      - "comfucios"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    reviewers:
+      - "comfucios"
     commit-message:
       prefix: "deps"
       include: "scope"
