@@ -3,6 +3,13 @@ type Session = { turns: Turn[]; bytes: number; expiresAt: number };
 
 const SESSIONS = new Map<string, Session>();
 
+export class SessionStore {
+  static appendTurn = appendTurn;
+  static getTranscript = getTranscript;
+  static clearSession = clearSession;
+  static listSessionIds = listSessionIds;
+}
+
 const TTL_MS = Number(process.env.CODEX_SESSION_TTL_MS ?? 60 * 60 * 1000); // 1h
 const MAX_BYTES = Number(process.env.CODEX_SESSION_MAX_BYTES ?? 400_000); // ~400 KB
 

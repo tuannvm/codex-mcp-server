@@ -1,6 +1,18 @@
 // src/cursorStore.ts
 type Entry = { remaining: string; expiresAt: number };
 const store = new Map<string, Entry>();
+
+export class CursorStore {
+  set(session: string, cursor: any) {
+    store.set(session, cursor);
+  }
+  get(session: string) {
+    return store.get(session);
+  }
+  clear() {
+    store.clear();
+  }
+}
 const TTL_MS = 10 * 60 * 1000;
 
 function gc() {
@@ -26,8 +38,8 @@ export function advanceChunk(cursor: string, consumed: number): void {
 export function saveChunk(remaining: string): string {
   gc();
   const id =
-    (globalThis.crypto?.randomUUID?.() ??
-      Math.random().toString(36).slice(2)) + Date.now().toString(36);
+    (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)) +
+    Date.now().toString(36);
   store.set(id, { remaining, expiresAt: Date.now() + TTL_MS });
   return id;
 }

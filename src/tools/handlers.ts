@@ -1,3 +1,4 @@
+/* eslint-disable no-control-regex */
 import {
   TOOLS,
   type ToolResult,
@@ -19,6 +20,11 @@ import {
   clearSession,
   listSessionIds,
 } from '../utils/sessionStore.js';
+import {
+  makeRunId,
+  buildPromptWithSentinels,
+  stripEchoesAndMarkers,
+} from '../utils/promptSanitizer.js';
 
 export class CodexToolHandler {
   async execute(args: unknown): Promise<ToolResult> {
@@ -87,24 +93,22 @@ export class CodexToolHandler {
         );
       }
 
-      // Build an effective prompt with session context if provided
-      let effectivePrompt = cleanPrompt;
-      if (sessionId) {
-        const prior = getTranscript(sessionId) ?? [];
-        if (prior.length > 0) {
-          // Simple stitched transcript; compact and neutral to avoid ballooning prompt size
-          const stitched = prior
-            .map(
-              (t) => `${t.role === 'user' ? 'User' : 'Assistant'}: ${t.text}`
-            )
-            .join('\n');
-          effectivePrompt = `You are continuing a coding session. Here is the previous context:
-${stitched}
-
-Now continue with the user's latest request:
-${cleanPrompt}`;
-        }
-      }
+      // Build an effective prompt with session context if provided, fenced by sentinels
+      const prior = sessionId ? (getTranscript(sessionId) ?? []) : [];
+      const stitched =
+        prior.length > 0
+          ? prior
+              .map(
+                (t) => `${t.role === 'user' ? 'User' : 'Assistant'}: ${t.text}`
+              )
+              .join('\n')
+          : null;
+      const runId = makeRunId();
+      const effectivePrompt = buildPromptWithSentinels(
+        runId,
+        stitched,
+        cleanPrompt
+      );
 
       // Use streamed execution to avoid maxBuffer and handle very large outputs.
       const result = await executeCommandStreamed('codex', [
@@ -112,7 +116,9 @@ ${cleanPrompt}`;
         effectivePrompt,
       ]);
 
-      const output = result.stdout || 'No output from Codex';
+      // Strip any echoed context/prompt and sentinels to return only the new answer
+      const outputRaw = result.stdout || 'No output from Codex';
+      const output = stripEchoesAndMarkers(runId, stitched, outputRaw);
 
       if (output.length <= pageLen) {
         // Append turns to session after successful run (if enabled)
