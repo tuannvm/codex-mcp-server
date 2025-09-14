@@ -74,6 +74,22 @@ Add to your Claude Desktop configuration file:
 }
 ```
 
+## Advanced Features & Tips
+
+- **Session Management:**
+  - Provide a `sessionId` to maintain conversational context across multiple Codex calls.
+  - Use `resetSession: true` to clear the context for a session (start fresh).
+  - If `sessionId` is omitted, each call is stateless.
+- **Pagination:**
+  - Large outputs are split into pages. Use the `nextPageToken` from the response to fetch additional output with the `pageToken` parameter.
+  - You can control the default page size with the `CODEX_PAGE_SIZE` environment variable (default: 40000, min: 1000, max: 200000).
+- **Error Handling:**
+  - Invalid tool names or arguments return structured error messages in the response.
+- **Tool Discovery:**
+  - The MCP protocol supports listing all available tools and their schemas for client introspection.
+- **Graceful Shutdown:**
+  - The server handles `SIGINT` and `SIGTERM` for clean shutdowns, ensuring clients do not see abrupt disconnects.
+
 ## Usage in Claude Code
 
 Once installed, Claude Code can use these tools:
@@ -168,6 +184,50 @@ npm run build
 
 # Start built server
 npm start
+```
+
+## Testing & Quality
+
+This project uses **Jest** for unit and integration testing. Handlers, server logic, and tool integrations are covered with both unit and light integration tests (mocking external dependencies and CLI calls).
+
+### Run All Tests
+
+```bash
+npm test
+```
+
+### Watch Tests
+
+```bash
+npm run test:watch
+```
+
+### Test Coverage
+
+```bash
+npm run test:coverage
+```
+
+This will output a coverage summary for statements, branches, functions, and lines.
+
+### Linting & Formatting
+
+Lint code with:
+
+```bash
+npm run lint
+```
+
+Auto-fix lint errors:
+
+```bash
+npm run lint:fix
+```
+
+Format code with Prettier:
+
+```bash
+npm run format
 ```
 
 ## License
