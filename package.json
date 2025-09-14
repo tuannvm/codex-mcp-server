@@ -24,7 +24,8 @@
     "format": "prettier --write src/**/*.ts",
     "format:check": "prettier --check src/**/*.ts",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run clean && npm run build"
+    "prepublishOnly": "npm run clean && npm run build",
+    "docs:preview": "pip install mkdocs-material && mkdocs serve"
   },
   "repository": {
     "type": "git",

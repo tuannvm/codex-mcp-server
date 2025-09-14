@@ -1,0 +1,62 @@
+site_name: Codex MCP Server
+site_description: MCP server wrapper for OpenAI Codex CLI to let Claude Code leverage Codex.
+site_url: https://comfucios.github.io/codex-mcp-server/
+repo_url: https://github.com/CoMfUcIoS/codex-mcp-server
+repo_name: comfucios/codex-mcp-server
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.footer
+    - content.code.copy
+    - content.tabs.link
+    - search.highlight
+    - search.suggest
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      accent: cyan
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: cyan
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
+plugins:
+  - search
+
+nav:
+  - Overview: index.md
+  - Quickstart: quickstart.md
+  - Installation: install.md
+  - Usage: usage.md
+  - Tools API: tools.md
+  - Configuration: configuration.md
+  - Pagination: pagination.md
+  - Development: development.md
+  - Troubleshooting: troubleshooting.md
+  - FAQ: faq.md
+  - Changelog: changelog.md
