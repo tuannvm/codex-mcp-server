@@ -1,6 +1,6 @@
 {
   "name": "@comfucios/codex-mcp-server",
-  "version": "0.2.0",
+  "version": "0.0.1",
   "description": "MCP server wrapper for OpenAI Codex CLI (comfucios fork)",
   "main": "dist/index.js",
   "bin": {
