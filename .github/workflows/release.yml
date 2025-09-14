@@ -86,7 +86,7 @@ jobs:
 
       - name: Generate changelog
         id: changelog
-        uses: mikepenz/release-changelog-builder-action@v4
+        uses: mikepenz/release-changelog-builder-action@v5
         with:
           toTag: ${{ steps.tag.outputs.new_tag }}
           failOnError: false
