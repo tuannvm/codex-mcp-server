@@ -68,7 +68,7 @@ Add to your Claude Desktop configuration file:
   "mcpServers": {
     "codex-cli": {
       "command": "npx",
-      "args": ["-y", "@comfuicos/codex-mcp-server"]
+      "args": ["-y", "@comfucios/codex-mcp-server"]
     }
   }
 }
