@@ -38,10 +38,11 @@ export class CodexMcpServer {
       return { tools: toolDefinitions };
     });
 
+/// <reference types="node" />
     // Call tool handler
     this.server.setRequestHandler(
       CallToolRequestSchema,
-      async (request, extra) => {
+      async (request, _extra) => {
         const { name, arguments: args } = request.params;
         try {
           if (!this.isValidToolName(name)) {

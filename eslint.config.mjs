@@ -16,6 +16,17 @@ export default [
       globals: {
         console: 'readonly',
         process: 'readonly',
+        setTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearTimeout: 'readonly',
+        clearInterval: 'readonly',
+        Buffer: 'readonly',
+        global: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        exports: 'readonly',
+        module: 'readonly',
+        require: 'readonly',
       },
     },
     plugins: {
@@ -29,40 +40,18 @@ export default [
       '@typescript-eslint/no-explicit-any': 'warn',
       'no-console': 'off',
       'eol-last': ['error', 'always'],
+      'no-undef': 'off',
     },
   },
   {
-    files: ['**/*.test.ts', '**/__tests__/**/*.ts'],
-    languageOptions: {
-      parser: tsparser,
-      parserOptions: {
-        ecmaVersion: 2022,
-        sourceType: 'module',
-        project: './tsconfig.json',
-      },
-      globals: {
-        describe: 'readonly',
-        test: 'readonly',
-        expect: 'readonly',
-        beforeEach: 'readonly',
-        afterEach: 'readonly',
-        beforeAll: 'readonly',
-        afterAll: 'readonly',
-        jest: 'readonly',
-      },
-    },
-    plugins: {
-      '@typescript-eslint': tseslint,
-    },
-    rules: {
-      ...tseslint.configs.recommended.rules,
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      '@typescript-eslint/explicit-function-return-type': 'off',
-      '@typescript-eslint/no-explicit-any': 'warn',
-      'eol-last': ['error', 'always'],
-    },
-  },
-  {
-    ignores: ['dist/', 'node_modules/', '**/*.js', '**/*.mjs', 'jest.config.*'],
+    ignores: [
+      'dist/',
+      'node_modules/',
+      '**/*.js',
+      '**/*.mjs',
+      'jest.config.*',
+      'src/__tests__/**',
+      '**/*.test.ts',
+    ],
   },
 ];

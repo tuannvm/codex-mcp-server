@@ -3,7 +3,7 @@ type Entry = { remaining: string; expiresAt: number };
 const store = new Map<string, Entry>();
 
 export class CursorStore {
-  set(session: string, cursor: any) {
+  set(session: string, cursor: Entry) {
     store.set(session, cursor);
   }
   get(session: string) {

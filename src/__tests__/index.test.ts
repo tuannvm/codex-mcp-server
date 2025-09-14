@@ -1,6 +1,11 @@
-
 jest.setTimeout(20000); // Increase timeout to 20 seconds for all tests
-let TOOLS: any, toolDefinitions: any, toolHandlers: any, CodexToolHandler: any, PingToolHandler: any, HelpToolHandler: any, CodexMcpServer: any;
+let TOOLS: any,
+  toolDefinitions: any,
+  toolHandlers: any,
+  CodexToolHandler: any,
+  PingToolHandler: any,
+  HelpToolHandler: any,
+  CodexMcpServer: any;
 import { jest } from '@jest/globals';
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -18,19 +23,24 @@ describe('Codex MCP Server', () => {
       },
     }));
     await jest.unstable_mockModule('../utils/command.js', () => ({
-      executeCommand: jest.fn<() => Promise<import('../types.js').CommandResult>>().mockResolvedValue({
-        stdout: 'mocked output',
-        stderr: '',
-      }),
-      executeCommandStreamed: jest.fn<() => Promise<import('../types.js').CommandResult>>().mockResolvedValue({
-        stdout: 'mocked streamed output',
-        stderr: '',
-      }),
+      executeCommand: jest
+        .fn<() => Promise<import('../types.js').CommandResult>>()
+        .mockResolvedValue({
+          stdout: 'mocked output',
+          stderr: '',
+        }),
+      executeCommandStreamed: jest
+        .fn<() => Promise<import('../types.js').CommandResult>>()
+        .mockResolvedValue({
+          stdout: 'mocked streamed output',
+          stderr: '',
+        }),
     }));
     // Dynamically import after mocks
     ({ TOOLS } = await import('../types.js'));
     ({ toolDefinitions } = await import('../tools/definitions.js'));
-    ({ toolHandlers, CodexToolHandler, PingToolHandler, HelpToolHandler } = await import('../tools/handlers.js'));
+    ({ toolHandlers, CodexToolHandler, PingToolHandler, HelpToolHandler } =
+      await import('../tools/handlers.js'));
     ({ CodexMcpServer } = await import('../server.js'));
   });
   test('should build successfully', async () => {
@@ -43,7 +53,9 @@ describe('Codex MCP Server', () => {
     test('should have all required tools defined', () => {
       expect(toolDefinitions).toHaveLength(4);
 
-      const toolNames = toolDefinitions.map((tool: { name: string }) => tool.name);
+      const toolNames = toolDefinitions.map(
+        (tool: { name: string }) => tool.name
+      );
       expect(toolNames).toContain(TOOLS.CODEX);
       expect(toolNames).toContain(TOOLS.PING);
       expect(toolNames).toContain(TOOLS.HELP);
@@ -61,14 +73,18 @@ describe('Codex MCP Server', () => {
     });
 
     test('ping tool should have optional message parameter', () => {
-      const pingTool = toolDefinitions.find((tool: { name: string }) => tool.name === TOOLS.PING);
+      const pingTool = toolDefinitions.find(
+        (tool: { name: string }) => tool.name === TOOLS.PING
+      );
       expect(pingTool).toBeDefined();
       expect(pingTool?.inputSchema.required).toEqual([]);
       expect(pingTool?.description).toContain('Test MCP server connection');
     });
 
     test('help tool should have no required parameters', () => {
-      const helpTool = toolDefinitions.find((tool: { name: string }) => tool.name === TOOLS.HELP);
+      const helpTool = toolDefinitions.find(
+        (tool: { name: string }) => tool.name === TOOLS.HELP
+      );
       expect(helpTool).toBeDefined();
       expect(helpTool?.inputSchema.required).toEqual([]);
       expect(helpTool?.description).toContain('Get Codex CLI help');

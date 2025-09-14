@@ -1,4 +1,3 @@
-/* eslint-disable no-control-regex */
 import {
   TOOLS,
   type ToolResult,
