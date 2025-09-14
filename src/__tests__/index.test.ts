@@ -123,3 +123,59 @@ describe('Codex MCP Server', () => {
     });
   });
 });
+
+describe('CLI entry (src/index.ts)', () => {
+  let originalExit: any;
+  let originalError: any;
+  let CodexMcpServerMock: any;
+
+  beforeAll(async () => {
+    // Save originals
+    originalExit = process.exit;
+    originalError = console.error;
+    // Mock process.exit and console.error
+    process.exit = jest.fn();
+    console.error = jest.fn();
+    // ESM-compatible mocking for chalk and server
+    await jest.unstable_mockModule('chalk', () => ({
+      default: { red: jest.fn((msg: any) => `[red]${msg}`) },
+    }));
+    CodexMcpServerMock = jest.fn().mockImplementation(() => ({
+      start: jest.fn().mockResolvedValue(undefined),
+    }));
+    await jest.unstable_mockModule('../server.js', () => ({
+      CodexMcpServer: CodexMcpServerMock,
+    }));
+  });
+
+  afterAll(() => {
+    process.exit = originalExit;
+    console.error = originalError;
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('main() starts server successfully', async () => {
+    const { main } = await import('../index.js');
+    await main();
+    expect(CodexMcpServerMock).toHaveBeenCalled();
+    expect(CodexMcpServerMock.mock.results[0].value.start).toBeDefined();
+    expect(process.exit).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  test('main() handles server start error', async () => {
+    CodexMcpServerMock.mockImplementationOnce(() => ({
+      start: jest.fn().mockRejectedValue(new Error('fail')),
+    }));
+    const { main } = await import('../index.js');
+    await main();
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to start server:'),
+      expect.any(Error)
+    );
+    expect(process.exit).toHaveBeenCalledWith(1);
+  });
+});

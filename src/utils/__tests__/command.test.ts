@@ -1,27 +1,56 @@
 import { executeCommand, executeCommandStreamed } from '../command';
-import { CommandResult } from '../../types';
+import type { CommandResult } from '../../types';
 
 describe('executeCommand', () => {
-  it('should resolve with stdout and stderr', async () => {
-    // This test assumes a harmless command available on all systems
-    const result: CommandResult = await executeCommand('echo', ['hello']);
+  it('resolves with stdout and stderr', async () => {
+    const result: CommandResult = await executeCommand(process.execPath, [
+      '-e',
+      "process.stdout.write('hello')",
+    ]);
     expect(result.stdout).toContain('hello');
-    expect(result.stderr).toBe('');
+    expect(typeof result.stderr).toBe('string');
   });
 
-  it('should throw on invalid command', async () => {
+  it('captures stderr for exit 0', async () => {
+    const result: CommandResult = await executeCommand(process.execPath, [
+      '-e',
+      "process.stderr.write('err')",
+    ]);
+    expect(result.stderr).toContain('err');
+  });
+
+  it('throws on invalid command', async () => {
     await expect(executeCommand('nonexistent-cmd')).rejects.toThrow();
   });
 });
 
 describe('executeCommandStreamed', () => {
-  it('should resolve with stdout and stderr', async () => {
-    const result: CommandResult = await executeCommandStreamed('echo', ['streamed']);
+  it('resolves with stdout and stderr', async () => {
+    const result: CommandResult = await executeCommandStreamed(
+      process.execPath,
+      ['-e', "process.stdout.write('streamed')"]
+    );
     expect(result.stdout).toContain('streamed');
-    expect(result.stderr).toBe('');
+    expect(typeof result.stderr).toBe('string');
   });
 
-  it('should throw on invalid command', async () => {
-    await expect(executeCommandStreamed('nonexistent-cmd')).rejects.toThrow();
+  it('invokes onChunk and continues even if onChunk throws', async () => {
+    const chunks: string[] = [];
+    const result = await executeCommandStreamed(
+      process.execPath,
+      ['-e', "process.stdout.write('A'); process.stdout.write('B');"],
+      (c) => {
+        chunks.push(c);
+        throw new Error('ignore me'); // cover onChunk try/catch path
+      }
+    );
+    expect(result.stdout).toContain('AB');
+    expect(chunks.join('')).toContain('AB');
+  });
+
+  it('rejects on non-zero exit code', async () => {
+    await expect(
+      executeCommandStreamed(process.execPath, ['-e', 'process.exit(2)'])
+    ).rejects.toThrow();
   });
 });

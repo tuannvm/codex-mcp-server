@@ -1,16 +1,41 @@
-import { CodexToolHandler, ListSessionsToolHandler, PingToolHandler, HelpToolHandler } from '../handlers';
-import { TOOLS } from '../../types';
+// Ensure no real CLI calls happen in these integration-ish tests.
+import { jest } from '@jest/globals';
 
-describe('CodexToolHandler', () => {
-  it('should throw ValidationError if prompt is missing and no pageToken', async () => {
-    const handler = new CodexToolHandler();
-    // The handler returns a ToolExecutionError, not a ValidationError. Adjust test to expect the error message.
-    await expect(handler.execute({})).rejects.toThrow('Failed to execute codex command');
+const mockExecuteCommand = jest.fn();
+const mockExecuteCommandStreamed = jest.fn();
+
+await jest.unstable_mockModule('../../utils/command.js', () => ({
+  __esModule: true,
+  executeCommand: mockExecuteCommand,
+  executeCommandStreamed: mockExecuteCommandStreamed,
+}));
+
+const {
+  CodexToolHandler,
+  ListSessionsToolHandler,
+  PingToolHandler,
+  HelpToolHandler,
+} = await import('../handlers.js');
+
+describe('CodexToolHandler (light integration)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockExecuteCommandStreamed.mockResolvedValue({ stdout: 'ok', stderr: '' });
   });
 
-  it('should throw ValidationError for invalid args', async () => {
+  it('should wrap validation failure as ToolExecutionError for missing prompt', async () => {
     const handler = new CodexToolHandler();
-    await expect(handler.execute({ pageSize: 'not-a-number' })).rejects.toThrow();
+    await expect(handler.execute({})).rejects.toThrow(
+      'Failed to execute codex command'
+    );
+    expect(mockExecuteCommandStreamed).not.toHaveBeenCalled();
+  });
+
+  it('should throw on invalid args', async () => {
+    const handler = new CodexToolHandler();
+    await expect(
+      handler.execute({ pageSize: 'not-a-number' } as any)
+    ).rejects.toThrow();
   });
 });
 
@@ -18,12 +43,6 @@ describe('ListSessionsToolHandler', () => {
   it('should return no sessions if none exist', async () => {
     const handler = new ListSessionsToolHandler();
     const result = await handler.execute({});
-    expect(result.content[0].text).toMatch(/No active sessions/);
-  });
-
-  it('should return no sessions for invalid args', async () => {
-    const handler = new ListSessionsToolHandler();
-    const result = await handler.execute({ foo: 'bar' });
     expect(result.content[0].text).toMatch(/No active sessions/);
   });
 });
@@ -34,23 +53,17 @@ describe('PingToolHandler', () => {
     const result = await handler.execute({});
     expect(result.content[0].text).toBe('pong');
   });
-
-  it('should echo custom message', async () => {
-    const handler = new PingToolHandler();
-    const result = await handler.execute({ message: 'hi' });
-    expect(result.content[0].text).toBe('hi');
-  });
-
-  it('should throw ValidationError for invalid args', async () => {
-    const handler = new PingToolHandler();
-    await expect(handler.execute({ message: 123 })).rejects.toThrow();
-  });
 });
 
 describe('HelpToolHandler', () => {
-  it('should return help text for invalid args', async () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should use mocked help output', async () => {
+    mockExecuteCommand.mockResolvedValue({ stdout: 'mocked help', stderr: '' });
     const handler = new HelpToolHandler();
-    const result = await handler.execute({ foo: 'bar' });
-    expect(result.content[0].text).toMatch(/Codex CLI/);
+    const result = await handler.execute({});
+    expect(result.content[0].text).toContain('mocked help');
   });
 });

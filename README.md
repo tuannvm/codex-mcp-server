@@ -99,7 +99,7 @@ Use the codex tool to explain this function:
 
 ### `listSessions` - List Active Sessions
 
-Useful for debugging or selecting a session to clear.
+Useful for debugging or selecting a session to clear. if you want to clear the session you can use the `resetSession` parameter.
 
 ### `ping` - Connection Test
 

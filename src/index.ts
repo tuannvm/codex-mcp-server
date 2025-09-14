@@ -19,3 +19,7 @@ async function main(): Promise<void> {
 }
 
 main();
+
+// Export main for testing purposes
+export { main };
+
