@@ -26,7 +26,9 @@ import {
   CodexToolHandler,
   PingToolHandler,
   HelpToolHandler,
+  ListSessionsToolHandler,
 } from '../tools/handlers.js';
+import { InMemorySessionStorage } from '../session/storage.js';
 import { CodexMcpServer } from '../server.js';
 
 const execAsync = promisify(exec);
@@ -39,12 +41,13 @@ describe('Codex MCP Server', () => {
 
   describe('Tool Definitions', () => {
     test('should have all required tools defined', () => {
-      expect(toolDefinitions).toHaveLength(3);
+      expect(toolDefinitions).toHaveLength(4);
 
       const toolNames = toolDefinitions.map((tool) => tool.name);
       expect(toolNames).toContain(TOOLS.CODEX);
       expect(toolNames).toContain(TOOLS.PING);
       expect(toolNames).toContain(TOOLS.HELP);
+      expect(toolNames).toContain(TOOLS.LIST_SESSIONS);
     });
 
     test('codex tool should have required prompt parameter', () => {
@@ -76,6 +79,7 @@ describe('Codex MCP Server', () => {
       expect(toolHandlers[TOOLS.CODEX]).toBeInstanceOf(CodexToolHandler);
       expect(toolHandlers[TOOLS.PING]).toBeInstanceOf(PingToolHandler);
       expect(toolHandlers[TOOLS.HELP]).toBeInstanceOf(HelpToolHandler);
+      expect(toolHandlers[TOOLS.LIST_SESSIONS]).toBeInstanceOf(ListSessionsToolHandler);
     });
 
     test('ping handler should return message', async () => {
@@ -92,6 +96,16 @@ describe('Codex MCP Server', () => {
       const result = await handler.execute({});
 
       expect(result.content[0].text).toBe('pong');
+    });
+
+    test('listSessions handler should return session info', async () => {
+      const sessionStorage = new InMemorySessionStorage();
+      const handler = new ListSessionsToolHandler(sessionStorage);
+      const result = await handler.execute({});
+
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].type).toBe('text');
+      expect(result.content[0].text).toBe('No active sessions');
     });
   });
 

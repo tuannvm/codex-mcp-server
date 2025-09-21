@@ -11,6 +11,23 @@ export const toolDefinitions: ToolDefinition[] = [
           type: 'string',
           description: 'The coding task, question, or analysis request',
         },
+        sessionId: {
+          type: 'string',
+          description: 'Optional session ID for conversational context',
+        },
+        resetSession: {
+          type: 'boolean',
+          description: 'Reset the session history before processing this request',
+        },
+        model: {
+          type: 'string',
+          description: 'Specify which model to use (defaults to gpt-5-codex). Options: gpt-5-codex, gpt-4, gpt-3.5-turbo',
+        },
+        reasoningEffort: {
+          type: 'string',
+          enum: ['low', 'medium', 'high'],
+          description: 'Control reasoning depth (low=fast, high=thorough)',
+        },
       },
       required: ['prompt'],
     },
@@ -32,6 +49,15 @@ export const toolDefinitions: ToolDefinition[] = [
   {
     name: TOOLS.HELP,
     description: 'Get Codex CLI help information',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: TOOLS.LIST_SESSIONS,
+    description: 'List all active conversation sessions with metadata',
     inputSchema: {
       type: 'object',
       properties: {},
