@@ -7,13 +7,12 @@ graph LR
     A[Claude Code] --> B[Codex MCP Server]
 
     B --> C[codex tool]
-    B --> D[ping tool]
-    B --> E[help tool]
-    B --> F[listSessions tool]
+    B --> D[listSessions tool]
+    B --> E[ping tool]
+    B --> F[help tool]
 
-    C --> G[Codex CLI]
+    C --> G[Codex CLI v0.36.0+]
     C --> H[Session Storage]
-    G --> I[OpenAI API]
 
     style A fill:#FF6B35
     style B fill:#4A90E2
