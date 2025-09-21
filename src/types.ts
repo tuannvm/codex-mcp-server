@@ -5,6 +5,7 @@ export const TOOLS = {
   CODEX: 'codex',
   PING: 'ping',
   HELP: 'help',
+  LIST_SESSIONS: 'listSessions',
 } as const;
 
 export type ToolName = typeof TOOLS[keyof typeof TOOLS];
@@ -39,6 +40,10 @@ export interface ServerConfig {
 // Zod schemas for tool arguments
 export const CodexToolSchema = z.object({
   prompt: z.string(),
+  sessionId: z.string().optional(),
+  resetSession: z.boolean().optional(),
+  model: z.string().optional(),
+  reasoningEffort: z.enum(['low', 'medium', 'high']).optional(),
 });
 
 export const PingToolSchema = z.object({
@@ -47,8 +52,11 @@ export const PingToolSchema = z.object({
 
 export const HelpToolSchema = z.object({});
 
+export const ListSessionsToolSchema = z.object({});
+
 export type CodexToolArgs = z.infer<typeof CodexToolSchema>;
 export type PingToolArgs = z.infer<typeof PingToolSchema>;
+export type ListSessionsToolArgs = z.infer<typeof ListSessionsToolSchema>;
 
 // Command execution result
 export interface CommandResult {
