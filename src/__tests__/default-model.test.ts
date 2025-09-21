@@ -7,7 +7,9 @@ jest.mock('../utils/command.js', () => ({
   executeCommand: jest.fn(),
 }));
 
-const mockedExecuteCommand = executeCommand as jest.MockedFunction<typeof executeCommand>;
+const mockedExecuteCommand = executeCommand as jest.MockedFunction<
+  typeof executeCommand
+>;
 
 describe('Default Model Configuration', () => {
   let handler: CodexToolHandler;
@@ -17,7 +19,10 @@ describe('Default Model Configuration', () => {
     sessionStorage = new InMemorySessionStorage();
     handler = new CodexToolHandler(sessionStorage);
     mockedExecuteCommand.mockClear();
-    mockedExecuteCommand.mockResolvedValue({ stdout: 'Test response', stderr: '' });
+    mockedExecuteCommand.mockResolvedValue({
+      stdout: 'Test response',
+      stderr: '',
+    });
   });
 
   test('should use gpt-5-codex as default model when no model specified', async () => {

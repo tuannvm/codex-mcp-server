@@ -7,7 +7,9 @@ jest.mock('../utils/command.js', () => ({
   executeCommand: jest.fn(),
 }));
 
-const mockedExecuteCommand = executeCommand as jest.MockedFunction<typeof executeCommand>;
+const mockedExecuteCommand = executeCommand as jest.MockedFunction<
+  typeof executeCommand
+>;
 
 describe('Context Building Analysis', () => {
   let handler: CodexToolHandler;
@@ -17,7 +19,10 @@ describe('Context Building Analysis', () => {
     sessionStorage = new InMemorySessionStorage();
     handler = new CodexToolHandler(sessionStorage);
     mockedExecuteCommand.mockClear();
-    mockedExecuteCommand.mockResolvedValue({ stdout: 'Test response', stderr: '' });
+    mockedExecuteCommand.mockResolvedValue({
+      stdout: 'Test response',
+      stderr: '',
+    });
   });
 
   test('should build enhanced prompt correctly', async () => {
@@ -26,7 +31,8 @@ describe('Context Building Analysis', () => {
     // Add some conversation history
     sessionStorage.addTurn(sessionId, {
       prompt: 'What is recursion?',
-      response: 'Recursion is a programming technique where a function calls itself.',
+      response:
+        'Recursion is a programming technique where a function calls itself.',
       timestamp: new Date(),
     });
 
@@ -75,7 +81,8 @@ describe('Context Building Analysis', () => {
     mockedExecuteCommand.mockRejectedValue(new Error('Command failed'));
 
     const sessionId = sessionStorage.createSession();
-    const initialTurns = sessionStorage.getSession(sessionId)?.turns.length || 0;
+    const initialTurns =
+      sessionStorage.getSession(sessionId)?.turns.length || 0;
 
     try {
       await handler.execute({ prompt: 'Test prompt', sessionId });

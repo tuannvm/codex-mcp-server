@@ -53,8 +53,8 @@ describe('InMemorySessionStorage', () => {
 
     const sessions = storage.listSessions();
     expect(sessions).toHaveLength(2);
-    expect(sessions.map(s => s.id)).toContain(sessionId1);
-    expect(sessions.map(s => s.id)).toContain(sessionId2);
+    expect(sessions.map((s) => s.id)).toContain(sessionId1);
+    expect(sessions.map((s) => s.id)).toContain(sessionId2);
   });
 
   test('should delete a session', () => {

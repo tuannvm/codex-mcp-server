@@ -79,7 +79,9 @@ describe('Codex MCP Server', () => {
       expect(toolHandlers[TOOLS.CODEX]).toBeInstanceOf(CodexToolHandler);
       expect(toolHandlers[TOOLS.PING]).toBeInstanceOf(PingToolHandler);
       expect(toolHandlers[TOOLS.HELP]).toBeInstanceOf(HelpToolHandler);
-      expect(toolHandlers[TOOLS.LIST_SESSIONS]).toBeInstanceOf(ListSessionsToolHandler);
+      expect(toolHandlers[TOOLS.LIST_SESSIONS]).toBeInstanceOf(
+        ListSessionsToolHandler
+      );
     });
 
     test('ping handler should return message', async () => {

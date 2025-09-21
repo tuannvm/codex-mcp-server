@@ -7,7 +7,9 @@ jest.mock('../utils/command.js', () => ({
   executeCommand: jest.fn(),
 }));
 
-const mockedExecuteCommand = executeCommand as jest.MockedFunction<typeof executeCommand>;
+const mockedExecuteCommand = executeCommand as jest.MockedFunction<
+  typeof executeCommand
+>;
 
 describe('Model Selection and Reasoning Effort', () => {
   let handler: CodexToolHandler;
@@ -17,7 +19,10 @@ describe('Model Selection and Reasoning Effort', () => {
     sessionStorage = new InMemorySessionStorage();
     handler = new CodexToolHandler(sessionStorage);
     mockedExecuteCommand.mockClear();
-    mockedExecuteCommand.mockResolvedValue({ stdout: 'Test response', stderr: '' });
+    mockedExecuteCommand.mockResolvedValue({
+      stdout: 'Test response',
+      stderr: '',
+    });
   });
 
   test('should pass model parameter to codex CLI', async () => {

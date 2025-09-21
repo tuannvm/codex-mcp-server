@@ -8,7 +8,9 @@ jest.mock('../utils/command.js', () => ({
   executeCommand: jest.fn(),
 }));
 
-const mockedExecuteCommand = executeCommand as jest.MockedFunction<typeof executeCommand>;
+const mockedExecuteCommand = executeCommand as jest.MockedFunction<
+  typeof executeCommand
+>;
 
 describe('Error Handling Scenarios', () => {
   let handler: CodexToolHandler;
@@ -21,34 +23,42 @@ describe('Error Handling Scenarios', () => {
   });
 
   test('should handle codex CLI authentication errors', async () => {
-    mockedExecuteCommand.mockRejectedValue(new Error('Authentication failed: Please run `codex login`'));
+    mockedExecuteCommand.mockRejectedValue(
+      new Error('Authentication failed: Please run `codex login`')
+    );
 
-    await expect(
-      handler.execute({ prompt: 'Test prompt' })
-    ).rejects.toThrow(ToolExecutionError);
+    await expect(handler.execute({ prompt: 'Test prompt' })).rejects.toThrow(
+      ToolExecutionError
+    );
   });
 
   test('should handle codex CLI not found errors', async () => {
-    mockedExecuteCommand.mockRejectedValue(new Error('command not found: codex'));
+    mockedExecuteCommand.mockRejectedValue(
+      new Error('command not found: codex')
+    );
 
-    await expect(
-      handler.execute({ prompt: 'Test prompt' })
-    ).rejects.toThrow(ToolExecutionError);
+    await expect(handler.execute({ prompt: 'Test prompt' })).rejects.toThrow(
+      ToolExecutionError
+    );
   });
 
   test('should handle invalid model parameters', async () => {
-    mockedExecuteCommand.mockRejectedValue(new Error('Invalid model: invalid-model'));
+    mockedExecuteCommand.mockRejectedValue(
+      new Error('Invalid model: invalid-model')
+    );
 
     await expect(
       handler.execute({
         prompt: 'Test prompt',
-        model: 'invalid-model'
+        model: 'invalid-model',
       })
     ).rejects.toThrow(ToolExecutionError);
   });
 
   test('should handle codex CLI timeout errors', async () => {
-    mockedExecuteCommand.mockRejectedValue(new Error('Timeout: Command took too long to execute'));
+    mockedExecuteCommand.mockRejectedValue(
+      new Error('Timeout: Command took too long to execute')
+    );
 
     await expect(
       handler.execute({ prompt: 'Complex analysis task' })
@@ -56,11 +66,13 @@ describe('Error Handling Scenarios', () => {
   });
 
   test('should handle network errors during codex execution', async () => {
-    mockedExecuteCommand.mockRejectedValue(new Error('Network error: Unable to reach OpenAI API'));
+    mockedExecuteCommand.mockRejectedValue(
+      new Error('Network error: Unable to reach OpenAI API')
+    );
 
-    await expect(
-      handler.execute({ prompt: 'Test prompt' })
-    ).rejects.toThrow(ToolExecutionError);
+    await expect(handler.execute({ prompt: 'Test prompt' })).rejects.toThrow(
+      ToolExecutionError
+    );
   });
 
   test('should handle invalid session IDs gracefully', async () => {
@@ -69,7 +81,7 @@ describe('Error Handling Scenarios', () => {
 
     const result = await handler.execute({
       prompt: 'Test prompt',
-      sessionId: 'non-existent-session-id'
+      sessionId: 'non-existent-session-id',
     });
 
     expect(result.content[0].text).toBe('Response');
@@ -89,7 +101,7 @@ describe('Error Handling Scenarios', () => {
     // Should not crash, should handle gracefully
     const result = await handler.execute({
       prompt: 'Test prompt',
-      sessionId
+      sessionId,
     });
 
     expect(result.content[0].text).toBe('Response');
@@ -99,12 +111,14 @@ describe('Error Handling Scenarios', () => {
     const sessionId = sessionStorage.createSession();
     sessionStorage.setCodexConversationId(sessionId, 'invalid-conv-id-format');
 
-    mockedExecuteCommand.mockRejectedValue(new Error('Invalid conversation ID format'));
+    mockedExecuteCommand.mockRejectedValue(
+      new Error('Invalid conversation ID format')
+    );
 
     await expect(
       handler.execute({
         prompt: 'Resume test',
-        sessionId
+        sessionId,
       })
     ).rejects.toThrow(ToolExecutionError);
   });
@@ -117,6 +131,11 @@ describe('Error Handling Scenarios', () => {
     const result = await handler.execute({ prompt: longPrompt });
 
     expect(result.content[0].text).toBe('Response');
-    expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', ['exec', '--model', 'gpt-5-codex', longPrompt]);
+    expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
+      'exec',
+      '--model',
+      'gpt-5-codex',
+      longPrompt,
+    ]);
   });
 });

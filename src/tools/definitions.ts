@@ -17,11 +17,13 @@ export const toolDefinitions: ToolDefinition[] = [
         },
         resetSession: {
           type: 'boolean',
-          description: 'Reset the session history before processing this request',
+          description:
+            'Reset the session history before processing this request',
         },
         model: {
           type: 'string',
-          description: 'Specify which model to use (defaults to gpt-5-codex). Options: gpt-5-codex, gpt-4, gpt-3.5-turbo',
+          description:
+            'Specify which model to use (defaults to gpt-5-codex). Options: gpt-5-codex, gpt-4, gpt-3.5-turbo',
         },
         reasoningEffort: {
           type: 'string',

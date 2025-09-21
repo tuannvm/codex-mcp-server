@@ -7,7 +7,9 @@ jest.mock('../utils/command.js', () => ({
   executeCommand: jest.fn(),
 }));
 
-const mockedExecuteCommand = executeCommand as jest.MockedFunction<typeof executeCommand>;
+const mockedExecuteCommand = executeCommand as jest.MockedFunction<
+  typeof executeCommand
+>;
 
 describe('Codex Resume Functionality', () => {
   let handler: CodexToolHandler;
@@ -23,7 +25,7 @@ describe('Codex Resume Functionality', () => {
     const sessionId = sessionStorage.createSession();
     mockedExecuteCommand.mockResolvedValue({
       stdout: 'Test response',
-      stderr: 'Conversation ID: abc-123-def'
+      stderr: 'Conversation ID: abc-123-def',
     });
 
     await handler.execute({
@@ -43,7 +45,7 @@ describe('Codex Resume Functionality', () => {
     const sessionId = sessionStorage.createSession();
     mockedExecuteCommand.mockResolvedValue({
       stdout: 'Test response',
-      stderr: 'Conversation ID: abc-123-def'
+      stderr: 'Conversation ID: abc-123-def',
     });
 
     await handler.execute({
@@ -51,16 +53,21 @@ describe('Codex Resume Functionality', () => {
       sessionId,
     });
 
-    expect(sessionStorage.getCodexConversationId(sessionId)).toBe('abc-123-def');
+    expect(sessionStorage.getCodexConversationId(sessionId)).toBe(
+      'abc-123-def'
+    );
   });
 
   test('should use resume for subsequent messages in session', async () => {
     const sessionId = sessionStorage.createSession();
-    sessionStorage.setCodexConversationId(sessionId, 'existing-conversation-id');
+    sessionStorage.setCodexConversationId(
+      sessionId,
+      'existing-conversation-id'
+    );
 
     mockedExecuteCommand.mockResolvedValue({
       stdout: 'Resumed response',
-      stderr: ''
+      stderr: '',
     });
 
     await handler.execute({
@@ -83,7 +90,7 @@ describe('Codex Resume Functionality', () => {
 
     mockedExecuteCommand.mockResolvedValue({
       stdout: 'Test response',
-      stderr: 'Conversation ID: new-conversation-id'
+      stderr: 'Conversation ID: new-conversation-id',
     });
 
     await handler.execute({
@@ -99,7 +106,9 @@ describe('Codex Resume Functionality', () => {
       'gpt-5-codex',
       'Reset and start new',
     ]);
-    expect(sessionStorage.getCodexConversationId(sessionId)).toBe('new-conversation-id');
+    expect(sessionStorage.getCodexConversationId(sessionId)).toBe(
+      'new-conversation-id'
+    );
   });
 
   test('should fall back to manual context if no conversation ID', async () => {
@@ -114,7 +123,7 @@ describe('Codex Resume Functionality', () => {
 
     mockedExecuteCommand.mockResolvedValue({
       stdout: 'Context-aware response',
-      stderr: ''
+      stderr: '',
     });
 
     await handler.execute({

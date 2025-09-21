@@ -8,7 +8,11 @@ import {
   HelpToolSchema,
   ListSessionsToolSchema,
 } from '../types.js';
-import { InMemorySessionStorage, type SessionStorage, type ConversationTurn } from '../session/storage.js';
+import {
+  InMemorySessionStorage,
+  type SessionStorage,
+  type ConversationTurn,
+} from '../session/storage.js';
 import { ToolExecutionError, ValidationError } from '../errors.js';
 import { executeCommand } from '../utils/command.js';
 import { ZodError } from 'zod';
@@ -18,7 +22,13 @@ export class CodexToolHandler {
 
   async execute(args: unknown): Promise<ToolResult> {
     try {
-      const { prompt, sessionId, resetSession, model, reasoningEffort }: CodexToolArgs = CodexToolSchema.parse(args);
+      const {
+        prompt,
+        sessionId,
+        resetSession,
+        model,
+        reasoningEffort,
+      }: CodexToolArgs = CodexToolSchema.parse(args);
 
       let activeSessionId = sessionId;
       let enhancedPrompt = prompt;
@@ -32,20 +42,28 @@ export class CodexToolHandler {
           this.sessionStorage.resetSession(sessionId);
         }
 
-        codexConversationId = this.sessionStorage.getCodexConversationId(sessionId);
+        codexConversationId =
+          this.sessionStorage.getCodexConversationId(sessionId);
         if (codexConversationId) {
           useResume = true;
         } else {
           // Fallback to manual context building if no codex conversation ID
           const session = this.sessionStorage.getSession(sessionId);
-          if (session && Array.isArray(session.turns) && session.turns.length > 0) {
+          if (
+            session &&
+            Array.isArray(session.turns) &&
+            session.turns.length > 0
+          ) {
             enhancedPrompt = this.buildEnhancedPrompt(session.turns, prompt);
           }
         }
       }
 
       // Build command arguments with new v0.36.0 features
-      const cmdArgs = useResume && codexConversationId ? ['resume', codexConversationId] : ['exec'];
+      const cmdArgs =
+        useResume && codexConversationId
+          ? ['resume', codexConversationId]
+          : ['exec'];
 
       // Add model and reasoning effort parameters (supported in both exec and resume)
       const selectedModel = model || 'gpt-5-codex'; // Default to gpt-5-codex
@@ -61,9 +79,14 @@ export class CodexToolHandler {
 
       // Extract conversation ID from new conversations for future resume
       if (activeSessionId && !useResume) {
-        const conversationIdMatch = result.stderr?.match(/conversation\s*id\s*:\s*([a-zA-Z0-9-]+)/i);
+        const conversationIdMatch = result.stderr?.match(
+          /conversation\s*id\s*:\s*([a-zA-Z0-9-]+)/i
+        );
         if (conversationIdMatch) {
-          this.sessionStorage.setCodexConversationId(activeSessionId, conversationIdMatch[1]);
+          this.sessionStorage.setCodexConversationId(
+            activeSessionId,
+            conversationIdMatch[1]
+          );
         }
       }
 
@@ -102,15 +125,21 @@ export class CodexToolHandler {
     }
   }
 
-  private buildEnhancedPrompt(turns: ConversationTurn[], newPrompt: string): string {
+  private buildEnhancedPrompt(
+    turns: ConversationTurn[],
+    newPrompt: string
+  ): string {
     if (turns.length === 0) return newPrompt;
 
     // Get relevant context from recent turns
     const recentTurns = turns.slice(-2);
     const contextualInfo = recentTurns
-      .map(turn => {
+      .map((turn) => {
         // Extract key information without conversational format
-        if (turn.response.includes('function') || turn.response.includes('def ')) {
+        if (
+          turn.response.includes('function') ||
+          turn.response.includes('def ')
+        ) {
           return `Previous code context: ${turn.response.slice(0, 200)}...`;
         }
         return `Context: ${turn.prompt} -> ${turn.response.slice(0, 100)}...`;
@@ -184,7 +213,7 @@ export class ListSessionsToolHandler {
       ListSessionsToolSchema.parse(args);
 
       const sessions = this.sessionStorage.listSessions();
-      const sessionInfo = sessions.map(session => ({
+      const sessionInfo = sessions.map((session) => ({
         id: session.id,
         createdAt: session.createdAt.toISOString(),
         lastAccessedAt: session.lastAccessedAt.toISOString(),
@@ -195,9 +224,10 @@ export class ListSessionsToolHandler {
         content: [
           {
             type: 'text',
-            text: sessionInfo.length > 0
-              ? JSON.stringify(sessionInfo, null, 2)
-              : 'No active sessions',
+            text:
+              sessionInfo.length > 0
+                ? JSON.stringify(sessionInfo, null, 2)
+                : 'No active sessions',
           },
         ],
       };

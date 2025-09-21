@@ -7,7 +7,9 @@ jest.mock('../utils/command.js', () => ({
   executeCommand: jest.fn(),
 }));
 
-const mockedExecuteCommand = executeCommand as jest.MockedFunction<typeof executeCommand>;
+const mockedExecuteCommand = executeCommand as jest.MockedFunction<
+  typeof executeCommand
+>;
 
 describe('Edge Cases and Integration Issues', () => {
   let handler: CodexToolHandler;
@@ -30,17 +32,25 @@ describe('Edge Cases and Integration Issues', () => {
       prompt: 'Use different model',
       sessionId,
       model: 'gpt-4',
-      reasoningEffort: 'high'
+      reasoningEffort: 'high',
     });
 
     const call = mockedExecuteCommand.mock.calls[0];
-    expect(call[1]).toEqual(['resume', 'existing-conv-id', '--model', 'gpt-4', '--reasoning-effort', 'high', 'Use different model']);
+    expect(call[1]).toEqual([
+      'resume',
+      'existing-conv-id',
+      '--model',
+      'gpt-4',
+      '--reasoning-effort',
+      'high',
+      'Use different model',
+    ]);
   });
 
   test('should handle missing conversation ID gracefully', async () => {
     mockedExecuteCommand.mockResolvedValue({
       stdout: 'Response without conversation ID',
-      stderr: 'Some other output'  // No conversation ID pattern
+      stderr: 'Some other output', // No conversation ID pattern
     });
 
     const sessionId = sessionStorage.createSession();
@@ -80,9 +90,9 @@ describe('Edge Cases and Integration Issues', () => {
   test('should handle command execution failures', async () => {
     mockedExecuteCommand.mockRejectedValue(new Error('Codex CLI not found'));
 
-    await expect(
-      handler.execute({ prompt: 'Test prompt' })
-    ).rejects.toThrow('Failed to execute codex command');
+    await expect(handler.execute({ prompt: 'Test prompt' })).rejects.toThrow(
+      'Failed to execute codex command'
+    );
   });
 
   test('should handle empty/malformed CLI responses', async () => {
