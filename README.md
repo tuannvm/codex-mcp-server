@@ -22,7 +22,6 @@ graph LR
     style F fill:#00D4AA
     style G fill:#FFA500
     style H fill:#9B59B6
-    style I fill:#FF9500
 ```
 
 ## Prerequisites
