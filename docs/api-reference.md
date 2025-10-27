@@ -179,7 +179,7 @@ interface ConversationTurn {
 
 ### Resume Functionality
 
-The server leverages Codex CLI v0.36.0+ native resume functionality:
+The server leverages Codex CLI v0.50.0+ native resume functionality:
 
 1. **Conversation ID Extraction**: Automatically captures conversation IDs from Codex output
 2. **Native Resume**: Uses `codex resume <conversation-id>` for optimal continuity

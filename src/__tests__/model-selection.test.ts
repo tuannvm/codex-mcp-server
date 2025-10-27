@@ -35,6 +35,7 @@ describe('Model Selection and Reasoning Effort', () => {
       'exec',
       '--model',
       'gpt-4',
+      '--skip-git-repo-check',
       'Test prompt',
     ]);
   });
@@ -49,8 +50,7 @@ describe('Model Selection and Reasoning Effort', () => {
       'exec',
       '--model',
       'gpt-5-codex',
-      '--reasoning-effort',
-      'high',
+      '--skip-git-repo-check',
       'Complex analysis',
     ]);
   });
@@ -66,8 +66,7 @@ describe('Model Selection and Reasoning Effort', () => {
       'exec',
       '--model',
       'gpt-4',
-      '--reasoning-effort',
-      'medium',
+      '--skip-git-repo-check',
       'Advanced task',
     ]);
   });
@@ -81,7 +80,6 @@ describe('Model Selection and Reasoning Effort', () => {
 
     expect(result._meta).toEqual({
       model: 'gpt-3.5-turbo',
-      reasoningEffort: 'low',
     });
   });
 

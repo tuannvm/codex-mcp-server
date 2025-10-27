@@ -1,7 +1,7 @@
 # Session Management Implementation Guide
 
 ## Overview
-The Codex MCP Server provides advanced session management with native Codex CLI v0.36.0+ integration, enabling persistent conversational context and sophisticated AI coding assistance.
+The Codex MCP Server provides advanced session management with native Codex CLI v0.50.0+ integration, enabling persistent conversational context and sophisticated AI coding assistance.
 
 ## Architecture
 
