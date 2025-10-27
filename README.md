@@ -11,7 +11,7 @@ graph LR
     B --> E[ping tool]
     B --> F[help tool]
 
-    C --> G[Codex CLI v0.36.0+]
+    C --> G[Codex CLI v0.50.0+]
     C --> H[Session Storage]
 
     style A fill:#FF6B35
@@ -218,7 +218,7 @@ npm start
 
 ### 📚 Comprehensive Guides
 - **[Session Management](docs/session-management.md)** - Advanced session features and implementation details
-- **[Codex CLI Integration](docs/codex-cli-integration.md)** - v0.36.0+ features, breaking changes, and migration guide
+- **[Codex CLI Integration](docs/codex-cli-integration.md)** - v0.50.0+ features, breaking changes, and migration guide
 - **[API Reference](docs/api-reference.md)** - Complete tool documentation and usage examples
 
 ### 🔧 Development Resources
