@@ -65,12 +65,13 @@ export class CodexToolHandler {
           ? ['resume', codexConversationId]
           : ['exec'];
 
-      // Add model and reasoning effort parameters (supported in both exec and resume)
+      // Add model parameter (supported in both exec and resume)
       const selectedModel = model || 'gpt-5-codex'; // Default to gpt-5-codex
       cmdArgs.push('--model', selectedModel);
-      if (reasoningEffort) {
-        cmdArgs.push('--reasoning-effort', reasoningEffort);
-      }
+      // Note: --reasoning-effort removed - not supported in codex CLI v0.50.0+
+
+      // Skip git repo check for v0.50.0+
+      cmdArgs.push('--skip-git-repo-check');
 
       cmdArgs.push(enhancedPrompt);
 
@@ -110,7 +111,6 @@ export class CodexToolHandler {
         _meta: {
           ...(activeSessionId && { sessionId: activeSessionId }),
           model: selectedModel,
-          ...(reasoningEffort && { reasoningEffort }),
         },
       };
     } catch (error) {

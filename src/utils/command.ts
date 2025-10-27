@@ -26,7 +26,16 @@ export async function executeCommand(
       stdout: result.stdout,
       stderr: result.stderr,
     };
-  } catch (error) {
+  } catch (error: any) {
+    // If command failed but produced stdout, treat it as success
+    // This handles cases where codex exits with error code but still returns valid output
+    if (error.stdout) {
+      console.error(chalk.yellow('Command failed but produced output, using stdout'));
+      return {
+        stdout: error.stdout,
+        stderr: error.stderr || '',
+      };
+    }
     throw new CommandExecutionError(
       [file, ...args].join(' '),
       'Command execution failed',
