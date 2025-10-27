@@ -1,6 +1,6 @@
 # Codex MCP Server
 
-Advanced MCP server wrapper for OpenAI Codex CLI v0.36.0+ that provides enterprise-grade conversational AI coding assistance with session management, intelligent model selection, and native resume functionality.
+Advanced MCP server wrapper for OpenAI Codex CLI v0.50.0+ that provides enterprise-grade conversational AI coding assistance with session management, intelligent model selection, and native resume functionality.
 
 ```mermaid
 graph LR
@@ -165,7 +165,7 @@ Use codex to help debug this error: [error message]
 Ask codex to create a React component that handles file uploads
 ```
 
-## Advanced Features (Codex CLI v0.36.0+)
+## Advanced Features (Codex CLI v0.50.0+)
 
 ### Session Management
 **Key Features:**
