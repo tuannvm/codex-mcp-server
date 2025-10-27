@@ -26,11 +26,26 @@ graph LR
 
 ## Prerequisites
 
-- **OpenAI Codex CLI v0.36.0+** must be pre-installed and configured
+- **OpenAI Codex CLI v0.50.0+** must be pre-installed and configured
   - Install: `npm i -g @openai/codex` or `brew install codex`
   - **Setup**: Run `codex login --api-key "your-openai-api-key"`
   - ⚠️ **Breaking Change**: `OPENAI_API_KEY` environment variable is no longer supported
+  - ⚠️ **Version Requirement**: v0.50.0+ required (see [Version Compatibility](#version-compatibility) below)
 - **Claude Code** installed
+
+## Version Compatibility
+
+This MCP server requires **codex CLI v0.50.0 or later** due to the following changes:
+
+- **v0.50.0+**: Introduced `--skip-git-repo-check` flag (now required)
+- **v0.50.0+**: Removed `--reasoning-effort` flag (no longer supported)
+
+**If you have an older version of codex CLI**, you will need to upgrade:
+```bash
+npm update -g @openai/codex
+```
+
+For detailed version compatibility information, see [docs/codex-cli-integration.md](docs/codex-cli-integration.md).
 
 ## Installation
 
