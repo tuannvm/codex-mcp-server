@@ -22,13 +22,8 @@ export class CodexToolHandler {
 
   async execute(args: unknown): Promise<ToolResult> {
     try {
-      const {
-        prompt,
-        sessionId,
-        resetSession,
-        model,
-        reasoningEffort,
-      }: CodexToolArgs = CodexToolSchema.parse(args);
+      const { prompt, sessionId, resetSession, model }: CodexToolArgs =
+        CodexToolSchema.parse(args);
 
       let activeSessionId = sessionId;
       let enhancedPrompt = prompt;
