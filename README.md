@@ -1,5 +1,9 @@
 # Codex MCP Server
 
+[![npm version](https://img.shields.io/npm/v/codex-mcp-server.svg)](https://www.npmjs.com/package/codex-mcp-server)
+[![npm downloads](https://img.shields.io/npm/dm/codex-mcp-server.svg)](https://www.npmjs.com/package/codex-mcp-server)
+[![license](https://img.shields.io/npm/l/codex-mcp-server.svg)](https://www.npmjs.com/package/codex-mcp-server)
+
 Advanced MCP server wrapper for OpenAI Codex CLI v0.50.0+ that provides enterprise-grade conversational AI coding assistance with session management, intelligent model selection, and native resume functionality.
 
 ```mermaid
