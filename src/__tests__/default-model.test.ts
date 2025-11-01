@@ -32,6 +32,7 @@ describe('Default Model Configuration', () => {
       'exec',
       '--model',
       'gpt-5-codex',
+      '--skip-git-repo-check',
       'Test prompt',
     ]);
   });
@@ -52,6 +53,7 @@ describe('Default Model Configuration', () => {
       'exec',
       '--model',
       'gpt-4',
+      '--skip-git-repo-check',
       'Test prompt',
     ]);
   });
@@ -68,6 +70,7 @@ describe('Default Model Configuration', () => {
       'exec',
       '--model',
       'gpt-5-codex',
+      '--skip-git-repo-check',
       'Test prompt',
     ]);
   });
@@ -86,6 +89,7 @@ describe('Default Model Configuration', () => {
       'existing-conv-id',
       '--model',
       'gpt-5-codex',
+      '--skip-git-repo-check',
       'Resume with default model',
     ]);
   });
@@ -100,8 +104,7 @@ describe('Default Model Configuration', () => {
       'exec',
       '--model',
       'gpt-5-codex',
-      '--reasoning-effort',
-      'high',
+      '--skip-git-repo-check',
       'Complex task',
     ]);
   });
