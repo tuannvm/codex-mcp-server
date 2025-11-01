@@ -47,7 +47,7 @@ describe('Context Building Analysis', () => {
 
     // Check what prompt was sent to Codex - should be enhanced but not conversational
     const call = mockedExecuteCommand.mock.calls[0];
-    const sentPrompt = call?.[1]?.[3]; // After exec, --model, gpt-5-codex, prompt
+    const sentPrompt = call?.[1]?.[4]; // After exec, --model, gpt-5-codex, --skip-git-repo-check, prompt
     expect(sentPrompt).toContain('Previous code context:');
     expect(sentPrompt).toContain('Task: Make it more efficient');
     expect(sentPrompt).not.toContain('Previous: What is recursion?'); // No conversational format

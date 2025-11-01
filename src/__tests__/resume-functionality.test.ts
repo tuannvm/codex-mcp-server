@@ -37,6 +37,7 @@ describe('Codex Resume Functionality', () => {
       'exec',
       '--model',
       'gpt-5-codex',
+      '--skip-git-repo-check',
       'First message',
     ]);
   });
@@ -80,6 +81,7 @@ describe('Codex Resume Functionality', () => {
       'existing-conversation-id',
       '--model',
       'gpt-5-codex',
+      '--skip-git-repo-check',
       'Continue conversation',
     ]);
   });
@@ -104,6 +106,7 @@ describe('Codex Resume Functionality', () => {
       'exec',
       '--model',
       'gpt-5-codex',
+      '--skip-git-repo-check',
       'Reset and start new',
     ]);
     expect(sessionStorage.getCodexConversationId(sessionId)).toBe(
@@ -133,7 +136,7 @@ describe('Codex Resume Functionality', () => {
 
     // Should build enhanced prompt since no conversation ID
     const call = mockedExecuteCommand.mock.calls[0];
-    const sentPrompt = call?.[1]?.[3]; // After exec, --model, gpt-5-codex, prompt
+    const sentPrompt = call?.[1]?.[4]; // After exec, --model, gpt-5-codex, --skip-git-repo-check, prompt
     expect(sentPrompt).toContain('Context:');
     expect(sentPrompt).toContain('Task: Follow up question');
   });
