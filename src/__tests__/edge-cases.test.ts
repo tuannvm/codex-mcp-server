@@ -41,8 +41,7 @@ describe('Edge Cases and Integration Issues', () => {
       'existing-conv-id',
       '--model',
       'gpt-4',
-      '--reasoning-effort',
-      'high',
+      '--skip-git-repo-check',
       'Use different model',
     ]);
   });
@@ -130,7 +129,7 @@ describe('Edge Cases and Integration Issues', () => {
 
     // Should only use recent turns, not crash with too much context
     const call = mockedExecuteCommand.mock.calls[0];
-    const prompt = call?.[1]?.[3]; // After exec, --model, gpt-5-codex, prompt
+    const prompt = call?.[1]?.[4]; // After exec, --model, gpt-5-codex, --skip-git-repo-check, prompt
     expect(typeof prompt).toBe('string');
     if (prompt) {
       expect(prompt.length).toBeLessThan(5000); // Reasonable limit

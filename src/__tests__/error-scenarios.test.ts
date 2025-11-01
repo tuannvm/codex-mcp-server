@@ -135,6 +135,7 @@ describe('Error Handling Scenarios', () => {
       'exec',
       '--model',
       'gpt-5-codex',
+      '--skip-git-repo-check',
       longPrompt,
     ]);
   });
