@@ -1,6 +1,10 @@
 # Codex MCP Server
 
-Advanced MCP server wrapper for OpenAI Codex CLI v0.36.0+ that provides enterprise-grade conversational AI coding assistance with session management, intelligent model selection, and native resume functionality.
+[![npm version](https://img.shields.io/npm/v/codex-mcp-server.svg)](https://www.npmjs.com/package/codex-mcp-server)
+[![npm downloads](https://img.shields.io/npm/dm/codex-mcp-server.svg)](https://www.npmjs.com/package/codex-mcp-server)
+[![license](https://img.shields.io/npm/l/codex-mcp-server.svg)](https://www.npmjs.com/package/codex-mcp-server)
+
+Advanced MCP server wrapper for OpenAI Codex CLI v0.50.0+ that provides enterprise-grade conversational AI coding assistance with session management, intelligent model selection, and native resume functionality.
 
 ```mermaid
 graph LR
@@ -11,7 +15,7 @@ graph LR
     B --> E[ping tool]
     B --> F[help tool]
 
-    C --> G[Codex CLI v0.36.0+]
+    C --> G[Codex CLI v0.50.0+]
     C --> H[Session Storage]
 
     style A fill:#FF6B35
@@ -26,11 +30,26 @@ graph LR
 
 ## Prerequisites
 
-- **OpenAI Codex CLI v0.36.0+** must be pre-installed and configured
+- **OpenAI Codex CLI v0.50.0+** must be pre-installed and configured
   - Install: `npm i -g @openai/codex` or `brew install codex`
   - **Setup**: Run `codex login --api-key "your-openai-api-key"`
   - ⚠️ **Breaking Change**: `OPENAI_API_KEY` environment variable is no longer supported
+  - ⚠️ **Version Requirement**: v0.50.0+ required (see [Version Compatibility](#version-compatibility) below)
 - **Claude Code** installed
+
+## Version Compatibility
+
+This MCP server requires **codex CLI v0.50.0 or later** due to the following changes:
+
+- **v0.50.0+**: Introduced `--skip-git-repo-check` flag (now required)
+- **v0.50.0+**: Removed `--reasoning-effort` flag (no longer supported)
+
+**If you have an older version of codex CLI**, you will need to upgrade:
+```bash
+npm update -g @openai/codex
+```
+
+For detailed version compatibility information, see [docs/codex-cli-integration.md](docs/codex-cli-integration.md).
 
 ## Installation
 
@@ -56,6 +75,7 @@ claude mcp add codex-cli -- npx -y codex-mcp-server
 Add to your Claude Desktop configuration file:
 
 **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+
 **Windows:** `%APPDATA%/Claude/claude_desktop_config.json`
 
 ```json
@@ -150,7 +170,7 @@ Use codex to help debug this error: [error message]
 Ask codex to create a React component that handles file uploads
 ```
 
-## Advanced Features (Codex CLI v0.36.0+)
+## Advanced Features (Codex CLI v0.50.0+)
 
 ### Session Management
 **Key Features:**
@@ -203,7 +223,7 @@ npm start
 
 ### 📚 Comprehensive Guides
 - **[Session Management](docs/session-management.md)** - Advanced session features and implementation details
-- **[Codex CLI Integration](docs/codex-cli-integration.md)** - v0.36.0+ features, breaking changes, and migration guide
+- **[Codex CLI Integration](docs/codex-cli-integration.md)** - v0.50.0+ features, breaking changes, and migration guide
 - **[API Reference](docs/api-reference.md)** - Complete tool documentation and usage examples
 
 ### 🔧 Development Resources
