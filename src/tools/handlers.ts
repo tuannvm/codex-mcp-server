@@ -22,8 +22,13 @@ export class CodexToolHandler {
 
   async execute(args: unknown): Promise<ToolResult> {
     try {
-      const { prompt, sessionId, resetSession, model }: CodexToolArgs =
-        CodexToolSchema.parse(args);
+      const {
+        prompt,
+        sessionId,
+        resetSession,
+        model,
+        reasoningEffort,
+      }: CodexToolArgs = CodexToolSchema.parse(args);
 
       let activeSessionId = sessionId;
       let enhancedPrompt = prompt;
@@ -61,10 +66,14 @@ export class CodexToolHandler {
           : ['exec'];
 
       // Add model parameter (supported in both exec and resume)
-      const selectedModel = model || process.env.CODEX_DEFAULT_MODEL || 'gpt-5.1-codex'; // Default to gpt-5.1-codex
+      const selectedModel =
+        model || process.env.CODEX_DEFAULT_MODEL || 'gpt-5.1-codex'; // Default to gpt-5.1-codex
       cmdArgs.push('--model', selectedModel);
-      // Note: --reasoning-effort removed - not supported in codex CLI v0.50.0+
-      // Reasoning effort is now configured via ~/.codex/config.toml
+
+      // Add reasoning effort via config parameter (v0.50.0+ uses -c instead of --reasoning-effort)
+      if (reasoningEffort) {
+        cmdArgs.push('-c', `model_reasoning_effort=${reasoningEffort}`);
+      }
 
       // Skip git repo check for v0.50.0+
       cmdArgs.push('--skip-git-repo-check');
