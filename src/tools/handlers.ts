@@ -61,9 +61,10 @@ export class CodexToolHandler {
           : ['exec'];
 
       // Add model parameter (supported in both exec and resume)
-      const selectedModel = model || 'gpt-5-codex'; // Default to gpt-5-codex
+      const selectedModel = model || process.env.CODEX_DEFAULT_MODEL || 'gpt-5.1-codex'; // Default to gpt-5.1-codex
       cmdArgs.push('--model', selectedModel);
       // Note: --reasoning-effort removed - not supported in codex CLI v0.50.0+
+      // Reasoning effort is now configured via ~/.codex/config.toml
 
       // Skip git repo check for v0.50.0+
       cmdArgs.push('--skip-git-repo-check');

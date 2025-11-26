@@ -23,12 +23,12 @@ export const toolDefinitions: ToolDefinition[] = [
         model: {
           type: 'string',
           description:
-            'Specify which model to use (defaults to gpt-5-codex). Options: gpt-5-codex, gpt-4, gpt-3.5-turbo',
+            'Specify which model to use (defaults to gpt-5.1-codex). Options: gpt-5.1-codex, gpt-5-codex, gpt-4, gpt-3.5-turbo',
         },
         reasoningEffort: {
           type: 'string',
           enum: ['low', 'medium', 'high'],
-          description: 'Control reasoning depth (low=fast, high=thorough)',
+          description: 'DEPRECATED: Configure reasoning effort via ~/.codex/config.toml (model_reasoning_effort = "high")',
         },
       },
       required: ['prompt'],
