@@ -1,8 +1,13 @@
 name: Cursor Code Review
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
+
+# Prevent multiple reviews running simultaneously on the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   pull-requests: write
@@ -12,6 +17,7 @@ permissions:
 jobs:
   code-review:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # Skip automated code review for draft PRs
     if: github.event.pull_request.draft == false
     steps:
@@ -20,11 +26,20 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false  # Security: don't persist creds when checking out PR code
 
       - name: Install Cursor CLI
         run: |
           curl https://cursor.com/install -fsS | bash
           echo "$HOME/.cursor/bin" >> $GITHUB_PATH
+
+      - name: Verify Cursor CLI installation
+        run: |
+          if ! command -v cursor-agent &> /dev/null; then
+            echo "::error::cursor-agent not found after installation"
+            exit 1
+          fi
+          cursor-agent --version || true
 
       - name: Configure git identity
         run: |
@@ -34,7 +49,7 @@ jobs:
       - name: Perform automated code review
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          MODEL: gpt-5-codex
+          MODEL: gpt-5.1-codex
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BLOCKING_REVIEW: ${{ vars.BLOCKING_REVIEW || 'false' }}
         run: |
