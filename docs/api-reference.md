@@ -16,11 +16,12 @@ Execute Codex CLI with advanced session management and model control.
 | `prompt` | string | ✅ | - | The coding task, question, or analysis request |
 | `sessionId` | string | ❌ | - | Session ID for conversational context |
 | `resetSession` | boolean | ❌ | `false` | Reset session history before processing |
-| `model` | string | ❌ | `gpt-5-codex` | Model to use for processing |
+| `model` | string | ❌ | `gpt-5.1-codex` | Model to use for processing |
 | `reasoningEffort` | enum | ❌ | - | Control reasoning depth |
 
 #### Model Options
-- `gpt-5-codex` (default) - Specialized coding model
+- `gpt-5.1-codex` (default) - Latest specialized coding model
+- `gpt-5.1-codex` - Previous coding model version
 - `gpt-4` - Advanced reasoning capabilities
 - `gpt-3.5-turbo` - Fast general-purpose model
 
@@ -229,7 +230,7 @@ interface ErrorResponse {
 - **Context Optimization**: Recent turns only (last 2) for fallback context
 
 ### Response Optimization
-- **Model Selection**: Default `gpt-5-codex` optimized for coding
+- **Model Selection**: Default `gpt-5.1-codex` optimized for coding
 - **Reasoning Control**: Adjust effort based on task complexity
 - **Native Resume**: Preferred over manual context building
 

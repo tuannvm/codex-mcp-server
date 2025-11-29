@@ -104,7 +104,7 @@ Use the codex tool to explain this function:
 
 **Advanced Usage:**
 ```
-# Model selection (defaults to gpt-5-codex)
+# Model selection (defaults to gpt-5.1-codex)
 Use codex with model "gpt-4" to analyze this complex algorithm
 
 # Reasoning effort control

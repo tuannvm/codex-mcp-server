@@ -134,7 +134,7 @@ describe('Error Handling Scenarios', () => {
     expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
       'exec',
       '--model',
-      'gpt-5-codex',
+      'gpt-5.1-codex',
       '--skip-git-repo-check',
       longPrompt,
     ]);
