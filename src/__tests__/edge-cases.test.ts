@@ -41,6 +41,8 @@ describe('Edge Cases and Integration Issues', () => {
       'existing-conv-id',
       '--model',
       'gpt-4',
+      '-c',
+      'model_reasoning_effort=high',
       '--skip-git-repo-check',
       'Use different model',
     ]);

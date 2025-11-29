@@ -104,6 +104,8 @@ describe('Default Model Configuration', () => {
       'exec',
       '--model',
       'gpt-5.1-codex',
+      '-c',
+      'model_reasoning_effort=high',
       '--skip-git-repo-check',
       'Complex task',
     ]);
