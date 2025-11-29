@@ -36,7 +36,7 @@ describe('Codex Resume Functionality', () => {
     expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
       'exec',
       '--model',
-      'gpt-5-codex',
+      'gpt-5.1-codex',
       '--skip-git-repo-check',
       'First message',
     ]);
@@ -80,7 +80,7 @@ describe('Codex Resume Functionality', () => {
       'resume',
       'existing-conversation-id',
       '--model',
-      'gpt-5-codex',
+      'gpt-5.1-codex',
       '--skip-git-repo-check',
       'Continue conversation',
     ]);
@@ -105,7 +105,7 @@ describe('Codex Resume Functionality', () => {
     expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
       'exec',
       '--model',
-      'gpt-5-codex',
+      'gpt-5.1-codex',
       '--skip-git-repo-check',
       'Reset and start new',
     ]);
@@ -136,7 +136,7 @@ describe('Codex Resume Functionality', () => {
 
     // Should build enhanced prompt since no conversation ID
     const call = mockedExecuteCommand.mock.calls[0];
-    const sentPrompt = call?.[1]?.[4]; // After exec, --model, gpt-5-codex, --skip-git-repo-check, prompt
+    const sentPrompt = call?.[1]?.[4]; // After exec, --model, gpt-5.1-codex, --skip-git-repo-check, prompt
     expect(sentPrompt).toContain('Context:');
     expect(sentPrompt).toContain('Task: Follow up question');
   });
