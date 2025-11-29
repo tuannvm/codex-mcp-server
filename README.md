@@ -4,7 +4,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/codex-mcp-server.svg)](https://www.npmjs.com/package/codex-mcp-server)
 [![license](https://img.shields.io/npm/l/codex-mcp-server.svg)](https://www.npmjs.com/package/codex-mcp-server)
 
-Advanced MCP server wrapper for OpenAI Codex CLI v0.50.0+ that provides enterprise-grade conversational AI coding assistance with session management, intelligent model selection, and native resume functionality.
+MCP server for OpenAI Codex CLI v0.50.0+ with session management, model selection, and native resume support.
 
 ```mermaid
 graph LR
@@ -42,7 +42,7 @@ graph LR
 This MCP server requires **codex CLI v0.50.0 or later** due to the following changes:
 
 - **v0.50.0+**: Introduced `--skip-git-repo-check` flag (now required)
-- **v0.50.0+**: Removed `--reasoning-effort` flag (no longer supported)
+- **v0.50.0+**: Reasoning effort now configured via `-c model_reasoning_effort=X` flag
 
 **If you have an older version of codex CLI**, you will need to upgrade:
 ```bash
@@ -93,8 +93,8 @@ Add to your Claude Desktop configuration file:
 
 Once installed, Claude Code can use these tools:
 
-### `codex` - AI Coding Assistant
-Ask Codex to analyze code, generate solutions, or provide coding assistance with optional session support for conversational context.
+### `codex` - Code Assistant
+Run Codex queries with optional session support for multi-turn conversations.
 
 **Basic Usage:**
 ```
@@ -110,7 +110,7 @@ Use codex with model "gpt-4" to analyze this complex algorithm
 # Reasoning effort control
 Use codex with reasoningEffort "high" for thorough code review
 
-# Session with model preferences (using advanced GPT-5 Codex by default)
+# Session with model override
 Use codex with sessionId "my-session" and model "gpt-4" to refactor this code
 
 # Continue conversation (uses native codex resume)
@@ -124,8 +124,8 @@ Use codex with sessionId "my-session" and resetSession true to start fresh analy
 - `prompt` (required): Your coding question or request
 - `sessionId` (optional): Session ID for conversational context
 - `resetSession` (optional): Reset session history before processing
-- `model` (optional): Specify model to use (defaults to 'gpt-5-codex'). Options: 'gpt-5-codex', 'gpt-4', 'gpt-3.5-turbo'
-- `reasoningEffort` (optional): Control reasoning depth ('low', 'medium', 'high')
+- `model` (optional): Model to use (defaults to `gpt-5.1-codex`)
+- `reasoningEffort` (optional): Control reasoning depth ('minimal', 'low', 'medium', 'high')
 
 ### `listSessions` - Session Management
 List all active conversation sessions with metadata including creation time, last access, and turn count.
@@ -173,35 +173,20 @@ Ask codex to create a React component that handles file uploads
 ## Advanced Features (Codex CLI v0.50.0+)
 
 ### Session Management
-**Key Features:**
-- **Native Resume**: Leverages `codex resume` for optimal conversation continuity
-- **Intelligent Defaults**: GPT-5-Codex model for superior coding assistance
-- **Fallback Context**: Manual context building when resume unavailable
-- **Session Persistence**: Context maintained across interactions (24hr TTL)
-- **Production-Ready**: Comprehensive error handling and graceful degradation
-- **Enterprise-Scale**: 54 tests covering all functionality and edge cases
+- Uses `codex resume` for conversation continuity
+- Falls back to manual context building when resume unavailable
+- Sessions persist for 24 hours
+- 57 tests covering functionality and edge cases
 
-### Model Selection & Control
-**Key Features:**
-- **Default GPT-5 Codex**: Automatically uses the latest `gpt-5-codex` model for optimal coding assistance
-- **Dynamic Models**: Choose between different models per request
-- **Reasoning Effort**: Control AI processing depth (low/medium/high)
-- **Per-Model Optimization**: Optimized prompts for different model families
-- **Flexible Configuration**: Mix and match model and session parameters
+### Model Selection
+- Default: `gpt-5.1-codex`
+- Override per request with `model` parameter
+- Reasoning effort: `minimal`, `low`, `medium`, `high`
 
-### Enhanced Authentication
-**Requirements:**
-- ⚠️ **Breaking Change**: Environment variable `OPENAI_API_KEY` no longer supported
-- **New Setup**: Run `codex login --api-key "your-key"` for authentication
-- **Credential Storage**: Credentials stored securely in `CODEX_HOME/auth.json`
-
-**Best Practices:**
-- Use sessions with native resume for complex, multi-step development tasks
-- **Default Model**: Uses `gpt-5-codex` by default for optimal coding assistance
-- Choose appropriate reasoning effort: `low` for quick answers, `high` for complex analysis
-- Select models based on task complexity: `gpt-5-codex` for coding (default), `gpt-4` for advanced reasoning, `gpt-3.5-turbo` for speed
-- Reset sessions when switching to unrelated topics
-- Check `listSessions` to manage active conversations
+### Authentication
+- `OPENAI_API_KEY` env var no longer supported
+- Run `codex login --api-key "your-key"` instead
+- Credentials stored in `CODEX_HOME/auth.json`
 
 ## Development
 
@@ -221,16 +206,9 @@ npm start
 
 ## Documentation
 
-### 📚 Comprehensive Guides
-- **[Session Management](docs/session-management.md)** - Advanced session features and implementation details
-- **[Codex CLI Integration](docs/codex-cli-integration.md)** - v0.50.0+ features, breaking changes, and migration guide
-- **[API Reference](docs/api-reference.md)** - Complete tool documentation and usage examples
-
-### 🔧 Development Resources
-- **Testing Suite**: 54 comprehensive tests covering all functionality
-- **TypeScript Support**: Full type definitions and IntelliSense
-- **Error Handling**: Robust error recovery and graceful degradation
-- **Performance**: Optimized for enterprise-scale usage
+- [Session Management](docs/session-management.md)
+- [Codex CLI Integration](docs/codex-cli-integration.md)
+- [API Reference](docs/api-reference.md)
 
 ## License
 
