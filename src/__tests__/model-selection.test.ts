@@ -110,4 +110,21 @@ describe('Model Selection and Reasoning Effort', () => {
       })
     ).rejects.toThrow();
   });
+
+  test('should pass minimal reasoning effort to CLI', async () => {
+    await handler.execute({
+      prompt: 'Quick task',
+      reasoningEffort: 'minimal',
+    });
+
+    expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
+      'exec',
+      '--model',
+      'gpt-5.1-codex',
+      '-c',
+      'model_reasoning_effort=minimal',
+      '--skip-git-repo-check',
+      'Quick task',
+    ]);
+  });
 });
