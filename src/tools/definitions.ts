@@ -27,8 +27,9 @@ export const toolDefinitions: ToolDefinition[] = [
         },
         reasoningEffort: {
           type: 'string',
-          enum: ['low', 'medium', 'high'],
-          description: 'DEPRECATED: Configure reasoning effort via ~/.codex/config.toml (model_reasoning_effort = "high")',
+          enum: ['minimal', 'low', 'medium', 'high'],
+          description:
+            'Control reasoning depth (minimal < low < medium < high)',
         },
       },
       required: ['prompt'],
