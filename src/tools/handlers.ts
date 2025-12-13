@@ -3,10 +3,12 @@ import {
   type ToolResult,
   type CodexToolArgs,
   type PingToolArgs,
+  type GetSessionStatusToolArgs,
   CodexToolSchema,
   PingToolSchema,
   HelpToolSchema,
   ListSessionsToolSchema,
+  GetSessionStatusToolSchema,
 } from '../types.js';
 import {
   InMemorySessionStorage,
@@ -15,6 +17,11 @@ import {
 } from '../session/storage.js';
 import { ToolExecutionError, ValidationError } from '../errors.js';
 import { executeCommand } from '../utils/command.js';
+import {
+  getSessionStatus,
+  findMostRecentSession,
+  formatSessionStatus,
+} from '../utils/tokenTracker.js';
 import { ZodError } from 'zod';
 
 export class CodexToolHandler {
@@ -42,13 +49,19 @@ export class CodexToolHandler {
           this.sessionStorage.resetSession(sessionId);
         }
 
+        // Ensure session exists (create if not)
+        let session = this.sessionStorage.getSession(sessionId);
+        if (!session) {
+          this.sessionStorage.createSessionWithId(sessionId);
+        }
+
         codexConversationId =
           this.sessionStorage.getCodexConversationId(sessionId);
         if (codexConversationId) {
           useResume = true;
         } else {
           // Fallback to manual context building if no codex conversation ID
-          const session = this.sessionStorage.getSession(sessionId);
+          session = this.sessionStorage.getSession(sessionId);
           if (
             session &&
             Array.isArray(session.turns) &&
@@ -84,15 +97,15 @@ export class CodexToolHandler {
       const result = await executeCommand('codex', cmdArgs, enhancedPrompt);
       const response = result.stdout || 'No output from Codex';
 
-      // Extract conversation ID from new conversations for future resume
+      // Extract session ID from new sessions for future resume
       if (activeSessionId && !useResume) {
-        const conversationIdMatch = result.stderr?.match(
-          /conversation\s*id\s*:\s*([a-zA-Z0-9-]+)/i
+        const sessionIdMatch = result.stderr?.match(
+          /session\s*id\s*:\s*([a-zA-Z0-9-]+)/i
         );
-        if (conversationIdMatch) {
+        if (sessionIdMatch) {
           this.sessionStorage.setCodexConversationId(
             activeSessionId,
-            conversationIdMatch[1]
+            sessionIdMatch[1]
           );
         }
       }
@@ -250,6 +263,95 @@ export class ListSessionsToolHandler {
   }
 }
 
+export class GetSessionStatusHandler {
+  constructor(private sessionStorage: SessionStorage) {}
+
+  async execute(args: unknown): Promise<ToolResult> {
+    try {
+      const { sessionId }: GetSessionStatusToolArgs =
+        GetSessionStatusToolSchema.parse(args);
+
+      let targetSessionId: string | undefined = sessionId;
+      let sessionFilePath: string | undefined;
+      let codexSessionId: string | undefined;
+
+      // If session ID provided, check if it's an MCP session ID that maps to a Codex CLI session
+      if (targetSessionId) {
+        // Check if it's a UUID format (Codex CLI session ID)
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetSessionId);
+
+        if (!isUUID) {
+          // It's an MCP session ID, look up the mapped Codex CLI session ID
+          codexSessionId = this.sessionStorage.getCodexConversationId(targetSessionId);
+          if (codexSessionId) {
+            targetSessionId = codexSessionId;
+          }
+        }
+      }
+
+      // If no session ID provided, find most recent session
+      if (!targetSessionId) {
+        const recentSession = findMostRecentSession();
+        if (recentSession) {
+          targetSessionId = recentSession.sessionId;
+          sessionFilePath = recentSession.filePath;
+        }
+      }
+
+      if (!targetSessionId) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: 'No Codex sessions found.',
+            },
+          ],
+        };
+      }
+
+      const status = getSessionStatus(sessionFilePath || targetSessionId);
+
+      if (!status) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Could not find token information for session: ${targetSessionId}`,
+            },
+          ],
+        };
+      }
+
+      const formattedStatus = formatSessionStatus(status);
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: formattedStatus,
+          },
+        ],
+        _meta: {
+          sessionId: status.sessionId,
+          contextUsagePercent: status.contextUsagePercent,
+          isNearLimit: status.isNearLimit,
+          modelContextWindow: status.modelContextWindow,
+          totalInputTokens: status.totalTokenUsage.inputTokens,
+        },
+      };
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw new ValidationError(TOOLS.GET_SESSION_STATUS, error.message);
+      }
+      throw new ToolExecutionError(
+        TOOLS.GET_SESSION_STATUS,
+        'Failed to get session status',
+        error
+      );
+    }
+  }
+}
+
 // Tool handler registry
 const sessionStorage = new InMemorySessionStorage();
 
@@ -258,4 +360,5 @@ export const toolHandlers = {
   [TOOLS.PING]: new PingToolHandler(),
   [TOOLS.HELP]: new HelpToolHandler(),
   [TOOLS.LIST_SESSIONS]: new ListSessionsToolHandler(sessionStorage),
+  [TOOLS.GET_SESSION_STATUS]: new GetSessionStatusHandler(sessionStorage),
 } as const;

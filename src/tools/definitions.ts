@@ -67,4 +67,20 @@ export const toolDefinitions: ToolDefinition[] = [
       required: [],
     },
   },
+  {
+    name: TOOLS.GET_SESSION_STATUS,
+    description:
+      'Get token usage and context window status for a Codex session. Shows how much of the context window is used and warns if nearing the limit.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        sessionId: {
+          type: 'string',
+          description:
+            'Session ID to check. If not provided, checks the most recent session.',
+        },
+      },
+      required: [],
+    },
+  },
 ];

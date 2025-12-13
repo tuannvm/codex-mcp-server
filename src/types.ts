@@ -6,6 +6,7 @@ export const TOOLS = {
   PING: 'ping',
   HELP: 'help',
   LIST_SESSIONS: 'listSessions',
+  GET_SESSION_STATUS: 'getSessionStatus',
 } as const;
 
 export type ToolName = typeof TOOLS[keyof typeof TOOLS];
@@ -54,9 +55,14 @@ export const HelpToolSchema = z.object({});
 
 export const ListSessionsToolSchema = z.object({});
 
+export const GetSessionStatusToolSchema = z.object({
+  sessionId: z.string().optional().describe('Session ID to check. If not provided, checks the most recent session.'),
+});
+
 export type CodexToolArgs = z.infer<typeof CodexToolSchema>;
 export type PingToolArgs = z.infer<typeof PingToolSchema>;
 export type ListSessionsToolArgs = z.infer<typeof ListSessionsToolSchema>;
+export type GetSessionStatusToolArgs = z.infer<typeof GetSessionStatusToolSchema>;
 
 // Command execution result
 export interface CommandResult {
