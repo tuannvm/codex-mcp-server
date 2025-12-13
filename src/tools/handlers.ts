@@ -67,7 +67,7 @@ export class CodexToolHandler {
 
       // Add model parameter (supported in both exec and resume)
       const selectedModel =
-        model || process.env.CODEX_DEFAULT_MODEL || 'gpt-5.1-codex'; // Default to gpt-5.1-codex
+        model || process.env.CODEX_DEFAULT_MODEL || 'gpt-5.1-codex-max'; // Default to gpt-5.1-codex-max
       cmdArgs.push('--model', selectedModel);
 
       // Add reasoning effort via config parameter (v0.50.0+ uses -c instead of --reasoning-effort)
@@ -78,9 +78,10 @@ export class CodexToolHandler {
       // Skip git repo check for v0.50.0+
       cmdArgs.push('--skip-git-repo-check');
 
-      cmdArgs.push(enhancedPrompt);
+      // stdin으로 prompt 전달하기 위해 '-' 추가
+      cmdArgs.push('-');
 
-      const result = await executeCommand('codex', cmdArgs);
+      const result = await executeCommand('codex', cmdArgs, enhancedPrompt);
       const response = result.stdout || 'No output from Codex';
 
       // Extract conversation ID from new conversations for future resume

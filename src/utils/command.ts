@@ -17,7 +17,8 @@ function escapeArgForWindows(arg: string): string {
 
 export async function executeCommand(
   file: string,
-  args: string[] = []
+  args: string[] = [],
+  stdinData?: string
 ): Promise<CommandResult> {
   return new Promise((resolve, reject) => {
     const isWindows = process.platform === 'win32';
@@ -34,6 +35,12 @@ export async function executeCommand(
       env: process.env,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
+
+    // stdin으로 데이터 전달
+    if (stdinData) {
+      child.stdin.write(stdinData);
+      child.stdin.end();
+    }
 
     let stdout = '';
     let stderr = '';
