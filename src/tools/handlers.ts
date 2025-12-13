@@ -40,10 +40,7 @@ export class CodexToolHandler {
       let activeSessionId = sessionId;
       let enhancedPrompt = prompt;
 
-      // Only work with sessions if explicitly requested
-      let useResume = false;
-      let codexConversationId: string | undefined;
-
+      // Handle session context if sessionId provided
       if (sessionId) {
         if (resetSession) {
           this.sessionStorage.resetSession(sessionId);
@@ -53,52 +50,39 @@ export class CodexToolHandler {
         let session = this.sessionStorage.getSession(sessionId);
         if (!session) {
           this.sessionStorage.createSessionWithId(sessionId);
+          session = this.sessionStorage.getSession(sessionId);
         }
 
-        codexConversationId =
-          this.sessionStorage.getCodexConversationId(sessionId);
-        if (codexConversationId) {
-          useResume = true;
-        } else {
-          // Fallback to manual context building if no codex conversation ID
-          session = this.sessionStorage.getSession(sessionId);
-          if (
-            session &&
-            Array.isArray(session.turns) &&
-            session.turns.length > 0
-          ) {
-            enhancedPrompt = this.buildEnhancedPrompt(session.turns, prompt);
-          }
+        // Build context from previous turns
+        // Note: codex resume requires interactive terminal, so we use manual context
+        if (
+          session &&
+          Array.isArray(session.turns) &&
+          session.turns.length > 0
+        ) {
+          enhancedPrompt = this.buildEnhancedPrompt(session.turns, prompt);
         }
       }
 
-      // Build command arguments with new v0.36.0 features
-      const cmdArgs =
-        useResume && codexConversationId
-          ? ['resume', codexConversationId]
-          : ['exec'];
-
-      // Add model parameter (supported in both exec and resume)
+      // Build command arguments
+      // Note: codex resume requires interactive terminal, so we always use exec
+      // and build context manually from previous turns
+      const cmdArgs: string[] = ['exec'];
       const selectedModel =
-        model || process.env.CODEX_DEFAULT_MODEL || 'gpt-5.1-codex-max'; // Default to gpt-5.1-codex-max
-      cmdArgs.push('--model', selectedModel);
+        model || process.env.CODEX_DEFAULT_MODEL || 'gpt-5.1-codex-max';
 
-      // Add reasoning effort via config parameter (v0.50.0+ uses -c instead of --reasoning-effort)
+      cmdArgs.push('--model', selectedModel);
       if (reasoningEffort) {
         cmdArgs.push('-c', `model_reasoning_effort=${reasoningEffort}`);
       }
-
-      // Skip git repo check for v0.50.0+
       cmdArgs.push('--skip-git-repo-check');
-
-      // stdin으로 prompt 전달하기 위해 '-' 추가
       cmdArgs.push('-');
 
       const result = await executeCommand('codex', cmdArgs, enhancedPrompt);
       const response = result.stdout || 'No output from Codex';
 
-      // Extract session ID from new sessions for future resume
-      if (activeSessionId && !useResume) {
+      // Extract session ID from new sessions
+      if (activeSessionId) {
         const sessionIdMatch = result.stderr?.match(
           /session\s*id\s*:\s*([a-zA-Z0-9-]+)/i
         );
