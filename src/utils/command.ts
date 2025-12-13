@@ -1,11 +1,22 @@
-import { execFile, spawn } from 'child_process';
-import { promisify } from 'util';
+import { spawn } from 'child_process';
 import { Buffer } from 'node:buffer';
 import chalk from 'chalk';
 import { CommandExecutionError } from '../errors.js';
 import { type CommandResult } from '../types.js';
 
-const execFileAsync = promisify(execFile);
+/**
+ * Escape argument for Windows shell
+ */
+function escapeArgForWindows(arg: string): string {
+  // If arg contains spaces or special chars, wrap in double quotes
+  if (/[\s"&|<>^]/.test(arg)) {
+    // Escape internal double quotes
+    return `"${arg.replace(/"/g, '\\"')}"`;
+  }
+  return arg;
+}
+
+const isWindows = process.platform === 'win32';
 
 export type ProgressCallback = (message: string) => void;
 
@@ -17,43 +28,56 @@ export async function executeCommand(
   file: string,
   args: string[] = []
 ): Promise<CommandResult> {
-  try {
-    console.error(chalk.blue('Executing:'), file, args.join(' '));
+  return new Promise((resolve, reject) => {
+    // Escape args for Windows shell
+    const escapedArgs = isWindows
+      ? args.map(escapeArgForWindows)
+      : args;
 
-    const result = await execFileAsync(file, args, {
-      shell: false,
-      maxBuffer: 10 * 1024 * 1024, // 10MB
+    console.error(chalk.blue('Executing:'), file, escapedArgs.join(' '));
+
+    const child = spawn(file, escapedArgs, {
+      shell: isWindows,
+      env: process.env,
+      stdio: ['pipe', 'pipe', 'pipe'],
     });
 
-    if (result.stderr) {
-      console.error(chalk.yellow('Command stderr:'), result.stderr);
-    }
+    let stdout = '';
+    let stderr = '';
 
-    return {
-      stdout: result.stdout,
-      stderr: result.stderr,
-    };
-  } catch (error: unknown) {
-    // If command failed but produced stdout, treat it as success
-    // This handles cases where codex exits with error code but still returns valid output
-    if (error && typeof error === 'object' && 'stdout' in error) {
-      const execError = error as { stdout: string; stderr?: string };
-      if (execError.stdout) {
-        console.error(
-          chalk.yellow('Command failed but produced output, using stdout')
-        );
-        return {
-          stdout: execError.stdout,
-          stderr: execError.stderr || '',
-        };
+    child.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+
+    child.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    child.on('close', (code) => {
+      if (stderr) {
+        console.error(chalk.yellow('Command stderr:'), stderr);
       }
-    }
-    throw new CommandExecutionError(
-      [file, ...args].join(' '),
-      'Command execution failed',
-      error
-    );
-  }
+
+      // Accept exit code 0 or if we got stdout output
+      if (code === 0 || stdout) {
+        resolve({ stdout, stderr });
+      } else {
+        reject(new CommandExecutionError(
+          [file, ...args].join(' '),
+          `Command failed with exit code ${code}`,
+          new Error(stderr || 'Unknown error')
+        ));
+      }
+    });
+
+    child.on('error', (error) => {
+      reject(new CommandExecutionError(
+        [file, ...args].join(' '),
+        'Command execution failed',
+        error
+      ));
+    });
+  });
 }
 
 /**
@@ -66,10 +90,18 @@ export async function executeCommandStreaming(
   options: StreamingCommandOptions = {}
 ): Promise<CommandResult> {
   return new Promise((resolve, reject) => {
-    console.error(chalk.blue('Executing (streaming):'), file, args.join(' '));
+    // Escape args for Windows shell
+    const escapedArgs = isWindows ? args.map(escapeArgForWindows) : args;
 
-    const child = spawn(file, args, {
-      shell: false,
+    console.error(
+      chalk.blue('Executing (streaming):'),
+      file,
+      escapedArgs.join(' ')
+    );
+
+    const child = spawn(file, escapedArgs, {
+      shell: isWindows, // Use shell on Windows to inherit PATH correctly
+      env: process.env,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
 
