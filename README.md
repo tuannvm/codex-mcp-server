@@ -104,7 +104,7 @@ Use the codex tool to explain this function:
 
 **Advanced Usage:**
 ```
-# Model selection (defaults to gpt-5.1-codex)
+# Model selection (defaults to gpt-5.2-codex)
 Use codex with model "gpt-4" to analyze this complex algorithm
 
 # Reasoning effort control
@@ -124,7 +124,7 @@ Use codex with sessionId "my-session" and resetSession true to start fresh analy
 - `prompt` (required): Your coding question or request
 - `sessionId` (optional): Session ID for conversational context
 - `resetSession` (optional): Reset session history before processing
-- `model` (optional): Model to use (defaults to `gpt-5.1-codex`)
+- `model` (optional): Model to use (defaults to `gpt-5.2-codex`)
 - `reasoningEffort` (optional): Control reasoning depth ('minimal', 'low', 'medium', 'high')
 
 ### `listSessions` - Session Management
@@ -179,7 +179,7 @@ Ask codex to create a React component that handles file uploads
 - 57 tests covering functionality and edge cases
 
 ### Model Selection
-- Default: `gpt-5.1-codex`
+- Default: `gpt-5.2-codex`
 - Override per request with `model` parameter
 - Reasoning effort: `minimal`, `low`, `medium`, `high`
 

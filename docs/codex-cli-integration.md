@@ -35,12 +35,15 @@ This MCP server **requires codex CLI v0.50.0 or later** due to critical flag cha
 ## New Features Implemented
 
 ### 1. Model Selection
-- **Default Model**: `gpt-5.1-codex` (optimal for coding tasks)
+- **Default Model**: `gpt-5.2-codex` (optimal for agentic coding tasks)
 - **CLI Flag**: `--model <model-name>`
 - **Supported Models**:
-  - `gpt-5.1-codex` (default, specialized for coding)
+  - `gpt-5.2-codex` (default, specialized for agentic coding)
+  - `gpt-5.1-codex` (previous coding model)
+  - `gpt-5.1-codex-max` (enhanced coding)
+  - `gpt-5-codex` (base GPT-5 coding)
+  - `gpt-4o` (fast multimodal)
   - `gpt-4` (advanced reasoning)
-  - `gpt-3.5-turbo` (fast responses)
 - **Usage**: Model parameter available in both `exec` and `resume` modes
 
 ### 2. Reasoning Effort Control (Deprecated in v0.50.0)
@@ -145,7 +148,7 @@ if (conversationIdMatch) {
    ```bash
    # Edit ~/.codex/config.toml to set preferences
    # Example:
-   # model = "gpt-5.1-codex"
+   # model = "gpt-5.2-codex"
    # model_reasoning_effort = "medium"
    ```
 
@@ -157,7 +160,7 @@ if (conversationIdMatch) {
 ## Performance Optimizations
 
 ### Smart Model Selection
-- **Default to gpt-5.1-codex**: Optimal for coding without configuration
+- **Default to gpt-5.2-codex**: Optimal for agentic coding without configuration
 - **Context-Aware Suggestions**: Better model recommendations based on task type
 - **Consistent Experience**: Same model across session interactions
 
@@ -205,7 +208,7 @@ if (conversationIdMatch) {
    - Verify: Check `CODEX_HOME/auth.json` exists
 
 2. **Model Not Available**
-   - Solution: Use default `gpt-5.1-codex` or try alternative models
+   - Solution: Use default `gpt-5.2-codex` or try alternative models
    - Check: Codex CLI documentation for available models
 
 3. **Resume Functionality Not Working**

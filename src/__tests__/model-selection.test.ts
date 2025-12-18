@@ -49,7 +49,7 @@ describe('Model Selection and Reasoning Effort', () => {
     expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
       'exec',
       '--model',
-      'gpt-5.1-codex',
+      'gpt-5.2-codex',
       '-c',
       'model_reasoning_effort=high',
       '--skip-git-repo-check',
@@ -120,7 +120,7 @@ describe('Model Selection and Reasoning Effort', () => {
     expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
       'exec',
       '--model',
-      'gpt-5.1-codex',
+      'gpt-5.2-codex',
       '-c',
       'model_reasoning_effort=minimal',
       '--skip-git-repo-check',
