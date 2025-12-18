@@ -97,6 +97,24 @@ This MCP server is optimized for **codex CLI v0.75.0 or later** for full feature
 - **Fallback Strategy**: Manual context building when resume unavailable
 - **Session Integration**: Seamless integration with session management
 
+## Features Not Yet Supported
+
+The following Codex CLI features are not currently exposed through the MCP server:
+
+| Feature | CLI Flag | Notes |
+|---------|----------|-------|
+| Image Attachments | `-i, --image` | Attach images to prompts |
+| OSS/Local Models | `--oss`, `--local-provider` | LMStudio/Ollama support |
+| Config Profiles | `-p, --profile` | Named configuration profiles |
+| Approval Policy | `-a, --ask-for-approval` | Fine-grained approval control |
+| Web Search | `--search` | Enable web search tool |
+| Additional Dirs | `--add-dir` | Extra writable directories |
+| JSON Output | `--json` | JSONL event stream output |
+| Output Schema | `--output-schema` | Structured JSON output |
+| Output File | `-o, --output-last-message` | Write response to file |
+
+These features may be added in future versions based on user demand.
+
 ## Implementation Details
 
 ### Command Construction (v0.75.0+)
@@ -110,7 +128,10 @@ This MCP server is optimized for **codex CLI v0.75.0 or later** for full feature
 // Resume mode (v0.75.0+) - IMPORTANT: limited flags, uses -c for config
 ['exec', 'resume', conversationId, '-c', 'model="modelName"', prompt]
 
-// Code review (v0.75.0+)
+// Code review (v0.75.0+) - NOTE: -C must come BEFORE 'review' subcommand
+['exec', '-C', workingDir, 'review', '-c', 'model="modelName"', '--uncommitted', '--base', 'main', prompt]
+
+// Code review without working directory
 ['exec', 'review', '--uncommitted', '--base', 'main', prompt]
 ```
 
@@ -125,12 +146,23 @@ The `codex exec resume` subcommand has a **limited set of flags** compared to `c
 - ❌ `-C` - Not available in resume mode
 - ❌ `--skip-git-repo-check` - Not available in resume mode
 
+**Important: Review Mode Limitations**
+
+The `codex exec review` subcommand also has limited flags:
+- ✅ `-c, --config` - Configuration overrides (use for model selection)
+- ✅ `--uncommitted`, `--base`, `--commit`, `--title` - Review-specific flags
+- ✅ `--enable/--disable` - Feature toggles
+- ❌ `--model` - Not available (use `-c model="..."` instead)
+- ❌ `--sandbox` - Not available in review mode
+- ❌ `--full-auto` - Not available in review mode
+- ⚠️ `-C` - Must be placed on `exec` command BEFORE `review` subcommand
+
 **Key Changes in v0.75.0:**
 - Added: `codex exec review` subcommand for code reviews
 - Added: `--sandbox` flag for sandbox modes (exec only)
 - Added: `--full-auto` flag for automatic execution (exec only)
 - Changed: `codex resume` moved to `codex exec resume`
-- Note: Resume subcommand has limited flag support
+- Note: Resume and review subcommands have limited flag support
 
 **Key Changes in v0.50.0:**
 - Added: `--skip-git-repo-check` flag (exec only)

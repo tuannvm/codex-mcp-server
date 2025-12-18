@@ -219,7 +219,7 @@ Ask codex to create a React component that handles file uploads
 - Uses `codex exec resume` for conversation continuity
 - Falls back to manual context building when resume unavailable
 - Sessions persist for 24 hours
-- 57 tests covering functionality and edge cases
+- 58 tests covering functionality and edge cases
 
 ### Model Selection
 - Default: `gpt-5.2-codex`
