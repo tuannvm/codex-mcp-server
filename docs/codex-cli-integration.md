@@ -118,6 +118,9 @@ These features may be added in future versions based on user demand.
 ## Implementation Details
 
 ### Command Construction (v0.75.0+)
+
+**IMPORTANT**: All `exec` options (`--model`, `-c`, `--skip-git-repo-check`, `-C`, `--sandbox`, `--full-auto`) must come BEFORE subcommands (`resume`, `review`).
+
 ```typescript
 // Basic execution (v0.75.0+)
 ['exec', '--model', selectedModel, '--skip-git-repo-check', prompt]
@@ -125,12 +128,11 @@ These features may be added in future versions based on user demand.
 // Execution with new parameters (v0.75.0+)
 ['exec', '--model', selectedModel, '--sandbox', 'workspace-write', '--full-auto', '-C', workingDir, '--skip-git-repo-check', prompt]
 
-// Resume mode (v0.75.0+) - IMPORTANT: limited flags, uses -c for config
-// Note: --skip-git-repo-check must come BEFORE 'resume' subcommand
-['exec', '--skip-git-repo-check', 'resume', conversationId, '-c', 'model="modelName"', '-c', 'model_reasoning_effort="high"', prompt]
+// Resume mode (v0.75.0+) - All exec options BEFORE 'resume' subcommand
+['exec', '--skip-git-repo-check', '-c', 'model="modelName"', '-c', 'model_reasoning_effort="high"', 'resume', conversationId, prompt]
 
-// Code review (v0.75.0+) - NOTE: -C and --skip-git-repo-check must come BEFORE 'review' subcommand
-['exec', '-C', workingDir, '--skip-git-repo-check', 'review', '-c', 'model="modelName"', '--uncommitted', '--base', 'main', prompt]
+// Code review (v0.75.0+) - All exec options BEFORE 'review' subcommand
+['exec', '-C', workingDir, '--skip-git-repo-check', '-c', 'model="modelName"', 'review', '--uncommitted', '--base', 'main', prompt]
 
 // Code review without working directory
 ['exec', '--skip-git-repo-check', 'review', '--uncommitted', '--base', 'main', prompt]

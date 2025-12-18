@@ -35,18 +35,17 @@ describe('Edge Cases and Integration Issues', () => {
       reasoningEffort: 'high',
     });
 
-    // Resume mode uses -c config for model (not --model flag)
-    // Note: --skip-git-repo-check must come before 'resume' subcommand
+    // Resume mode: all exec options must come BEFORE 'resume' subcommand
     const call = mockedExecuteCommand.mock.calls[0];
     expect(call[1]).toEqual([
       'exec',
       '--skip-git-repo-check',
-      'resume',
-      'existing-conv-id',
       '-c',
       'model="gpt-4"',
       '-c',
       'model_reasoning_effort="high"',
+      'resume',
+      'existing-conv-id',
       'Use different model',
     ]);
   });

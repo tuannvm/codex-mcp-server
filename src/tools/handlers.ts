@@ -71,20 +71,20 @@ export class CodexToolHandler {
       let cmdArgs: string[];
 
       if (useResume && codexConversationId) {
-        // Resume mode: codex exec resume has limited flags (only -c config)
-        // Note: --skip-git-repo-check must come BEFORE 'resume' subcommand
-        cmdArgs = ['exec', '--skip-git-repo-check', 'resume', codexConversationId];
+        // Resume mode: codex exec resume has limited flags
+        // All exec options (--skip-git-repo-check, -c) must come BEFORE 'resume' subcommand
+        cmdArgs = ['exec', '--skip-git-repo-check'];
 
-        // Model must be set via -c config in resume mode
+        // Model must be set via -c config in resume mode (before subcommand)
         cmdArgs.push('-c', `model="${selectedModel}"`);
 
-        // Reasoning effort via config (quoted for consistency)
+        // Reasoning effort via config (before subcommand)
         if (reasoningEffort) {
           cmdArgs.push('-c', `model_reasoning_effort="${reasoningEffort}"`);
         }
 
-        // Add prompt at the end
-        cmdArgs.push(enhancedPrompt);
+        // Add resume subcommand with conversation ID and prompt
+        cmdArgs.push('resume', codexConversationId, enhancedPrompt);
       } else {
         // Exec mode: supports full set of flags
         cmdArgs = ['exec'];
@@ -301,7 +301,7 @@ export class ReviewToolHandler {
       }: ReviewToolArgs = ReviewToolSchema.parse(args);
 
       // Build command arguments for codex exec review
-      // Note: -C and --skip-git-repo-check belong to 'exec', must come BEFORE 'review' subcommand
+      // All exec options (-C, --skip-git-repo-check, -c) must come BEFORE 'review' subcommand
       const cmdArgs = ['exec'];
 
       // Add working directory if specified (must be before subcommand)
@@ -312,13 +312,13 @@ export class ReviewToolHandler {
       // Skip git repo check (required for running outside trusted directories)
       cmdArgs.push('--skip-git-repo-check');
 
-      // Add the review subcommand
-      cmdArgs.push('review');
-
-      // Add model parameter if specified (via -c config)
+      // Add model parameter if specified (via -c config, must be before subcommand)
       if (model) {
         cmdArgs.push('-c', `model="${model}"`);
       }
+
+      // Add the review subcommand
+      cmdArgs.push('review');
 
       // Add review-specific flags
       if (uncommitted) {
