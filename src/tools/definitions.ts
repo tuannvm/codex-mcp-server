@@ -74,8 +74,7 @@ export const toolDefinitions: ToolDefinition[] = [
         },
         commit: {
           type: 'string',
-          description:
-            'Review the changes introduced by a specific commit SHA',
+          description: 'Review the changes introduced by a specific commit SHA',
         },
         title: {
           type: 'string',
