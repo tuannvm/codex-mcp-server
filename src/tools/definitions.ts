@@ -23,7 +23,7 @@ export const toolDefinitions: ToolDefinition[] = [
         model: {
           type: 'string',
           description:
-            'Specify which model to use (defaults to gpt-5.1-codex). Options: gpt-5.1-codex, gpt-5-codex, gpt-4, gpt-3.5-turbo',
+            'Specify which model to use (defaults to gpt-5.2-codex). Options: gpt-5.2-codex, gpt-5.1-codex, gpt-5.1-codex-max, gpt-5-codex, gpt-4o, gpt-4',
         },
         reasoningEffort: {
           type: 'string',

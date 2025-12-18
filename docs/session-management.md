@@ -39,7 +39,7 @@ interface ConversationTurn {
 #### Enhanced Codex Tool
 - **sessionId** (optional): Session ID for conversational context
 - **resetSession** (optional): Reset session history before processing
-- **model** (optional): Model selection (defaults to `gpt-5.1-codex`)
+- **model** (optional): Model selection (defaults to `gpt-5.2-codex`)
 - **reasoningEffort** (optional): Control reasoning depth (low/medium/high)
 - **Smart context building**: Uses native resume or fallback context
 - **Robust error handling**: Graceful degradation for various failure modes
@@ -59,7 +59,7 @@ interface ConversationTurn {
 
 2. **Enhanced Codex Tool Handler**
    - Native resume functionality with fallback
-   - GPT-5-Codex as intelligent default model
+   - GPT-5.2-Codex as intelligent default model
    - Model and reasoning effort parameter support
    - Comprehensive error handling and validation
 
@@ -75,7 +75,7 @@ interface ConversationTurn {
 
 ## Advanced Benefits
 - **Native Codex Resume**: Optimal conversation continuity using Codex CLI's built-in resume feature
-- **Intelligent Defaults**: GPT-5-Codex model selection for superior coding assistance
+- **Intelligent Defaults**: GPT-5.2-Codex model selection for superior agentic coding assistance
 - **Production-Ready**: Comprehensive error handling, data validation, and graceful degradation
 - **Enterprise-Scale**: Session management suitable for professional development workflows
 - **Flexible Configuration**: Per-request model and reasoning effort customization

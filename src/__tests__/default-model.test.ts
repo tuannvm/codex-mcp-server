@@ -25,13 +25,13 @@ describe('Default Model Configuration', () => {
     });
   });
 
-  test('should use gpt-5.1-codex as default model when no model specified', async () => {
+  test('should use gpt-5.2-codex as default model when no model specified', async () => {
     await handler.execute({ prompt: 'Test prompt' });
 
     expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
       'exec',
       '--model',
-      'gpt-5.1-codex',
+      'gpt-5.2-codex',
       '--skip-git-repo-check',
       'Test prompt',
     ]);
@@ -40,7 +40,7 @@ describe('Default Model Configuration', () => {
   test('should include default model in response metadata', async () => {
     const result = await handler.execute({ prompt: 'Test prompt' });
 
-    expect(result._meta?.model).toBe('gpt-5.1-codex');
+    expect(result._meta?.model).toBe('gpt-5.2-codex');
   });
 
   test('should override default model when explicit model provided', async () => {
@@ -69,7 +69,7 @@ describe('Default Model Configuration', () => {
     expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
       'exec',
       '--model',
-      'gpt-5.1-codex',
+      'gpt-5.2-codex',
       '--skip-git-repo-check',
       'Test prompt',
     ]);
@@ -88,7 +88,7 @@ describe('Default Model Configuration', () => {
       'resume',
       'existing-conv-id',
       '--model',
-      'gpt-5.1-codex',
+      'gpt-5.2-codex',
       '--skip-git-repo-check',
       'Resume with default model',
     ]);
@@ -103,7 +103,7 @@ describe('Default Model Configuration', () => {
     expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
       'exec',
       '--model',
-      'gpt-5.1-codex',
+      'gpt-5.2-codex',
       '-c',
       'model_reasoning_effort=high',
       '--skip-git-repo-check',
