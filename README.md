@@ -4,23 +4,26 @@
 [![npm downloads](https://img.shields.io/npm/dm/codex-mcp-server.svg)](https://www.npmjs.com/package/codex-mcp-server)
 [![license](https://img.shields.io/npm/l/codex-mcp-server.svg)](https://www.npmjs.com/package/codex-mcp-server)
 
-MCP server for OpenAI Codex CLI v0.50.0+ with session management, model selection, and native resume support.
+MCP server for OpenAI Codex CLI v0.75.0+ with session management, model selection, code review, and native resume support.
 
 ```mermaid
 graph LR
     A[Claude Code] --> B[Codex MCP Server]
 
     B --> C[codex tool]
+    B --> R[review tool]
     B --> D[listSessions tool]
     B --> E[ping tool]
     B --> F[help tool]
 
-    C --> G[Codex CLI v0.50.0+]
+    C --> G[Codex CLI v0.75.0+]
     C --> H[Session Storage]
+    R --> G
 
     style A fill:#FF6B35
     style B fill:#4A90E2
     style C fill:#00D4AA
+    style R fill:#00D4AA
     style D fill:#00D4AA
     style E fill:#00D4AA
     style F fill:#00D4AA
@@ -30,19 +33,22 @@ graph LR
 
 ## Prerequisites
 
-- **OpenAI Codex CLI v0.50.0+** must be pre-installed and configured
+- **OpenAI Codex CLI v0.75.0+** must be pre-installed and configured
   - Install: `npm i -g @openai/codex` or `brew install codex`
   - **Setup**: Run `codex login --api-key "your-openai-api-key"`
   - ⚠️ **Breaking Change**: `OPENAI_API_KEY` environment variable is no longer supported
-  - ⚠️ **Version Requirement**: v0.50.0+ required (see [Version Compatibility](#version-compatibility) below)
+  - ⚠️ **Version Requirement**: v0.75.0+ required for full feature support (see [Version Compatibility](#version-compatibility) below)
 - **Claude Code** installed
 
 ## Version Compatibility
 
-This MCP server requires **codex CLI v0.50.0 or later** due to the following changes:
+This MCP server requires **codex CLI v0.75.0 or later** for full feature support:
 
+- **v0.75.0+**: Added `codex exec review` for code reviews
+- **v0.75.0+**: Added sandbox mode (`--sandbox read-only|workspace-write|danger-full-access`)
+- **v0.75.0+**: Added full-auto mode (`--full-auto`)
 - **v0.50.0+**: Introduced `--skip-git-repo-check` flag (now required)
-- **v0.50.0+**: Reasoning effort now configured via `-c model_reasoning_effort=X` flag
+- **v0.50.0+**: Reasoning effort configured via `-c model_reasoning_effort=X` flag
 
 **If you have an older version of codex CLI**, you will need to upgrade:
 ```bash
@@ -126,6 +132,38 @@ Use codex with sessionId "my-session" and resetSession true to start fresh analy
 - `resetSession` (optional): Reset session history before processing
 - `model` (optional): Model to use (defaults to `gpt-5.2-codex`)
 - `reasoningEffort` (optional): Control reasoning depth ('minimal', 'low', 'medium', 'high')
+- `sandbox` (optional): Sandbox policy ('read-only', 'workspace-write', 'danger-full-access')
+- `fullAuto` (optional): Enable full-auto mode for sandboxed automatic execution
+- `workingDirectory` (optional): Working directory for the agent
+
+### `review` - Code Review
+Run AI-powered code reviews against your repository using Codex CLI.
+
+**Basic Usage:**
+```
+Use the review tool to review my uncommitted changes
+```
+
+**Advanced Usage:**
+```
+# Review changes against main branch
+Use review with base "main" to review my PR changes
+
+# Review a specific commit
+Use review with commit "abc123" to analyze this commit
+
+# Review with custom instructions
+Use review with prompt "Focus on security vulnerabilities" and uncommitted true
+```
+
+**Parameters:**
+- `prompt` (optional): Custom review instructions or focus areas
+- `uncommitted` (optional): Review staged, unstaged, and untracked changes
+- `base` (optional): Review changes against a specific base branch
+- `commit` (optional): Review changes introduced by a specific commit SHA
+- `title` (optional): Title to display in the review summary
+- `model` (optional): Model to use for the review
+- `workingDirectory` (optional): Working directory containing the repository
 
 ### `listSessions` - Session Management
 List all active conversation sessions with metadata including creation time, last access, and turn count.
@@ -170,10 +208,15 @@ Use codex to help debug this error: [error message]
 Ask codex to create a React component that handles file uploads
 ```
 
-## Advanced Features (Codex CLI v0.50.0+)
+## Advanced Features (Codex CLI v0.75.0+)
+
+### Code Review (New in v0.75.0)
+- Review uncommitted changes, branches, or specific commits
+- Custom review instructions and focus areas
+- Integration with git workflow
 
 ### Session Management
-- Uses `codex resume` for conversation continuity
+- Uses `codex exec resume` for conversation continuity
 - Falls back to manual context building when resume unavailable
 - Sessions persist for 24 hours
 - 57 tests covering functionality and edge cases
@@ -181,7 +224,17 @@ Ask codex to create a React component that handles file uploads
 ### Model Selection
 - Default: `gpt-5.2-codex`
 - Override per request with `model` parameter
+- Supported: `gpt-5.2-codex`, `gpt-5.1-codex`, `gpt-5.1-codex-max`, `gpt-5-codex`, `gpt-4o`, `gpt-4`, `o3`, `o4-mini`
 - Reasoning effort: `minimal`, `low`, `medium`, `high`
+
+### Sandbox Mode (New in v0.75.0)
+- `read-only`: No writes allowed
+- `workspace-write`: Writes only in workspace directory
+- `danger-full-access`: Full system access (use with caution)
+
+### Full-Auto Mode (New in v0.75.0)
+- Sandboxed automatic execution without approval prompts
+- Equivalent to `-a on-request --sandbox workspace-write`
 
 ### Authentication
 - `OPENAI_API_KEY` env var no longer supported

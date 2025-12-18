@@ -1,29 +1,37 @@
-# Codex CLI v0.50.0+ Integration Guide
+# Codex CLI v0.75.0+ Integration Guide
 
 ## Overview
-This document outlines the integration with OpenAI Codex CLI v0.50.0+, highlighting breaking changes, new features, and implementation details for the MCP server wrapper.
+This document outlines the integration with OpenAI Codex CLI v0.75.0+, highlighting breaking changes, new features, and implementation details for the MCP server wrapper.
 
 ## Version Compatibility
 
-### Minimum Version: v0.50.0
-This MCP server **requires codex CLI v0.50.0 or later** due to critical flag changes.
+### Recommended Version: v0.75.0+
+This MCP server is optimized for **codex CLI v0.75.0 or later** for full feature support.
 
 **Version History:**
+- **v0.75.0**: Added `codex exec review` command, sandbox modes, full-auto mode
+- **v0.74.0**: Introduced `gpt-5.2-codex` model
 - **v0.50.0**: Introduced `--skip-git-repo-check` flag, removed `--reasoning-effort` flag
 - **v0.36.0-v0.49.x**: Not compatible with this MCP server version (use older MCP releases)
 
 ## Breaking Changes ⚠️
 
-### v0.50.0 Changes (Current)
+### v0.75.0 Changes (Current)
+1. **Resume command moved under exec**
+   - **Old**: `codex resume <id>`
+   - **New**: `codex exec resume <id>`
+   - Impact: MCP server updated to use new command structure
+
+### v0.50.0 Changes
 1. **`--skip-git-repo-check` flag now required**
    - Required when running outside git repositories or in untrusted directories
    - Prevents "Not inside a trusted directory" errors
    - Impact: All MCP server commands now include this flag
 
-2. **`--reasoning-effort` flag removed**
-   - The flag no longer exists in codex CLI v0.50.0
-   - MCP server `reasoningEffort` parameter is now ignored
-   - Impact: Reasoning effort configuration moved to codex CLI's own config
+2. **`--reasoning-effort` flag changed**
+   - The standalone flag was removed in codex CLI v0.50.0
+   - Now passed via `-c model_reasoning_effort=<level>` config flag
+   - Impact: MCP server updated to use new config-based approach
 
 ### v0.36.0 Changes (Historical)
 1. **Authentication Method Change**
@@ -34,7 +42,35 @@ This MCP server **requires codex CLI v0.50.0 or later** due to critical flag cha
 
 ## New Features Implemented
 
-### 1. Model Selection
+### 1. Code Review (v0.75.0+)
+- **Command**: `codex exec review`
+- **CLI Flags**:
+  - `--uncommitted`: Review staged, unstaged, and untracked changes
+  - `--base <branch>`: Review changes against a base branch
+  - `--commit <sha>`: Review changes introduced by a specific commit
+  - `--title <title>`: Optional title for review summary
+- **MCP Tool**: New `review` tool with all parameters exposed
+
+### 2. Sandbox Mode (v0.75.0+)
+- **CLI Flag**: `--sandbox <mode>`
+- **Modes**:
+  - `read-only`: No file writes allowed
+  - `workspace-write`: Writes only in workspace directory
+  - `danger-full-access`: Full system access (dangerous)
+- **MCP Parameter**: `sandbox` parameter in codex tool
+
+### 3. Full-Auto Mode (v0.75.0+)
+- **CLI Flag**: `--full-auto`
+- **Description**: Sandboxed automatic execution without approval prompts
+- **Equivalent to**: `-a on-request --sandbox workspace-write`
+- **MCP Parameter**: `fullAuto` boolean parameter
+
+### 4. Working Directory (v0.75.0+)
+- **CLI Flag**: `-C <dir>`
+- **Description**: Set working directory for the agent
+- **MCP Parameter**: `workingDirectory` parameter in both codex and review tools
+
+### 5. Model Selection
 - **Default Model**: `gpt-5.2-codex` (optimal for agentic coding tasks)
 - **CLI Flag**: `--model <model-name>`
 - **Supported Models**:
@@ -44,20 +80,18 @@ This MCP server **requires codex CLI v0.50.0 or later** due to critical flag cha
   - `gpt-5-codex` (base GPT-5 coding)
   - `gpt-4o` (fast multimodal)
   - `gpt-4` (advanced reasoning)
-- **Usage**: Model parameter available in both `exec` and `resume` modes
+  - `o3` (OpenAI reasoning model)
+  - `o4-mini` (compact reasoning model)
+- **Usage**: Model parameter available in `exec`, `resume`, and `review` modes
 
-### 2. Reasoning Effort Control (Deprecated in v0.50.0)
-- **Status**: ⚠️ Removed in codex CLI v0.50.0
-- **Previous Flag**: `--reasoning-effort <level>` (no longer supported)
-- **Current Configuration**: Set reasoning effort in `~/.codex/config.toml`:
-  ```toml
-  model_reasoning_effort = "medium"  # Options: low, medium, high
-  ```
-- **MCP Parameter**: The `reasoningEffort` parameter in MCP tool calls is now **ignored**
-- **Migration**: Users should configure reasoning effort directly in codex CLI config
+### 6. Reasoning Effort Control
+- **CLI Flag**: `-c model_reasoning_effort=<level>`
+- **Levels**: `minimal`, `low`, `medium`, `high`
+- **MCP Parameter**: `reasoningEffort` parameter in codex tool
+- **Note**: The standalone `--reasoning-effort` flag was removed in v0.50.0, now uses config approach
 
-### 3. Native Resume Functionality
-- **Command**: `codex resume <conversation-id>`
+### 7. Native Resume Functionality
+- **Command**: `codex exec resume <conversation-id>`
 - **Automatic ID Extraction**: Server extracts conversation IDs from CLI output
 - **Regex Pattern**: `/conversation\s*id\s*:\s*([a-zA-Z0-9-]+)/i`
 - **Fallback Strategy**: Manual context building when resume unavailable
@@ -65,21 +99,33 @@ This MCP server **requires codex CLI v0.50.0 or later** due to critical flag cha
 
 ## Implementation Details
 
-### Command Construction (v0.50.0+)
+### Command Construction (v0.75.0+)
 ```typescript
-// Basic execution (v0.50.0+)
+// Basic execution (v0.75.0+)
 ['exec', '--model', selectedModel, '--skip-git-repo-check', prompt]
 
-// Resume with parameters (v0.50.0+)
-['resume', conversationId, '--model', selectedModel, '--skip-git-repo-check', prompt]
+// Execution with new parameters (v0.75.0+)
+['exec', '--model', selectedModel, '--sandbox', 'workspace-write', '--full-auto', '-C', workingDir, '--skip-git-repo-check', prompt]
 
-// Old command structure (v0.36.0-v0.49.x) - NO LONGER SUPPORTED
-// ['exec', '--model', selectedModel, '--reasoning-effort', effort, prompt]
+// Resume with parameters (v0.75.0+)
+['exec', 'resume', conversationId, '--model', selectedModel, '--skip-git-repo-check', prompt]
+
+// Code review (v0.75.0+)
+['exec', 'review', '--uncommitted', '--base', 'main', prompt]
+
+// Old command structure (v0.50.0-v0.74.x)
+// ['resume', conversationId, '--model', selectedModel, '--skip-git-repo-check', prompt]
 ```
+
+**Key Changes in v0.75.0:**
+- Added: `codex exec review` subcommand for code reviews
+- Added: `--sandbox` flag for sandbox modes
+- Added: `--full-auto` flag for automatic execution
+- Changed: `codex resume` moved to `codex exec resume`
 
 **Key Changes in v0.50.0:**
 - Added: `--skip-git-repo-check` flag (always included)
-- Removed: `--reasoning-effort` flag (configure in `~/.codex/config.toml` instead)
+- Changed: `--reasoning-effort` to `-c model_reasoning_effort=<level>`
 
 ### Conversation ID Extraction
 ```typescript
@@ -97,37 +143,35 @@ if (conversationIdMatch) {
 
 ## Migration Guide
 
-### For Existing Users (Upgrading to v0.50.0+)
+### For Existing Users (Upgrading to v0.75.0+)
 1. **Check Current Version**:
    ```bash
    codex --version
    ```
 
-2. **Update Codex CLI** (if below v0.50.0):
+2. **Update Codex CLI** (if below v0.75.0):
    ```bash
    npm update -g @openai/codex
    # or
    brew upgrade codex
    ```
 
-3. **Verify Version** (must be v0.50.0 or later):
+3. **Verify Version** (must be v0.75.0 or later):
    ```bash
-   codex --version  # Should show v0.50.0 or higher
+   codex --version  # Should show v0.75.0 or higher
    ```
 
-4. **Update Reasoning Effort Configuration** (if used):
+4. **Test New Features**:
    ```bash
-   # Edit ~/.codex/config.toml
-   # Add or update: model_reasoning_effort = "medium"
-   ```
+   # Test code review
+   codex exec review --uncommitted
 
-5. **Test Installation**:
-   ```bash
-   codex exec --skip-git-repo-check "console.log('Hello, Codex!')"
+   # Test sandbox mode
+   codex exec --sandbox workspace-write --skip-git-repo-check "list files"
    ```
 
 ### For New Users
-1. **Install Codex CLI** (v0.50.0+):
+1. **Install Codex CLI** (v0.75.0+):
    ```bash
    npm install -g @openai/codex
    # or
@@ -136,7 +180,7 @@ if (conversationIdMatch) {
 
 2. **Verify Version**:
    ```bash
-   codex --version  # Must be v0.50.0 or later
+   codex --version  # Must be v0.75.0 or later
    ```
 
 3. **Authenticate**:
