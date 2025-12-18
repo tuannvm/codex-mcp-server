@@ -85,8 +85,10 @@ describe('Default Model Configuration', () => {
     });
 
     // Resume mode uses -c config for model (not --model flag)
+    // Note: --skip-git-repo-check must come before 'resume' subcommand
     expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
       'exec',
+      '--skip-git-repo-check',
       'resume',
       'existing-conv-id',
       '-c',

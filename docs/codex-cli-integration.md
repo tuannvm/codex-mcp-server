@@ -126,13 +126,14 @@ These features may be added in future versions based on user demand.
 ['exec', '--model', selectedModel, '--sandbox', 'workspace-write', '--full-auto', '-C', workingDir, '--skip-git-repo-check', prompt]
 
 // Resume mode (v0.75.0+) - IMPORTANT: limited flags, uses -c for config
-['exec', 'resume', conversationId, '-c', 'model="modelName"', '-c', 'model_reasoning_effort="high"', prompt]
+// Note: --skip-git-repo-check must come BEFORE 'resume' subcommand
+['exec', '--skip-git-repo-check', 'resume', conversationId, '-c', 'model="modelName"', '-c', 'model_reasoning_effort="high"', prompt]
 
-// Code review (v0.75.0+) - NOTE: -C must come BEFORE 'review' subcommand
-['exec', '-C', workingDir, 'review', '-c', 'model="modelName"', '--uncommitted', '--base', 'main', prompt]
+// Code review (v0.75.0+) - NOTE: -C and --skip-git-repo-check must come BEFORE 'review' subcommand
+['exec', '-C', workingDir, '--skip-git-repo-check', 'review', '-c', 'model="modelName"', '--uncommitted', '--base', 'main', prompt]
 
 // Code review without working directory
-['exec', 'review', '--uncommitted', '--base', 'main', prompt]
+['exec', '--skip-git-repo-check', 'review', '--uncommitted', '--base', 'main', prompt]
 ```
 
 **Important: Resume Mode Limitations**
@@ -144,7 +145,7 @@ The `codex exec resume` subcommand has a **limited set of flags** compared to `c
 - ❌ `--sandbox` - Not available in resume mode
 - ❌ `--full-auto` - Not available in resume mode
 - ❌ `-C` - Not available in resume mode
-- ❌ `--skip-git-repo-check` - Not available in resume mode
+- ⚠️ `--skip-git-repo-check` - Must be placed on `exec` command BEFORE `resume` subcommand
 
 **Important: Review Mode Limitations**
 

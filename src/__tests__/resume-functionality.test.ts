@@ -77,8 +77,10 @@ describe('Codex Resume Functionality', () => {
     });
 
     // Resume mode uses -c config for model (not --model flag)
+    // Note: --skip-git-repo-check comes before 'resume' subcommand
     expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
       'exec',
+      '--skip-git-repo-check',
       'resume',
       'existing-conversation-id',
       '-c',

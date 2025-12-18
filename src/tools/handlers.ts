@@ -72,7 +72,8 @@ export class CodexToolHandler {
 
       if (useResume && codexConversationId) {
         // Resume mode: codex exec resume has limited flags (only -c config)
-        cmdArgs = ['exec', 'resume', codexConversationId];
+        // Note: --skip-git-repo-check must come BEFORE 'resume' subcommand
+        cmdArgs = ['exec', '--skip-git-repo-check', 'resume', codexConversationId];
 
         // Model must be set via -c config in resume mode
         cmdArgs.push('-c', `model="${selectedModel}"`);
@@ -300,13 +301,16 @@ export class ReviewToolHandler {
       }: ReviewToolArgs = ReviewToolSchema.parse(args);
 
       // Build command arguments for codex exec review
-      // Note: -C flag belongs to 'exec', must come BEFORE 'review' subcommand
+      // Note: -C and --skip-git-repo-check belong to 'exec', must come BEFORE 'review' subcommand
       const cmdArgs = ['exec'];
 
       // Add working directory if specified (must be before subcommand)
       if (workingDirectory) {
         cmdArgs.push('-C', workingDirectory);
       }
+
+      // Skip git repo check (required for running outside trusted directories)
+      cmdArgs.push('--skip-git-repo-check');
 
       // Add the review subcommand
       cmdArgs.push('review');

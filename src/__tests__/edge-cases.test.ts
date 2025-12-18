@@ -36,9 +36,11 @@ describe('Edge Cases and Integration Issues', () => {
     });
 
     // Resume mode uses -c config for model (not --model flag)
+    // Note: --skip-git-repo-check must come before 'resume' subcommand
     const call = mockedExecuteCommand.mock.calls[0];
     expect(call[1]).toEqual([
       'exec',
+      '--skip-git-repo-check',
       'resume',
       'existing-conv-id',
       '-c',
