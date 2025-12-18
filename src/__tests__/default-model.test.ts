@@ -84,12 +84,14 @@ describe('Default Model Configuration', () => {
       sessionId,
     });
 
+    // Resume mode: all exec options must come BEFORE 'resume' subcommand
     expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
+      'exec',
+      '--skip-git-repo-check',
+      '-c',
+      'model="gpt-5.2-codex"',
       'resume',
       'existing-conv-id',
-      '--model',
-      'gpt-5.2-codex',
-      '--skip-git-repo-check',
       'Resume with default model',
     ]);
   });
@@ -105,7 +107,7 @@ describe('Default Model Configuration', () => {
       '--model',
       'gpt-5.2-codex',
       '-c',
-      'model_reasoning_effort=high',
+      'model_reasoning_effort="high"',
       '--skip-git-repo-check',
       'Complex task',
     ]);

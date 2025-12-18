@@ -76,12 +76,14 @@ describe('Codex Resume Functionality', () => {
       sessionId,
     });
 
+    // Resume mode: all exec options must come BEFORE 'resume' subcommand
     expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
+      'exec',
+      '--skip-git-repo-check',
+      '-c',
+      'model="gpt-5.2-codex"',
       'resume',
       'existing-conversation-id',
-      '--model',
-      'gpt-5.2-codex',
-      '--skip-git-repo-check',
       'Continue conversation',
     ]);
   });

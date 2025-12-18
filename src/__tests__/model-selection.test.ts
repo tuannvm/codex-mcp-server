@@ -51,7 +51,7 @@ describe('Model Selection and Reasoning Effort', () => {
       '--model',
       'gpt-5.2-codex',
       '-c',
-      'model_reasoning_effort=high',
+      'model_reasoning_effort="high"',
       '--skip-git-repo-check',
       'Complex analysis',
     ]);
@@ -69,7 +69,7 @@ describe('Model Selection and Reasoning Effort', () => {
       '--model',
       'gpt-4',
       '-c',
-      'model_reasoning_effort=medium',
+      'model_reasoning_effort="medium"',
       '--skip-git-repo-check',
       'Advanced task',
     ]);
@@ -122,7 +122,7 @@ describe('Model Selection and Reasoning Effort', () => {
       '--model',
       'gpt-5.2-codex',
       '-c',
-      'model_reasoning_effort=minimal',
+      'model_reasoning_effort="minimal"',
       '--skip-git-repo-check',
       'Quick task',
     ]);

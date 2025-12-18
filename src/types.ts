@@ -3,6 +3,7 @@ import { z } from 'zod';
 // Tool constants
 export const TOOLS = {
   CODEX: 'codex',
+  REVIEW: 'review',
   PING: 'ping',
   HELP: 'help',
   LIST_SESSIONS: 'listSessions',
@@ -37,6 +38,13 @@ export interface ServerConfig {
   version: string;
 }
 
+// Sandbox mode enum
+export const SandboxMode = z.enum([
+  'read-only',
+  'workspace-write',
+  'danger-full-access',
+]);
+
 // Zod schemas for tool arguments
 export const CodexToolSchema = z.object({
   prompt: z.string(),
@@ -44,6 +52,20 @@ export const CodexToolSchema = z.object({
   resetSession: z.boolean().optional(),
   model: z.string().optional(),
   reasoningEffort: z.enum(['minimal', 'low', 'medium', 'high']).optional(),
+  sandbox: SandboxMode.optional(),
+  fullAuto: z.boolean().optional(),
+  workingDirectory: z.string().optional(),
+});
+
+// Review tool schema
+export const ReviewToolSchema = z.object({
+  prompt: z.string().optional(),
+  uncommitted: z.boolean().optional(),
+  base: z.string().optional(),
+  commit: z.string().optional(),
+  title: z.string().optional(),
+  model: z.string().optional(),
+  workingDirectory: z.string().optional(),
 });
 
 export const PingToolSchema = z.object({
@@ -55,6 +77,7 @@ export const HelpToolSchema = z.object({});
 export const ListSessionsToolSchema = z.object({});
 
 export type CodexToolArgs = z.infer<typeof CodexToolSchema>;
+export type ReviewToolArgs = z.infer<typeof ReviewToolSchema>;
 export type PingToolArgs = z.infer<typeof PingToolSchema>;
 export type ListSessionsToolArgs = z.infer<typeof ListSessionsToolSchema>;
 

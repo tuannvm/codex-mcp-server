@@ -2,8 +2,10 @@ import {
   TOOLS,
   type ToolResult,
   type CodexToolArgs,
+  type ReviewToolArgs,
   type PingToolArgs,
   CodexToolSchema,
+  ReviewToolSchema,
   PingToolSchema,
   HelpToolSchema,
   ListSessionsToolSchema,
@@ -28,6 +30,9 @@ export class CodexToolHandler {
         resetSession,
         model,
         reasoningEffort,
+        sandbox,
+        fullAuto,
+        workingDirectory,
       }: CodexToolArgs = CodexToolSchema.parse(args);
 
       let activeSessionId = sessionId;
@@ -59,26 +64,59 @@ export class CodexToolHandler {
         }
       }
 
-      // Build command arguments with new v0.36.0 features
-      const cmdArgs =
-        useResume && codexConversationId
-          ? ['resume', codexConversationId]
-          : ['exec'];
-
-      // Add model parameter (supported in both exec and resume)
+      // Build command arguments with v0.75.0+ features
       const selectedModel =
         model || process.env.CODEX_DEFAULT_MODEL || 'gpt-5.2-codex'; // Default to gpt-5.2-codex
-      cmdArgs.push('--model', selectedModel);
 
-      // Add reasoning effort via config parameter (v0.50.0+ uses -c instead of --reasoning-effort)
-      if (reasoningEffort) {
-        cmdArgs.push('-c', `model_reasoning_effort=${reasoningEffort}`);
+      let cmdArgs: string[];
+
+      if (useResume && codexConversationId) {
+        // Resume mode: codex exec resume has limited flags
+        // All exec options (--skip-git-repo-check, -c) must come BEFORE 'resume' subcommand
+        cmdArgs = ['exec', '--skip-git-repo-check'];
+
+        // Model must be set via -c config in resume mode (before subcommand)
+        cmdArgs.push('-c', `model="${selectedModel}"`);
+
+        // Reasoning effort via config (before subcommand)
+        if (reasoningEffort) {
+          cmdArgs.push('-c', `model_reasoning_effort="${reasoningEffort}"`);
+        }
+
+        // Add resume subcommand with conversation ID and prompt
+        cmdArgs.push('resume', codexConversationId, enhancedPrompt);
+      } else {
+        // Exec mode: supports full set of flags
+        cmdArgs = ['exec'];
+
+        // Add model parameter
+        cmdArgs.push('--model', selectedModel);
+
+        // Add reasoning effort via config parameter (quoted for consistency)
+        if (reasoningEffort) {
+          cmdArgs.push('-c', `model_reasoning_effort="${reasoningEffort}"`);
+        }
+
+        // Add sandbox mode (v0.75.0+)
+        if (sandbox) {
+          cmdArgs.push('--sandbox', sandbox);
+        }
+
+        // Add full-auto mode (v0.75.0+)
+        if (fullAuto) {
+          cmdArgs.push('--full-auto');
+        }
+
+        // Add working directory (v0.75.0+)
+        if (workingDirectory) {
+          cmdArgs.push('-C', workingDirectory);
+        }
+
+        // Skip git repo check for v0.50.0+
+        cmdArgs.push('--skip-git-repo-check');
+
+        cmdArgs.push(enhancedPrompt);
       }
-
-      // Skip git repo check for v0.50.0+
-      cmdArgs.push('--skip-git-repo-check');
-
-      cmdArgs.push(enhancedPrompt);
 
       const result = await executeCommand('codex', cmdArgs);
       const response = result.stdout || 'No output from Codex';
@@ -249,11 +287,96 @@ export class ListSessionsToolHandler {
   }
 }
 
+export class ReviewToolHandler {
+  async execute(args: unknown): Promise<ToolResult> {
+    try {
+      const {
+        prompt,
+        uncommitted,
+        base,
+        commit,
+        title,
+        model,
+        workingDirectory,
+      }: ReviewToolArgs = ReviewToolSchema.parse(args);
+
+      // Build command arguments for codex exec review
+      // All exec options (-C, --skip-git-repo-check, -c) must come BEFORE 'review' subcommand
+      const cmdArgs = ['exec'];
+
+      // Add working directory if specified (must be before subcommand)
+      if (workingDirectory) {
+        cmdArgs.push('-C', workingDirectory);
+      }
+
+      // Skip git repo check (required for running outside trusted directories)
+      cmdArgs.push('--skip-git-repo-check');
+
+      // Add model parameter if specified (via -c config, must be before subcommand)
+      if (model) {
+        cmdArgs.push('-c', `model="${model}"`);
+      }
+
+      // Add the review subcommand
+      cmdArgs.push('review');
+
+      // Add review-specific flags
+      if (uncommitted) {
+        cmdArgs.push('--uncommitted');
+      }
+
+      if (base) {
+        cmdArgs.push('--base', base);
+      }
+
+      if (commit) {
+        cmdArgs.push('--commit', commit);
+      }
+
+      if (title) {
+        cmdArgs.push('--title', title);
+      }
+
+      // Add custom review instructions if provided
+      if (prompt) {
+        cmdArgs.push(prompt);
+      }
+
+      const result = await executeCommand('codex', cmdArgs);
+      const response = result.stdout || 'No review output from Codex';
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: response,
+          },
+        ],
+        _meta: {
+          ...(model && { model }),
+          ...(base && { base }),
+          ...(commit && { commit }),
+        },
+      };
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw new ValidationError(TOOLS.REVIEW, error.message);
+      }
+      throw new ToolExecutionError(
+        TOOLS.REVIEW,
+        'Failed to execute code review',
+        error
+      );
+    }
+  }
+}
+
 // Tool handler registry
 const sessionStorage = new InMemorySessionStorage();
 
 export const toolHandlers = {
   [TOOLS.CODEX]: new CodexToolHandler(sessionStorage),
+  [TOOLS.REVIEW]: new ReviewToolHandler(),
   [TOOLS.PING]: new PingToolHandler(),
   [TOOLS.HELP]: new HelpToolHandler(),
   [TOOLS.LIST_SESSIONS]: new ListSessionsToolHandler(sessionStorage),

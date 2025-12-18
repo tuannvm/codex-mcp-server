@@ -24,6 +24,7 @@ import { toolDefinitions } from '../tools/definitions.js';
 import {
   toolHandlers,
   CodexToolHandler,
+  ReviewToolHandler,
   PingToolHandler,
   HelpToolHandler,
   ListSessionsToolHandler,
@@ -41,10 +42,11 @@ describe('Codex MCP Server', () => {
 
   describe('Tool Definitions', () => {
     test('should have all required tools defined', () => {
-      expect(toolDefinitions).toHaveLength(4);
+      expect(toolDefinitions).toHaveLength(5);
 
       const toolNames = toolDefinitions.map((tool) => tool.name);
       expect(toolNames).toContain(TOOLS.CODEX);
+      expect(toolNames).toContain(TOOLS.REVIEW);
       expect(toolNames).toContain(TOOLS.PING);
       expect(toolNames).toContain(TOOLS.HELP);
       expect(toolNames).toContain(TOOLS.LIST_SESSIONS);
@@ -77,6 +79,7 @@ describe('Codex MCP Server', () => {
   describe('Tool Handlers', () => {
     test('should have handlers for all tools', () => {
       expect(toolHandlers[TOOLS.CODEX]).toBeInstanceOf(CodexToolHandler);
+      expect(toolHandlers[TOOLS.REVIEW]).toBeInstanceOf(ReviewToolHandler);
       expect(toolHandlers[TOOLS.PING]).toBeInstanceOf(PingToolHandler);
       expect(toolHandlers[TOOLS.HELP]).toBeInstanceOf(HelpToolHandler);
       expect(toolHandlers[TOOLS.LIST_SESSIONS]).toBeInstanceOf(
@@ -108,6 +111,15 @@ describe('Codex MCP Server', () => {
       expect(result.content).toHaveLength(1);
       expect(result.content[0].type).toBe('text');
       expect(result.content[0].text).toBe('No active sessions');
+    });
+
+    test('review tool should have correct definition', () => {
+      const reviewTool = toolDefinitions.find(
+        (tool) => tool.name === TOOLS.REVIEW
+      );
+      expect(reviewTool).toBeDefined();
+      expect(reviewTool?.inputSchema.required).toEqual([]);
+      expect(reviewTool?.description).toContain('code review');
     });
   });
 
