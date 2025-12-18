@@ -85,10 +85,10 @@ This MCP server is optimized for **codex CLI v0.75.0 or later** for full feature
 - **Usage**: Model parameter available in `exec`, `resume`, and `review` modes
 
 ### 6. Reasoning Effort Control
-- **CLI Flag**: `-c model_reasoning_effort=<level>`
+- **CLI Flag**: `-c model_reasoning_effort="<level>"`
 - **Levels**: `minimal`, `low`, `medium`, `high`
 - **MCP Parameter**: `reasoningEffort` parameter in codex tool
-- **Note**: The standalone `--reasoning-effort` flag was removed in v0.50.0, now uses config approach
+- **Note**: The standalone `--reasoning-effort` flag was removed in v0.50.0, now uses quoted config values for consistency
 
 ### 7. Native Resume Functionality
 - **Command**: `codex exec resume <conversation-id>`
@@ -126,7 +126,7 @@ These features may be added in future versions based on user demand.
 ['exec', '--model', selectedModel, '--sandbox', 'workspace-write', '--full-auto', '-C', workingDir, '--skip-git-repo-check', prompt]
 
 // Resume mode (v0.75.0+) - IMPORTANT: limited flags, uses -c for config
-['exec', 'resume', conversationId, '-c', 'model="modelName"', prompt]
+['exec', 'resume', conversationId, '-c', 'model="modelName"', '-c', 'model_reasoning_effort="high"', prompt]
 
 // Code review (v0.75.0+) - NOTE: -C must come BEFORE 'review' subcommand
 ['exec', '-C', workingDir, 'review', '-c', 'model="modelName"', '--uncommitted', '--base', 'main', prompt]

@@ -77,9 +77,9 @@ export class CodexToolHandler {
         // Model must be set via -c config in resume mode
         cmdArgs.push('-c', `model="${selectedModel}"`);
 
-        // Reasoning effort via config
+        // Reasoning effort via config (quoted for consistency)
         if (reasoningEffort) {
-          cmdArgs.push('-c', `model_reasoning_effort=${reasoningEffort}`);
+          cmdArgs.push('-c', `model_reasoning_effort="${reasoningEffort}"`);
         }
 
         // Add prompt at the end
@@ -91,9 +91,9 @@ export class CodexToolHandler {
         // Add model parameter
         cmdArgs.push('--model', selectedModel);
 
-        // Add reasoning effort via config parameter
+        // Add reasoning effort via config parameter (quoted for consistency)
         if (reasoningEffort) {
-          cmdArgs.push('-c', `model_reasoning_effort=${reasoningEffort}`);
+          cmdArgs.push('-c', `model_reasoning_effort="${reasoningEffort}"`);
         }
 
         // Add sandbox mode (v0.75.0+)

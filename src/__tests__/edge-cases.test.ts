@@ -44,7 +44,7 @@ describe('Edge Cases and Integration Issues', () => {
       '-c',
       'model="gpt-4"',
       '-c',
-      'model_reasoning_effort=high',
+      'model_reasoning_effort="high"',
       'Use different model',
     ]);
   });
