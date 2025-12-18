@@ -65,40 +65,57 @@ export class CodexToolHandler {
       }
 
       // Build command arguments with v0.75.0+ features
-      const cmdArgs =
-        useResume && codexConversationId
-          ? ['exec', 'resume', codexConversationId]
-          : ['exec'];
-
-      // Add model parameter (supported in both exec and resume)
       const selectedModel =
         model || process.env.CODEX_DEFAULT_MODEL || 'gpt-5.2-codex'; // Default to gpt-5.2-codex
-      cmdArgs.push('--model', selectedModel);
 
-      // Add reasoning effort via config parameter (v0.50.0+ uses -c instead of --reasoning-effort)
-      if (reasoningEffort) {
-        cmdArgs.push('-c', `model_reasoning_effort=${reasoningEffort}`);
+      let cmdArgs: string[];
+
+      if (useResume && codexConversationId) {
+        // Resume mode: codex exec resume has limited flags (only -c config)
+        cmdArgs = ['exec', 'resume', codexConversationId];
+
+        // Model must be set via -c config in resume mode
+        cmdArgs.push('-c', `model="${selectedModel}"`);
+
+        // Reasoning effort via config
+        if (reasoningEffort) {
+          cmdArgs.push('-c', `model_reasoning_effort=${reasoningEffort}`);
+        }
+
+        // Add prompt at the end
+        cmdArgs.push(enhancedPrompt);
+      } else {
+        // Exec mode: supports full set of flags
+        cmdArgs = ['exec'];
+
+        // Add model parameter
+        cmdArgs.push('--model', selectedModel);
+
+        // Add reasoning effort via config parameter
+        if (reasoningEffort) {
+          cmdArgs.push('-c', `model_reasoning_effort=${reasoningEffort}`);
+        }
+
+        // Add sandbox mode (v0.75.0+)
+        if (sandbox) {
+          cmdArgs.push('--sandbox', sandbox);
+        }
+
+        // Add full-auto mode (v0.75.0+)
+        if (fullAuto) {
+          cmdArgs.push('--full-auto');
+        }
+
+        // Add working directory (v0.75.0+)
+        if (workingDirectory) {
+          cmdArgs.push('-C', workingDirectory);
+        }
+
+        // Skip git repo check for v0.50.0+
+        cmdArgs.push('--skip-git-repo-check');
+
+        cmdArgs.push(enhancedPrompt);
       }
-
-      // Add sandbox mode (v0.75.0+)
-      if (sandbox) {
-        cmdArgs.push('--sandbox', sandbox);
-      }
-
-      // Add full-auto mode (v0.75.0+)
-      if (fullAuto) {
-        cmdArgs.push('--full-auto');
-      }
-
-      // Add working directory (v0.75.0+)
-      if (workingDirectory) {
-        cmdArgs.push('-C', workingDirectory);
-      }
-
-      // Skip git repo check for v0.50.0+
-      cmdArgs.push('--skip-git-repo-check');
-
-      cmdArgs.push(enhancedPrompt);
 
       const result = await executeCommand('codex', cmdArgs);
       const response = result.stdout || 'No output from Codex';

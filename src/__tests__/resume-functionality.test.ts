@@ -76,13 +76,13 @@ describe('Codex Resume Functionality', () => {
       sessionId,
     });
 
+    // Resume mode uses -c config for model (not --model flag)
     expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
       'exec',
       'resume',
       'existing-conversation-id',
-      '--model',
-      'gpt-5.2-codex',
-      '--skip-git-repo-check',
+      '-c',
+      'model="gpt-5.2-codex"',
       'Continue conversation',
     ]);
   });

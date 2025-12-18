@@ -107,24 +107,33 @@ This MCP server is optimized for **codex CLI v0.75.0 or later** for full feature
 // Execution with new parameters (v0.75.0+)
 ['exec', '--model', selectedModel, '--sandbox', 'workspace-write', '--full-auto', '-C', workingDir, '--skip-git-repo-check', prompt]
 
-// Resume with parameters (v0.75.0+)
-['exec', 'resume', conversationId, '--model', selectedModel, '--skip-git-repo-check', prompt]
+// Resume mode (v0.75.0+) - IMPORTANT: limited flags, uses -c for config
+['exec', 'resume', conversationId, '-c', 'model="modelName"', prompt]
 
 // Code review (v0.75.0+)
 ['exec', 'review', '--uncommitted', '--base', 'main', prompt]
-
-// Old command structure (v0.50.0-v0.74.x)
-// ['resume', conversationId, '--model', selectedModel, '--skip-git-repo-check', prompt]
 ```
+
+**Important: Resume Mode Limitations**
+
+The `codex exec resume` subcommand has a **limited set of flags** compared to `codex exec`:
+- ✅ `-c, --config` - Configuration overrides (use for model selection)
+- ✅ `--enable/--disable` - Feature toggles
+- ❌ `--model` - Not available (use `-c model="..."` instead)
+- ❌ `--sandbox` - Not available in resume mode
+- ❌ `--full-auto` - Not available in resume mode
+- ❌ `-C` - Not available in resume mode
+- ❌ `--skip-git-repo-check` - Not available in resume mode
 
 **Key Changes in v0.75.0:**
 - Added: `codex exec review` subcommand for code reviews
-- Added: `--sandbox` flag for sandbox modes
-- Added: `--full-auto` flag for automatic execution
+- Added: `--sandbox` flag for sandbox modes (exec only)
+- Added: `--full-auto` flag for automatic execution (exec only)
 - Changed: `codex resume` moved to `codex exec resume`
+- Note: Resume subcommand has limited flag support
 
 **Key Changes in v0.50.0:**
-- Added: `--skip-git-repo-check` flag (always included)
+- Added: `--skip-git-repo-check` flag (exec only)
 - Changed: `--reasoning-effort` to `-c model_reasoning_effort=<level>`
 
 ### Conversation ID Extraction

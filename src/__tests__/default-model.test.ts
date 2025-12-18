@@ -84,13 +84,13 @@ describe('Default Model Configuration', () => {
       sessionId,
     });
 
+    // Resume mode uses -c config for model (not --model flag)
     expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
       'exec',
       'resume',
       'existing-conv-id',
-      '--model',
-      'gpt-5.2-codex',
-      '--skip-git-repo-check',
+      '-c',
+      'model="gpt-5.2-codex"',
       'Resume with default model',
     ]);
   });

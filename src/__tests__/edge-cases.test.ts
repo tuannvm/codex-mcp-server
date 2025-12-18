@@ -35,16 +35,16 @@ describe('Edge Cases and Integration Issues', () => {
       reasoningEffort: 'high',
     });
 
+    // Resume mode uses -c config for model (not --model flag)
     const call = mockedExecuteCommand.mock.calls[0];
     expect(call[1]).toEqual([
       'exec',
       'resume',
       'existing-conv-id',
-      '--model',
-      'gpt-4',
+      '-c',
+      'model="gpt-4"',
       '-c',
       'model_reasoning_effort=high',
-      '--skip-git-repo-check',
       'Use different model',
     ]);
   });
