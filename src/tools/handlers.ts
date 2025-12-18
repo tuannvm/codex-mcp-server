@@ -119,12 +119,14 @@ export class CodexToolHandler {
       }
 
       const result = await executeCommand('codex', cmdArgs);
-      const response = result.stdout || 'No output from Codex';
+      // Codex CLI may output to stderr, so check both
+      const response = result.stdout || result.stderr || 'No output from Codex';
 
-      // Extract conversation ID from new conversations for future resume
+      // Extract session ID from new conversations for future resume
+      // Note: Codex v0.75.0 uses "session id:" format
       if (activeSessionId && !useResume) {
         const conversationIdMatch = result.stderr?.match(
-          /conversation\s*id\s*:\s*([a-zA-Z0-9-]+)/i
+          /session\s*id\s*:\s*([a-zA-Z0-9-]+)/i
         );
         if (conversationIdMatch) {
           this.sessionStorage.setCodexConversationId(
@@ -312,10 +314,10 @@ export class ReviewToolHandler {
       // Skip git repo check (required for running outside trusted directories)
       cmdArgs.push('--skip-git-repo-check');
 
-      // Add model parameter if specified (via -c config, must be before subcommand)
-      if (model) {
-        cmdArgs.push('-c', `model="${model}"`);
-      }
+      // Add model parameter (use default if not specified, must be before subcommand)
+      const selectedModel =
+        model || process.env.CODEX_DEFAULT_MODEL || 'gpt-5.2-codex';
+      cmdArgs.push('-c', `model="${selectedModel}"`);
 
       // Add the review subcommand
       cmdArgs.push('review');
@@ -343,7 +345,9 @@ export class ReviewToolHandler {
       }
 
       const result = await executeCommand('codex', cmdArgs);
-      const response = result.stdout || 'No review output from Codex';
+      // Codex CLI outputs to stderr, so check both stdout and stderr
+      const response =
+        result.stdout || result.stderr || 'No review output from Codex';
 
       return {
         content: [
@@ -353,7 +357,7 @@ export class ReviewToolHandler {
           },
         ],
         _meta: {
-          ...(model && { model }),
+          model: selectedModel,
           ...(base && { base }),
           ...(commit && { commit }),
         },

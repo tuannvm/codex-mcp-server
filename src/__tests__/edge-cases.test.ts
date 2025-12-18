@@ -50,10 +50,10 @@ describe('Edge Cases and Integration Issues', () => {
     ]);
   });
 
-  test('should handle missing conversation ID gracefully', async () => {
+  test('should handle missing session ID gracefully', async () => {
     mockedExecuteCommand.mockResolvedValue({
-      stdout: 'Response without conversation ID',
-      stderr: 'Some other output', // No conversation ID pattern
+      stdout: 'Response without session ID',
+      stderr: 'Some other output', // No session ID pattern
     });
 
     const sessionId = sessionStorage.createSession();
@@ -62,16 +62,16 @@ describe('Edge Cases and Integration Issues', () => {
       sessionId,
     });
 
-    // Should not crash, conversation ID should be undefined
+    // Should not crash, codex session ID should be undefined
     expect(sessionStorage.getCodexConversationId(sessionId)).toBeUndefined();
   });
 
-  test('should handle various conversation ID formats', async () => {
+  test('should handle various session ID formats', async () => {
     const testCases = [
-      'Conversation ID: abc-123-def',
-      'conversation id: XYZ789',
-      'ConversationID:uuid-format-here',
-      'Conversation ID:  spaced-format  ',
+      'session id: abc-123-def',
+      'Session ID: XYZ789',
+      'session id:uuid-format-here',
+      'Session id:  spaced-format  ',
     ];
 
     for (const [index, stderr] of testCases.entries()) {
@@ -83,10 +83,10 @@ describe('Edge Cases and Integration Issues', () => {
         sessionId,
       });
 
-      const conversationId = sessionStorage.getCodexConversationId(sessionId);
-      expect(conversationId).toBeDefined();
-      expect(conversationId).not.toContain('Conversation');
-      expect(conversationId).not.toContain(':');
+      const extractedId = sessionStorage.getCodexConversationId(sessionId);
+      expect(extractedId).toBeDefined();
+      expect(extractedId).not.toContain('session');
+      expect(extractedId).not.toContain(':');
     }
   });
 

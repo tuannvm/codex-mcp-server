@@ -13,7 +13,8 @@ export const toolDefinitions: ToolDefinition[] = [
         },
         sessionId: {
           type: 'string',
-          description: 'Optional session ID for conversational context',
+          description:
+            'Optional session ID for conversational context. Note: when resuming a session, sandbox/fullAuto/workingDirectory parameters are not applied (CLI limitation)',
         },
         resetSession: {
           type: 'boolean',

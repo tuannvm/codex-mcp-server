@@ -21,11 +21,11 @@ describe('Codex Resume Functionality', () => {
     mockedExecuteCommand.mockClear();
   });
 
-  test('should use exec for new session without conversation ID', async () => {
+  test('should use exec for new session without codex session ID', async () => {
     const sessionId = sessionStorage.createSession();
     mockedExecuteCommand.mockResolvedValue({
       stdout: 'Test response',
-      stderr: 'Conversation ID: abc-123-def',
+      stderr: 'session id: abc-123-def',
     });
 
     await handler.execute({
@@ -42,11 +42,11 @@ describe('Codex Resume Functionality', () => {
     ]);
   });
 
-  test('should extract and store conversation ID', async () => {
+  test('should extract and store session ID', async () => {
     const sessionId = sessionStorage.createSession();
     mockedExecuteCommand.mockResolvedValue({
       stdout: 'Test response',
-      stderr: 'Conversation ID: abc-123-def',
+      stderr: 'session id: abc-123-def',
     });
 
     await handler.execute({
@@ -63,7 +63,7 @@ describe('Codex Resume Functionality', () => {
     const sessionId = sessionStorage.createSession();
     sessionStorage.setCodexConversationId(
       sessionId,
-      'existing-conversation-id'
+      'existing-codex-session-id'
     );
 
     mockedExecuteCommand.mockResolvedValue({
@@ -72,7 +72,7 @@ describe('Codex Resume Functionality', () => {
     });
 
     await handler.execute({
-      prompt: 'Continue conversation',
+      prompt: 'Continue the task',
       sessionId,
     });
 
@@ -83,18 +83,18 @@ describe('Codex Resume Functionality', () => {
       '-c',
       'model="gpt-5.2-codex"',
       'resume',
-      'existing-conversation-id',
-      'Continue conversation',
+      'existing-codex-session-id',
+      'Continue the task',
     ]);
   });
 
-  test('should reset conversation ID when session is reset', async () => {
+  test('should reset session ID when session is reset', async () => {
     const sessionId = sessionStorage.createSession();
-    sessionStorage.setCodexConversationId(sessionId, 'old-conversation-id');
+    sessionStorage.setCodexConversationId(sessionId, 'old-session-id');
 
     mockedExecuteCommand.mockResolvedValue({
       stdout: 'Test response',
-      stderr: 'Conversation ID: new-conversation-id',
+      stderr: 'session id: new-session-id',
     });
 
     await handler.execute({
@@ -103,7 +103,7 @@ describe('Codex Resume Functionality', () => {
       resetSession: true,
     });
 
-    // Should use exec (not resume) and get new conversation ID
+    // Should use exec (not resume) and get new session ID
     expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
       'exec',
       '--model',
@@ -112,11 +112,11 @@ describe('Codex Resume Functionality', () => {
       'Reset and start new',
     ]);
     expect(sessionStorage.getCodexConversationId(sessionId)).toBe(
-      'new-conversation-id'
+      'new-session-id'
     );
   });
 
-  test('should fall back to manual context if no conversation ID', async () => {
+  test('should fall back to manual context if no codex session ID', async () => {
     const sessionId = sessionStorage.createSession();
 
     // Add some history
@@ -136,7 +136,7 @@ describe('Codex Resume Functionality', () => {
       sessionId,
     });
 
-    // Should build enhanced prompt since no conversation ID
+    // Should build enhanced prompt since no codex session ID
     const call = mockedExecuteCommand.mock.calls[0];
     const sentPrompt = call?.[1]?.[4]; // After exec, --model, gpt-5.2-codex, --skip-git-repo-check, prompt
     expect(sentPrompt).toContain('Context:');
