@@ -112,6 +112,15 @@ describe('Codex MCP Server', () => {
       expect(result.content[0].type).toBe('text');
       expect(result.content[0].text).toBe('No active sessions');
     });
+
+    test('review tool should have correct definition', () => {
+      const reviewTool = toolDefinitions.find(
+        (tool) => tool.name === TOOLS.REVIEW
+      );
+      expect(reviewTool).toBeDefined();
+      expect(reviewTool?.inputSchema.required).toEqual([]);
+      expect(reviewTool?.description).toContain('code review');
+    });
   });
 
   describe('Server Initialization', () => {

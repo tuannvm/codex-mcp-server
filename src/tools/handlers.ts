@@ -300,9 +300,18 @@ export class ReviewToolHandler {
       }: ReviewToolArgs = ReviewToolSchema.parse(args);
 
       // Build command arguments for codex exec review
-      const cmdArgs = ['exec', 'review'];
+      // Note: -C flag belongs to 'exec', must come BEFORE 'review' subcommand
+      const cmdArgs = ['exec'];
 
-      // Add model parameter if specified
+      // Add working directory if specified (must be before subcommand)
+      if (workingDirectory) {
+        cmdArgs.push('-C', workingDirectory);
+      }
+
+      // Add the review subcommand
+      cmdArgs.push('review');
+
+      // Add model parameter if specified (via -c config)
       if (model) {
         cmdArgs.push('-c', `model="${model}"`);
       }
@@ -322,11 +331,6 @@ export class ReviewToolHandler {
 
       if (title) {
         cmdArgs.push('--title', title);
-      }
-
-      // Add working directory if specified
-      if (workingDirectory) {
-        cmdArgs.push('-C', workingDirectory);
       }
 
       // Add custom review instructions if provided
