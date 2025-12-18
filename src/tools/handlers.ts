@@ -2,8 +2,10 @@ import {
   TOOLS,
   type ToolResult,
   type CodexToolArgs,
+  type ReviewToolArgs,
   type PingToolArgs,
   CodexToolSchema,
+  ReviewToolSchema,
   PingToolSchema,
   HelpToolSchema,
   ListSessionsToolSchema,
@@ -28,6 +30,9 @@ export class CodexToolHandler {
         resetSession,
         model,
         reasoningEffort,
+        sandbox,
+        fullAuto,
+        workingDirectory,
       }: CodexToolArgs = CodexToolSchema.parse(args);
 
       let activeSessionId = sessionId;
@@ -59,10 +64,10 @@ export class CodexToolHandler {
         }
       }
 
-      // Build command arguments with new v0.36.0 features
+      // Build command arguments with v0.75.0+ features
       const cmdArgs =
         useResume && codexConversationId
-          ? ['resume', codexConversationId]
+          ? ['exec', 'resume', codexConversationId]
           : ['exec'];
 
       // Add model parameter (supported in both exec and resume)
@@ -73,6 +78,21 @@ export class CodexToolHandler {
       // Add reasoning effort via config parameter (v0.50.0+ uses -c instead of --reasoning-effort)
       if (reasoningEffort) {
         cmdArgs.push('-c', `model_reasoning_effort=${reasoningEffort}`);
+      }
+
+      // Add sandbox mode (v0.75.0+)
+      if (sandbox) {
+        cmdArgs.push('--sandbox', sandbox);
+      }
+
+      // Add full-auto mode (v0.75.0+)
+      if (fullAuto) {
+        cmdArgs.push('--full-auto');
+      }
+
+      // Add working directory (v0.75.0+)
+      if (workingDirectory) {
+        cmdArgs.push('-C', workingDirectory);
       }
 
       // Skip git repo check for v0.50.0+
@@ -249,11 +269,89 @@ export class ListSessionsToolHandler {
   }
 }
 
+export class ReviewToolHandler {
+  async execute(args: unknown): Promise<ToolResult> {
+    try {
+      const {
+        prompt,
+        uncommitted,
+        base,
+        commit,
+        title,
+        model,
+        workingDirectory,
+      }: ReviewToolArgs = ReviewToolSchema.parse(args);
+
+      // Build command arguments for codex exec review
+      const cmdArgs = ['exec', 'review'];
+
+      // Add model parameter if specified
+      if (model) {
+        cmdArgs.push('-c', `model="${model}"`);
+      }
+
+      // Add review-specific flags
+      if (uncommitted) {
+        cmdArgs.push('--uncommitted');
+      }
+
+      if (base) {
+        cmdArgs.push('--base', base);
+      }
+
+      if (commit) {
+        cmdArgs.push('--commit', commit);
+      }
+
+      if (title) {
+        cmdArgs.push('--title', title);
+      }
+
+      // Add working directory if specified
+      if (workingDirectory) {
+        cmdArgs.push('-C', workingDirectory);
+      }
+
+      // Add custom review instructions if provided
+      if (prompt) {
+        cmdArgs.push(prompt);
+      }
+
+      const result = await executeCommand('codex', cmdArgs);
+      const response = result.stdout || 'No review output from Codex';
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: response,
+          },
+        ],
+        _meta: {
+          ...(model && { model }),
+          ...(base && { base }),
+          ...(commit && { commit }),
+        },
+      };
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw new ValidationError(TOOLS.REVIEW, error.message);
+      }
+      throw new ToolExecutionError(
+        TOOLS.REVIEW,
+        'Failed to execute code review',
+        error
+      );
+    }
+  }
+}
+
 // Tool handler registry
 const sessionStorage = new InMemorySessionStorage();
 
 export const toolHandlers = {
   [TOOLS.CODEX]: new CodexToolHandler(sessionStorage),
+  [TOOLS.REVIEW]: new ReviewToolHandler(),
   [TOOLS.PING]: new PingToolHandler(),
   [TOOLS.HELP]: new HelpToolHandler(),
   [TOOLS.LIST_SESSIONS]: new ListSessionsToolHandler(sessionStorage),

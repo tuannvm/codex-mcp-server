@@ -37,6 +37,7 @@ describe('Edge Cases and Integration Issues', () => {
 
     const call = mockedExecuteCommand.mock.calls[0];
     expect(call[1]).toEqual([
+      'exec',
       'resume',
       'existing-conv-id',
       '--model',

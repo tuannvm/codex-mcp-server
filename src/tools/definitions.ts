@@ -23,7 +23,7 @@ export const toolDefinitions: ToolDefinition[] = [
         model: {
           type: 'string',
           description:
-            'Specify which model to use (defaults to gpt-5.2-codex). Options: gpt-5.2-codex, gpt-5.1-codex, gpt-5.1-codex-max, gpt-5-codex, gpt-4o, gpt-4',
+            'Specify which model to use (defaults to gpt-5.2-codex). Options: gpt-5.2-codex, gpt-5.1-codex, gpt-5.1-codex-max, gpt-5-codex, gpt-4o, gpt-4, o3, o4-mini',
         },
         reasoningEffort: {
           type: 'string',
@@ -31,8 +31,67 @@ export const toolDefinitions: ToolDefinition[] = [
           description:
             'Control reasoning depth (minimal < low < medium < high)',
         },
+        sandbox: {
+          type: 'string',
+          enum: ['read-only', 'workspace-write', 'danger-full-access'],
+          description:
+            'Sandbox policy for shell command execution. read-only: no writes allowed, workspace-write: writes only in workspace, danger-full-access: full system access (dangerous)',
+        },
+        fullAuto: {
+          type: 'boolean',
+          description:
+            'Enable full-auto mode: sandboxed automatic execution without approval prompts (equivalent to -a on-request --sandbox workspace-write)',
+        },
+        workingDirectory: {
+          type: 'string',
+          description:
+            'Working directory for the agent to use as its root (passed via -C flag)',
+        },
       },
       required: ['prompt'],
+    },
+  },
+  {
+    name: TOOLS.REVIEW,
+    description:
+      'Run a code review against the current repository using Codex CLI',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        prompt: {
+          type: 'string',
+          description: 'Custom review instructions or focus areas',
+        },
+        uncommitted: {
+          type: 'boolean',
+          description:
+            'Review staged, unstaged, and untracked changes (working tree)',
+        },
+        base: {
+          type: 'string',
+          description:
+            'Review changes against a specific base branch (e.g., "main", "develop")',
+        },
+        commit: {
+          type: 'string',
+          description:
+            'Review the changes introduced by a specific commit SHA',
+        },
+        title: {
+          type: 'string',
+          description: 'Optional title to display in the review summary',
+        },
+        model: {
+          type: 'string',
+          description:
+            'Specify which model to use for the review (defaults to gpt-5.2-codex)',
+        },
+        workingDirectory: {
+          type: 'string',
+          description: 'Working directory containing the repository to review',
+        },
+      },
+      required: [],
     },
   },
   {

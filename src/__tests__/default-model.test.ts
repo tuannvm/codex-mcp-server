@@ -85,6 +85,7 @@ describe('Default Model Configuration', () => {
     });
 
     expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
+      'exec',
       'resume',
       'existing-conv-id',
       '--model',

@@ -77,6 +77,7 @@ describe('Codex Resume Functionality', () => {
     });
 
     expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
+      'exec',
       'resume',
       'existing-conversation-id',
       '--model',
