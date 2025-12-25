@@ -1,6 +1,7 @@
 import {
   TOOLS,
   type ToolResult,
+  type ToolHandlerContext,
   type CodexToolArgs,
   type ReviewToolArgs,
   type PingToolArgs,
@@ -16,13 +17,21 @@ import {
   type ConversationTurn,
 } from '../session/storage.js';
 import { ToolExecutionError, ValidationError } from '../errors.js';
-import { executeCommand } from '../utils/command.js';
+import { executeCommand, executeCommandStreaming } from '../utils/command.js';
 import { ZodError } from 'zod';
+
+// Default no-op context for handlers that don't need progress
+const defaultContext: ToolHandlerContext = {
+  sendProgress: async () => {},
+};
 
 export class CodexToolHandler {
   constructor(private sessionStorage: SessionStorage) {}
 
-  async execute(args: unknown): Promise<ToolResult> {
+  async execute(
+    args: unknown,
+    context: ToolHandlerContext = defaultContext
+  ): Promise<ToolResult> {
     try {
       const {
         prompt,
@@ -118,7 +127,20 @@ export class CodexToolHandler {
         cmdArgs.push(enhancedPrompt);
       }
 
-      const result = await executeCommand('codex', cmdArgs);
+      // Send initial progress notification
+      await context.sendProgress('Starting Codex execution...', 0);
+
+      // Use streaming execution if progress is enabled
+      const useStreaming = !!context.progressToken;
+      const result = useStreaming
+        ? await executeCommandStreaming('codex', cmdArgs, {
+            onProgress: (message) => {
+              // Send progress notification for each chunk of output
+              context.sendProgress(message);
+            },
+          })
+        : await executeCommand('codex', cmdArgs);
+
       // Codex CLI may output to stderr, so check both
       const response = result.stdout || result.stderr || 'No output from Codex';
 
@@ -197,7 +219,10 @@ export class CodexToolHandler {
 }
 
 export class PingToolHandler {
-  async execute(args: unknown): Promise<ToolResult> {
+  async execute(
+    args: unknown,
+    _context: ToolHandlerContext = defaultContext
+  ): Promise<ToolResult> {
     try {
       const { message = 'pong' }: PingToolArgs = PingToolSchema.parse(args);
 
@@ -223,7 +248,10 @@ export class PingToolHandler {
 }
 
 export class HelpToolHandler {
-  async execute(args: unknown): Promise<ToolResult> {
+  async execute(
+    args: unknown,
+    _context: ToolHandlerContext = defaultContext
+  ): Promise<ToolResult> {
     try {
       HelpToolSchema.parse(args);
 
@@ -253,7 +281,10 @@ export class HelpToolHandler {
 export class ListSessionsToolHandler {
   constructor(private sessionStorage: SessionStorage) {}
 
-  async execute(args: unknown): Promise<ToolResult> {
+  async execute(
+    args: unknown,
+    _context: ToolHandlerContext = defaultContext
+  ): Promise<ToolResult> {
     try {
       ListSessionsToolSchema.parse(args);
 
@@ -290,7 +321,10 @@ export class ListSessionsToolHandler {
 }
 
 export class ReviewToolHandler {
-  async execute(args: unknown): Promise<ToolResult> {
+  async execute(
+    args: unknown,
+    context: ToolHandlerContext = defaultContext
+  ): Promise<ToolResult> {
     try {
       const {
         prompt,
@@ -344,7 +378,19 @@ export class ReviewToolHandler {
         cmdArgs.push(prompt);
       }
 
-      const result = await executeCommand('codex', cmdArgs);
+      // Send initial progress notification
+      await context.sendProgress('Starting code review...', 0);
+
+      // Use streaming execution if progress is enabled
+      const useStreaming = !!context.progressToken;
+      const result = useStreaming
+        ? await executeCommandStreaming('codex', cmdArgs, {
+            onProgress: (message) => {
+              context.sendProgress(message);
+            },
+          })
+        : await executeCommand('codex', cmdArgs);
+
       // Codex CLI outputs to stderr, so check both stdout and stderr
       const response =
         result.stdout || result.stderr || 'No review output from Codex';

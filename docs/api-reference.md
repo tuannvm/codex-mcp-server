@@ -3,11 +3,71 @@
 ## Overview
 Complete reference for the Codex MCP Server tools and interfaces.
 
+This server implements the **MCP 2025-11-25 specification**, including tool annotations and progress notifications.
+
+## MCP Protocol Features
+
+### Tool Annotations
+All tools include annotations that provide hints to MCP clients about tool behavior:
+
+| Annotation | Type | Description |
+|------------|------|-------------|
+| `title` | string | Human-readable tool name |
+| `readOnlyHint` | boolean | Tool doesn't modify state (safe to call) |
+| `destructiveHint` | boolean | Tool may modify files or external state |
+| `idempotentHint` | boolean | Multiple calls produce same result |
+| `openWorldHint` | boolean | Tool interacts with external services (network, APIs) |
+
+#### Tool Annotation Matrix
+| Tool | `title` | `readOnlyHint` | `destructiveHint` | `idempotentHint` | `openWorldHint` |
+|------|---------|---------------|-------------------|------------------|-----------------|
+| `codex` | Execute Codex CLI | `false` | `true` | `false` | `true` |
+| `review` | Code Review | `true` | `false` | `true` | `true` |
+| `ping` | Ping Server | `true` | `false` | `true` | `false` |
+| `help` | Get Help | `true` | `false` | `true` | `false` |
+| `listSessions` | List Sessions | `true` | `false` | `true` | `false` |
+
+### Progress Notifications
+For long-running operations, the server sends `notifications/progress` messages when the client includes a `progressToken` in the request `_meta`.
+
+**Request with Progress Token:**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "codex",
+    "arguments": { "prompt": "Analyze this codebase" },
+    "_meta": { "progressToken": "unique-token-123" }
+  }
+}
+```
+
+**Progress Notification (sent during execution):**
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "notifications/progress",
+  "params": {
+    "progressToken": "unique-token-123",
+    "progress": 1,
+    "message": "Processing output from Codex..."
+  }
+}
+```
+
+**Supported Tools:** `codex`, `review` (long-running operations)
+
+> **Note:** Progress notifications are streamed in real-time from CLI stdout/stderr. Client support for displaying these notifications varies.
+
 ## Tools
 
 ### `codex` - AI Coding Assistant
 
 Execute Codex CLI with advanced session management and model control.
+
+**Annotations:** `readOnlyHint: false`, `destructiveHint: true`, `idempotentHint: false`, `openWorldHint: true`
 
 #### Parameters
 
@@ -18,6 +78,9 @@ Execute Codex CLI with advanced session management and model control.
 | `resetSession` | boolean | ❌ | `false` | Reset session history before processing |
 | `model` | string | ❌ | `gpt-5.2-codex` | Model to use for processing |
 | `reasoningEffort` | enum | ❌ | - | Control reasoning depth |
+| `sandbox` | enum | ❌ | - | Sandbox policy: `read-only`, `workspace-write`, `danger-full-access` |
+| `fullAuto` | boolean | ❌ | `false` | Enable full-auto mode (sandboxed automatic execution) |
+| `workingDirectory` | string | ❌ | - | Working directory for the agent |
 
 #### Model Options
 - `gpt-5.2-codex` (default) - Latest specialized coding model optimized for agentic tasks
@@ -84,9 +147,71 @@ interface CodexToolResponse {
 
 ---
 
+### `review` - Code Review
+
+Run AI-powered code reviews against your repository using Codex CLI.
+
+**Annotations:** `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true`, `openWorldHint: true`
+
+#### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `prompt` | string | ❌ | - | Custom review instructions or focus areas |
+| `uncommitted` | boolean | ❌ | `false` | Review staged, unstaged, and untracked changes |
+| `base` | string | ❌ | - | Review changes against a specific base branch |
+| `commit` | string | ❌ | - | Review changes introduced by a specific commit SHA |
+| `title` | string | ❌ | - | Title to display in the review summary |
+| `model` | string | ❌ | `gpt-5.2-codex` | Model to use for the review |
+| `workingDirectory` | string | ❌ | - | Working directory containing the repository |
+
+#### Examples
+
+**Review Uncommitted Changes:**
+```json
+{
+  "uncommitted": true
+}
+```
+
+**Review Against Main Branch:**
+```json
+{
+  "base": "main",
+  "prompt": "Focus on security vulnerabilities"
+}
+```
+
+**Review Specific Commit:**
+```json
+{
+  "commit": "abc123def",
+  "title": "Security Audit"
+}
+```
+
+#### Response Format
+```typescript
+interface ReviewToolResponse {
+  content: Array<{
+    type: 'text';
+    text: string; // Review output from Codex
+  }>;
+  _meta?: {
+    model: string;
+    base?: string;
+    commit?: string;
+  };
+}
+```
+
+---
+
 ### `listSessions` - Session Management
 
 List all active conversation sessions with metadata.
+
+**Annotations:** `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true`, `openWorldHint: false`
 
 #### Parameters
 No parameters required.
@@ -117,6 +242,8 @@ interface SessionInfo {
 
 Test MCP server connection and responsiveness.
 
+**Annotations:** `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true`, `openWorldHint: false`
+
 #### Parameters
 
 | Parameter | Type | Required | Default | Description |
@@ -145,6 +272,8 @@ Test MCP server connection and responsiveness.
 ### `help` - Codex CLI Help
 
 Get information about Codex CLI capabilities and commands.
+
+**Annotations:** `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true`, `openWorldHint: false`
 
 #### Parameters
 No parameters required.

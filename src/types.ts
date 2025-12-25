@@ -11,6 +11,15 @@ export const TOOLS = {
 
 export type ToolName = typeof TOOLS[keyof typeof TOOLS];
 
+// Tool annotations for MCP 2025-11-25 spec
+export interface ToolAnnotations {
+  title?: string;
+  readOnlyHint?: boolean;
+  destructiveHint?: boolean;
+  idempotentHint?: boolean;
+  openWorldHint?: boolean;
+}
+
 // Tool definition interface
 export interface ToolDefinition {
   name: ToolName;
@@ -20,6 +29,7 @@ export interface ToolDefinition {
     properties: Record<string, unknown>;
     required: string[];
   };
+  annotations?: ToolAnnotations;
 }
 
 // Tool result interface matching MCP SDK expectations
@@ -85,4 +95,13 @@ export type ListSessionsToolArgs = z.infer<typeof ListSessionsToolSchema>;
 export interface CommandResult {
   stdout: string;
   stderr: string;
+}
+
+// Progress token from MCP request metadata
+export type ProgressToken = string | number;
+
+// Context passed to tool handlers for sending progress notifications
+export interface ToolHandlerContext {
+  progressToken?: ProgressToken;
+  sendProgress: (message: string, progress?: number, total?: number) => Promise<void>;
 }

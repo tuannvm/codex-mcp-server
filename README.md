@@ -210,6 +210,22 @@ Ask codex to create a React component that handles file uploads
 
 ## Advanced Features (Codex CLI v0.75.0+)
 
+### MCP 2025-11-25 Specification Compliance
+This server implements the latest MCP specification features:
+
+**Tool Annotations** - Each tool includes metadata hints for clients:
+| Tool | `readOnlyHint` | `destructiveHint` | `idempotentHint` | `openWorldHint` |
+|------|---------------|-------------------|------------------|-----------------|
+| `codex` | `false` | `true` | `false` | `true` |
+| `review` | `true` | `false` | `true` | `true` |
+| `ping` | `true` | `false` | `true` | `false` |
+| `help` | `true` | `false` | `true` | `false` |
+| `listSessions` | `true` | `false` | `true` | `false` |
+
+**Progress Notifications** - For long-running operations (`codex`, `review`), the server sends `notifications/progress` messages when the client provides a `progressToken`. This enables real-time streaming feedback during execution.
+
+> **Note:** Progress notification display depends on client support. As of December 2025, some MCP clients receive but don't display these notifications in the UI.
+
 ### Code Review (New in v0.75.0)
 - Review uncommitted changes, branches, or specific commits
 - Custom review instructions and focus areas

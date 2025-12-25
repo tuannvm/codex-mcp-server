@@ -6,7 +6,13 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import chalk from 'chalk';
 
-import { type ServerConfig, type ToolName, TOOLS } from './types.js';
+import {
+  type ServerConfig,
+  type ToolName,
+  type ToolHandlerContext,
+  type ProgressToken,
+  TOOLS,
+} from './types.js';
 import { handleError } from './errors.js';
 import { toolDefinitions } from './tools/definitions.js';
 import { toolHandlers } from './tools/handlers.js';
@@ -39,16 +45,45 @@ export class CodexMcpServer {
     });
 
     // Call tool handler
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
       const { name, arguments: args } = request.params;
-      
+      const progressToken = request.params._meta?.progressToken as ProgressToken | undefined;
+
+      // Create progress sender that uses MCP notifications
+      const createProgressContext = (): ToolHandlerContext => {
+        let progressCount = 0;
+        return {
+          progressToken,
+          sendProgress: async (message: string, progress?: number, total?: number) => {
+            if (!progressToken) return;
+
+            progressCount++;
+            try {
+              await extra.sendNotification({
+                method: 'notifications/progress',
+                params: {
+                  progressToken,
+                  progress: progress ?? progressCount,
+                  total,
+                  message,
+                },
+              });
+            } catch (err) {
+              // Log but don't fail the operation if progress notification fails
+              console.error(chalk.yellow('Failed to send progress notification:'), err);
+            }
+          },
+        };
+      };
+
       try {
         if (!this.isValidToolName(name)) {
           throw new Error(`Unknown tool: ${name}`);
         }
 
         const handler = toolHandlers[name];
-        return await handler.execute(args);
+        const context = createProgressContext();
+        return await handler.execute(args, context);
       } catch (error) {
         return {
           content: [
