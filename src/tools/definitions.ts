@@ -51,6 +51,13 @@ export const toolDefinitions: ToolDefinition[] = [
       },
       required: ['prompt'],
     },
+    annotations: {
+      title: 'Execute Codex CLI',
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: false,
+      openWorldHint: true,
+    },
   },
   {
     name: TOOLS.REVIEW,
@@ -93,6 +100,13 @@ export const toolDefinitions: ToolDefinition[] = [
       },
       required: [],
     },
+    annotations: {
+      title: 'Code Review',
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
   },
   {
     name: TOOLS.PING,
@@ -107,6 +121,13 @@ export const toolDefinitions: ToolDefinition[] = [
       },
       required: [],
     },
+    annotations: {
+      title: 'Ping Server',
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
   },
   {
     name: TOOLS.HELP,
@@ -116,6 +137,13 @@ export const toolDefinitions: ToolDefinition[] = [
       properties: {},
       required: [],
     },
+    annotations: {
+      title: 'Get Help',
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
+    },
   },
   {
     name: TOOLS.LIST_SESSIONS,
@@ -124,6 +152,13 @@ export const toolDefinitions: ToolDefinition[] = [
       type: 'object',
       properties: {},
       required: [],
+    },
+    annotations: {
+      title: 'List Sessions',
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
     },
   },
 ];
