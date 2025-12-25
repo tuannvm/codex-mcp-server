@@ -108,7 +108,9 @@ export async function executeCommandStreaming(
         const finalOutput = stdout || stderr;
         const lastChunk = finalOutput.slice(-500); // Last 500 chars
         if (lastChunk.trim()) {
-          options.onProgress(`[Completed] ${lastChunk.trim().slice(0, 200)}...`);
+          options.onProgress(
+            `[Completed] ${lastChunk.trim().slice(0, 200)}...`
+          );
         }
       }
 
