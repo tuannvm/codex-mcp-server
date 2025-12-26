@@ -30,9 +30,7 @@ export async function executeCommand(
 ): Promise<CommandResult> {
   return new Promise((resolve, reject) => {
     // Escape args for Windows shell
-    const escapedArgs = isWindows
-      ? args.map(escapeArgForWindows)
-      : args;
+    const escapedArgs = isWindows ? args.map(escapeArgForWindows) : args;
 
     console.error(chalk.blue('Executing:'), file, escapedArgs.join(' '));
 
@@ -62,20 +60,24 @@ export async function executeCommand(
       if (code === 0 || stdout) {
         resolve({ stdout, stderr });
       } else {
-        reject(new CommandExecutionError(
-          [file, ...args].join(' '),
-          `Command failed with exit code ${code}`,
-          new Error(stderr || 'Unknown error')
-        ));
+        reject(
+          new CommandExecutionError(
+            [file, ...args].join(' '),
+            `Command failed with exit code ${code}`,
+            new Error(stderr || 'Unknown error')
+          )
+        );
       }
     });
 
     child.on('error', (error) => {
-      reject(new CommandExecutionError(
-        [file, ...args].join(' '),
-        'Command execution failed',
-        error
-      ));
+      reject(
+        new CommandExecutionError(
+          [file, ...args].join(' '),
+          'Command execution failed',
+          error
+        )
+      );
     });
   });
 }
