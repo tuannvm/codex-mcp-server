@@ -18,6 +18,9 @@ function escapeArgForWindows(arg: string): string {
 
 const isWindows = process.platform === 'win32';
 
+// Maximum buffer size (10MB) to prevent memory exhaustion from noisy processes
+const MAX_BUFFER_SIZE = 10 * 1024 * 1024;
+
 export type ProgressCallback = (message: string) => void;
 
 export interface StreamingCommandOptions {
@@ -42,13 +45,33 @@ export async function executeCommand(
 
     let stdout = '';
     let stderr = '';
+    let stdoutTruncated = false;
+    let stderrTruncated = false;
 
-    child.stdout.on('data', (data) => {
-      stdout += data.toString();
+    child.stdout.on('data', (data: Buffer) => {
+      if (!stdoutTruncated) {
+        const chunk = data.toString();
+        if (stdout.length + chunk.length > MAX_BUFFER_SIZE) {
+          stdout += chunk.slice(0, MAX_BUFFER_SIZE - stdout.length);
+          stdoutTruncated = true;
+          console.error(chalk.yellow('Warning: stdout truncated at 10MB'));
+        } else {
+          stdout += chunk;
+        }
+      }
     });
 
-    child.stderr.on('data', (data) => {
-      stderr += data.toString();
+    child.stderr.on('data', (data: Buffer) => {
+      if (!stderrTruncated) {
+        const chunk = data.toString();
+        if (stderr.length + chunk.length > MAX_BUFFER_SIZE) {
+          stderr += chunk.slice(0, MAX_BUFFER_SIZE - stderr.length);
+          stderrTruncated = true;
+          console.error(chalk.yellow('Warning: stderr truncated at 10MB'));
+        } else {
+          stderr += chunk;
+        }
+      }
     });
 
     child.on('close', (code) => {
@@ -58,6 +81,11 @@ export async function executeCommand(
 
       // Accept exit code 0 or if we got stdout output
       if (code === 0 || stdout) {
+        if (code !== 0 && stdout) {
+          console.error(
+            chalk.yellow('Command failed but produced output, using stdout')
+          );
+        }
         resolve({ stdout, stderr });
       } else {
         reject(
@@ -109,6 +137,8 @@ export async function executeCommandStreaming(
 
     let stdout = '';
     let stderr = '';
+    let stdoutTruncated = false;
+    let stderrTruncated = false;
     let lastProgressTime = 0;
     const PROGRESS_DEBOUNCE_MS = 100; // Debounce progress updates
 
@@ -125,13 +155,29 @@ export async function executeCommandStreaming(
 
     child.stdout?.on('data', (data: Buffer) => {
       const chunk = data.toString();
-      stdout += chunk;
+      if (!stdoutTruncated) {
+        if (stdout.length + chunk.length > MAX_BUFFER_SIZE) {
+          stdout += chunk.slice(0, MAX_BUFFER_SIZE - stdout.length);
+          stdoutTruncated = true;
+          console.error(chalk.yellow('Warning: stdout truncated at 10MB'));
+        } else {
+          stdout += chunk;
+        }
+      }
       sendProgress(chunk.trim());
     });
 
     child.stderr?.on('data', (data: Buffer) => {
       const chunk = data.toString();
-      stderr += chunk;
+      if (!stderrTruncated) {
+        if (stderr.length + chunk.length > MAX_BUFFER_SIZE) {
+          stderr += chunk.slice(0, MAX_BUFFER_SIZE - stderr.length);
+          stderrTruncated = true;
+          console.error(chalk.yellow('Warning: stderr truncated at 10MB'));
+        } else {
+          stderr += chunk;
+        }
+      }
       // Also send stderr as progress - codex outputs to stderr
       sendProgress(chunk.trim());
     });
