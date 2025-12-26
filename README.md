@@ -4,280 +4,103 @@
 [![npm downloads](https://img.shields.io/npm/dm/codex-mcp-server.svg)](https://www.npmjs.com/package/codex-mcp-server)
 [![license](https://img.shields.io/npm/l/codex-mcp-server.svg)](https://www.npmjs.com/package/codex-mcp-server)
 
-MCP server for OpenAI Codex CLI v0.75.0+ with session management, model selection, code review, and native resume support.
+Bridge between Claude and OpenAI's Codex CLI — get AI-powered code analysis, generation, and review right in your editor.
 
 ```mermaid
 graph LR
     A[Claude Code] --> B[Codex MCP Server]
-
-    B --> C[codex tool]
-    B --> R[review tool]
-    B --> D[listSessions tool]
-    B --> E[ping tool]
-    B --> F[help tool]
-
-    C --> G[Codex CLI v0.75.0+]
-    C --> H[Session Storage]
-    R --> G
+    B --> C[Codex CLI]
+    C --> D[OpenAI API]
 
     style A fill:#FF6B35
     style B fill:#4A90E2
     style C fill:#00D4AA
-    style R fill:#00D4AA
-    style D fill:#00D4AA
-    style E fill:#00D4AA
-    style F fill:#00D4AA
-    style G fill:#FFA500
-    style H fill:#9B59B6
+    style D fill:#FFA500
 ```
 
-## Prerequisites
+## Quick Start
 
-- **OpenAI Codex CLI v0.75.0+** must be pre-installed and configured
-  - Install: `npm i -g @openai/codex` or `brew install codex`
-  - **Setup**: Run `codex login --api-key "your-openai-api-key"`
-  - ⚠️ **Breaking Change**: `OPENAI_API_KEY` environment variable is no longer supported
-  - ⚠️ **Version Requirement**: v0.75.0+ required for full feature support (see [Version Compatibility](#version-compatibility) below)
-- **Claude Code** installed
+### 1. Install Codex CLI
 
-## Version Compatibility
-
-This MCP server requires **codex CLI v0.75.0 or later** for full feature support:
-
-- **v0.75.0+**: Added `codex exec review` for code reviews
-- **v0.75.0+**: Added sandbox mode (`--sandbox read-only|workspace-write|danger-full-access`)
-- **v0.75.0+**: Added full-auto mode (`--full-auto`)
-- **v0.50.0+**: Introduced `--skip-git-repo-check` flag (now required)
-- **v0.50.0+**: Reasoning effort configured via `-c model_reasoning_effort=X` flag
-
-**If you have an older version of codex CLI**, you will need to upgrade:
 ```bash
-npm update -g @openai/codex
+npm i -g @openai/codex
+codex login --api-key "your-openai-api-key"
 ```
 
-For detailed version compatibility information, see [docs/codex-cli-integration.md](docs/codex-cli-integration.md).
+### 2. Add to Claude Code
 
-## Installation
-
-### One-Click Installation
-
-#### VS Code
-[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Codex_MCP_Server-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://vscode.dev/redirect/mcp/install?name=codex-cli&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22codex-mcp-server%22%5D%7D)
-
-#### VS Code Insiders
-[![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Codex_MCP_Server-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=codex-cli&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22codex-mcp-server%22%5D%7D)
-
-#### Cursor
-[![Install in Cursor](https://img.shields.io/badge/Cursor-Install_Codex_MCP_Server-00D8FF?style=flat-square&logo=cursor&logoColor=white)](https://cursor.com/en/install-mcp?name=codex&config=eyJ0eXBlIjoic3RkaW8iLCJjb21tYW5kIjoibnB4IC15IGNvZGV4LW1jcC1zZXJ2ZXIiLCJlbnYiOnt9fQ%3D%3D)
-
-### Manual Installation
-
-#### Claude Code
 ```bash
 claude mcp add codex-cli -- npx -y codex-mcp-server
 ```
 
-#### Claude Desktop
-Add to your Claude Desktop configuration file:
+### 3. Start Using
 
-**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
-
-**Windows:** `%APPDATA%/Claude/claude_desktop_config.json`
-
-```json
-{
-  "mcpServers": {
-    "codex-cli": {
-      "command": "npx",
-      "args": ["-y", "codex-mcp-server"]
-    }
-  }
-}
+```
+Ask codex to explain this function
+Use codex to refactor this code for better performance
+Use review to check my uncommitted changes
 ```
 
-## Usage in Claude Code
+## One-Click Install
 
-Once installed, Claude Code can use these tools:
+[![VS Code](https://img.shields.io/badge/VS_Code-Install-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://vscode.dev/redirect/mcp/install?name=codex-cli&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22codex-mcp-server%22%5D%7D)
+[![VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=codex-cli&config=%7B%22type%22%3A%22stdio%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22codex-mcp-server%22%5D%7D)
+[![Cursor](https://img.shields.io/badge/Cursor-Install-00D8FF?style=flat-square&logo=cursor&logoColor=white)](https://cursor.com/en/install-mcp?name=codex&config=eyJ0eXBlIjoic3RkaW8iLCJjb21tYW5kIjoibnB4IC15IGNvZGV4LW1jcC1zZXJ2ZXIiLCJlbnYiOnt9fQ%3D%3D)
 
-### `codex` - Code Assistant
-Run Codex queries with optional session support for multi-turn conversations.
+## Tools
 
-**Basic Usage:**
+| Tool | Description |
+|------|-------------|
+| `codex` | AI coding assistant with session support and model selection |
+| `review` | AI-powered code review for uncommitted changes, branches, or commits |
+| `listSessions` | View active conversation sessions |
+| `ping` | Test server connection |
+| `help` | Get Codex CLI help |
+
+## Examples
+
+**Code analysis:**
 ```
-Use the codex tool to explain this function:
-[paste your code here]
-```
-
-**Advanced Usage:**
-```
-# Model selection (defaults to gpt-5.2-codex)
-Use codex with model "gpt-4" to analyze this complex algorithm
-
-# Reasoning effort control
-Use codex with reasoningEffort "high" for thorough code review
-
-# Session with model override
-Use codex with sessionId "my-session" and model "gpt-4" to refactor this code
-
-# Continue conversation (uses native codex resume)
-Use codex with sessionId "my-session" to make it more efficient
-
-# Reset session context
-Use codex with sessionId "my-session" and resetSession true to start fresh analysis
+Use codex to analyze this authentication logic for security issues
 ```
 
-**Parameters:**
-- `prompt` (required): Your coding question or request
-- `sessionId` (optional): Session ID for conversational context
-- `resetSession` (optional): Reset session history before processing
-- `model` (optional): Model to use (defaults to `gpt-5.2-codex`)
-- `reasoningEffort` (optional): Control reasoning depth ('minimal', 'low', 'medium', 'high')
-- `sandbox` (optional): Sandbox policy ('read-only', 'workspace-write', 'danger-full-access')
-- `fullAuto` (optional): Enable full-auto mode for sandboxed automatic execution
-- `workingDirectory` (optional): Working directory for the agent
-
-### `review` - Code Review
-Run AI-powered code reviews against your repository using Codex CLI.
-
-**Basic Usage:**
+**Multi-turn conversations:**
 ```
-Use the review tool to review my uncommitted changes
+Use codex with sessionId "refactor" to analyze this module
+Use codex with sessionId "refactor" to implement your suggestions
 ```
 
-**Advanced Usage:**
+**Code review:**
 ```
-# Review changes against main branch
-Use review with base "main" to review my PR changes
-
-# Review a specific commit
-Use review with commit "abc123" to analyze this commit
-
-# Review with custom instructions
-Use review with prompt "Focus on security vulnerabilities" and uncommitted true
+Use review with base "main" to check my PR changes
+Use review with uncommitted true to review my local changes
 ```
 
-**Parameters:**
-- `prompt` (optional): Custom review instructions or focus areas
-- `uncommitted` (optional): Review staged, unstaged, and untracked changes
-- `base` (optional): Review changes against a specific base branch
-- `commit` (optional): Review changes introduced by a specific commit SHA
-- `title` (optional): Title to display in the review summary
-- `model` (optional): Model to use for the review
-- `workingDirectory` (optional): Working directory containing the repository
-
-### `listSessions` - Session Management
-List all active conversation sessions with metadata including creation time, last access, and turn count.
-
-**Usage:**
+**Advanced options:**
 ```
-Use listSessions to see all active coding sessions
+Use codex with model "o3" and reasoningEffort "high" for complex analysis
+Use codex with fullAuto true and sandbox "workspace-write" for automated tasks
 ```
 
-### `ping` - Connection Test
-Test if the MCP server is working properly.
+## Requirements
 
-### `help` - Codex CLI Help
-Get information about Codex CLI capabilities and commands.
+- **Codex CLI v0.75.0+** — Install with `npm i -g @openai/codex` or `brew install codex`
+- **OpenAI API key** — Run `codex login --api-key "your-key"` to authenticate
 
-## Example Workflows
+## Documentation
 
-**Code Analysis:**
-```
-Please use the codex tool to review this TypeScript function and suggest improvements
-```
-
-**Conversational Code Development:**
-```
-# Start a session for complex refactoring
-Use codex with sessionId "refactor-auth" to analyze this authentication system
-
-# Continue building on the analysis
-Use codex with sessionId "refactor-auth" to implement the security improvements you suggested
-
-# Check session history
-Use listSessions to see all active development sessions
-```
-
-**Bug Fixing:**
-```
-Use codex to help debug this error: [error message]
-```
-
-**Code Generation:**
-```
-Ask codex to create a React component that handles file uploads
-```
-
-## Advanced Features (Codex CLI v0.75.0+)
-
-### MCP 2025-11-25 Specification Compliance
-This server implements the latest MCP specification features:
-
-**Tool Annotations** - Each tool includes metadata hints for clients:
-| Tool | `readOnlyHint` | `destructiveHint` | `idempotentHint` | `openWorldHint` |
-|------|---------------|-------------------|------------------|-----------------|
-| `codex` | `false` | `true` | `false` | `true` |
-| `review` | `true` | `false` | `true` | `true` |
-| `ping` | `true` | `false` | `true` | `false` |
-| `help` | `true` | `false` | `true` | `false` |
-| `listSessions` | `true` | `false` | `true` | `false` |
-
-**Progress Notifications** - For long-running operations (`codex`, `review`), the server sends `notifications/progress` messages when the client provides a `progressToken`. This enables real-time streaming feedback during execution.
-
-> **Note:** Progress notification display depends on client support. As of December 2025, some MCP clients receive but don't display these notifications in the UI.
-
-### Code Review (New in v0.75.0)
-- Review uncommitted changes, branches, or specific commits
-- Custom review instructions and focus areas
-- Integration with git workflow
-
-### Session Management
-- Uses `codex exec resume` for conversation continuity
-- Falls back to manual context building when resume unavailable
-- Sessions persist for 24 hours
-- 58 tests covering functionality and edge cases
-
-### Model Selection
-- Default: `gpt-5.2-codex`
-- Override per request with `model` parameter
-- Supported: `gpt-5.2-codex`, `gpt-5.1-codex`, `gpt-5.1-codex-max`, `gpt-5-codex`, `gpt-4o`, `gpt-4`, `o3`, `o4-mini`
-- Reasoning effort: `minimal`, `low`, `medium`, `high`
-
-### Sandbox Mode (New in v0.75.0)
-- `read-only`: No writes allowed
-- `workspace-write`: Writes only in workspace directory
-- `danger-full-access`: Full system access (use with caution)
-
-### Full-Auto Mode (New in v0.75.0)
-- Sandboxed automatic execution without approval prompts
-- Equivalent to `-a on-request --sandbox workspace-write`
-
-### Authentication
-- `OPENAI_API_KEY` env var no longer supported
-- Run `codex login --api-key "your-key"` instead
-- Credentials stored in `CODEX_HOME/auth.json`
+- **[API Reference](docs/api-reference.md)** — Full tool parameters and response formats
+- **[Session Management](docs/session-management.md)** — How conversations work
+- **[Codex CLI Integration](docs/codex-cli-integration.md)** — Version compatibility and CLI details
 
 ## Development
 
 ```bash
-# Install dependencies
-npm install
-
-# Development mode
-npm run dev
-
-# Build
-npm run build
-
-# Start built server
-npm start
+npm install    # Install dependencies
+npm run dev    # Development mode
+npm run build  # Build for production
+npm test       # Run tests
 ```
-
-## Documentation
-
-- [Session Management](docs/session-management.md)
-- [Codex CLI Integration](docs/codex-cli-integration.md)
-- [API Reference](docs/api-reference.md)
 
 ## License
 

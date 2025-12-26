@@ -5,6 +5,31 @@ Complete reference for the Codex MCP Server tools and interfaces.
 
 This server implements the **MCP 2025-11-25 specification**, including tool annotations and progress notifications.
 
+## Installation Options
+
+### Claude Code
+```bash
+claude mcp add codex-cli -- npx -y codex-mcp-server
+```
+
+### Claude Desktop
+Add to your configuration file:
+
+**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+**Windows:** `%APPDATA%/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "codex-cli": {
+      "command": "npx",
+      "args": ["-y", "codex-mcp-server"]
+    }
+  }
+}
+```
+
 ## MCP Protocol Features
 
 ### Tool Annotations
