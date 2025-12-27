@@ -81,11 +81,13 @@ export async function executeCommand(
         console.error(chalk.yellow('Command stderr:'), stderr);
       }
 
-      // Accept exit code 0 or if we got output (stdout or stderr)
-      if (code === 0 || stdout || stderr) {
-        if (code !== 0 && (stdout || stderr)) {
+      // Accept exit code 0 or if we got stdout output
+      // Note: Unlike executeCommandStreaming, we only accept stdout here
+      // to avoid silently swallowing failures that only produce stderr
+      if (code === 0 || stdout) {
+        if (code !== 0 && stdout) {
           console.error(
-            chalk.yellow('Command failed but produced output, using output')
+            chalk.yellow('Command failed but produced output, using stdout')
           );
         }
         resolve({ stdout, stderr });
@@ -94,7 +96,7 @@ export async function executeCommand(
           new CommandExecutionError(
             [file, ...args].join(' '),
             `Command failed with exit code ${code}`,
-            new Error('Unknown error')
+            new Error(stderr || 'Unknown error')
           )
         );
       }
@@ -115,6 +117,10 @@ export async function executeCommand(
 /**
  * Execute a command with streaming output support.
  * Calls onProgress callback with each chunk of output for real-time feedback.
+ *
+ * Note: Unlike executeCommand, this function treats stderr output as success
+ * because tools like codex write their primary output to stderr. This is
+ * intentional for streaming use cases where we want to capture all output.
  */
 export async function executeCommandStreaming(
   file: string,
