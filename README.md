@@ -102,6 +102,10 @@ npm run build  # Build for production
 npm test       # Run tests
 ```
 
+## Related Projects
+
+- **[gemini-mcp-server](https://github.com/tuannvm/gemini-mcp-server)** — MCP server for Gemini CLI with 1M+ token context, web search, and media analysis
+
 ## License
 
 ISC
