@@ -5,15 +5,17 @@ import { CommandExecutionError } from '../errors.js';
 import { type CommandResult } from '../types.js';
 
 /**
- * Escape argument for Windows shell
+ * Escape argument for Windows shell (cmd.exe)
  */
 function escapeArgForWindows(arg: string): string {
+  // Escape percent signs to prevent environment variable expansion
+  let escaped = arg.replace(/%/g, '%%');
   // If arg contains spaces or special chars, wrap in double quotes
-  if (/[\s"&|<>^]/.test(arg)) {
-    // Escape internal double quotes
-    return `"${arg.replace(/"/g, '\\"')}"`;
+  if (/[\s"&|<>^%]/.test(arg)) {
+    // Escape internal double quotes using CMD-style doubling
+    escaped = `"${escaped.replace(/"/g, '""')}"`;
   }
-  return arg;
+  return escaped;
 }
 
 const isWindows = process.platform === 'win32';
@@ -79,11 +81,11 @@ export async function executeCommand(
         console.error(chalk.yellow('Command stderr:'), stderr);
       }
 
-      // Accept exit code 0 or if we got stdout output
-      if (code === 0 || stdout) {
-        if (code !== 0 && stdout) {
+      // Accept exit code 0 or if we got output (stdout or stderr)
+      if (code === 0 || stdout || stderr) {
+        if (code !== 0 && (stdout || stderr)) {
           console.error(
-            chalk.yellow('Command failed but produced output, using stdout')
+            chalk.yellow('Command failed but produced output, using output')
           );
         }
         resolve({ stdout, stderr });
@@ -92,7 +94,7 @@ export async function executeCommand(
           new CommandExecutionError(
             [file, ...args].join(' '),
             `Command failed with exit code ${code}`,
-            new Error(stderr || 'Unknown error')
+            new Error('Unknown error')
           )
         );
       }
