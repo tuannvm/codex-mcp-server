@@ -3,20 +3,7 @@ import { Buffer } from 'node:buffer';
 import chalk from 'chalk';
 import { CommandExecutionError } from '../errors.js';
 import { type CommandResult } from '../types.js';
-
-/**
- * Escape argument for Windows shell (cmd.exe)
- */
-function escapeArgForWindows(arg: string): string {
-  // Escape percent signs to prevent environment variable expansion
-  let escaped = arg.replace(/%/g, '%%');
-  // If arg contains spaces or special chars, wrap in double quotes
-  if (/[\s"&|<>^%]/.test(arg)) {
-    // Escape internal double quotes using CMD-style doubling
-    escaped = `"${escaped.replace(/"/g, '""')}"`;
-  }
-  return escaped;
-}
+import { escapeArgForWindowsShell } from './escape.js';
 
 const isWindows = process.platform === 'win32';
 
@@ -34,12 +21,14 @@ export async function executeCommand(
   args: string[] = []
 ): Promise<CommandResult> {
   return new Promise((resolve, reject) => {
-    // Escape args for Windows shell
-    const escapedArgs = isWindows ? args.map(escapeArgForWindows) : args;
+    // Escape args for Windows shell to prevent injection
+    // Note: file is not escaped - it should be a simple command name (e.g., "codex", "node")
+    const escapedArgs = isWindows ? args.map(escapeArgForWindowsShell) : args;
 
     console.error(chalk.blue('Executing:'), file, escapedArgs.join(' '));
 
     const child = spawn(file, escapedArgs, {
+      // Use shell on Windows to resolve .cmd/.bat executables (e.g., codex.cmd)
       shell: isWindows,
       env: process.env,
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -118,9 +107,9 @@ export async function executeCommand(
  * Execute a command with streaming output support.
  * Calls onProgress callback with each chunk of output for real-time feedback.
  *
- * Note: Unlike executeCommand, this function treats stderr output as success
- * because tools like codex write their primary output to stderr. This is
- * intentional for streaming use cases where we want to capture all output.
+ * Note: This function accepts exit code 0 with any output (stdout or stderr),
+ * since tools like codex write their primary output to stderr. However, non-zero
+ * exit codes are only accepted if there's stdout output, to avoid masking errors.
  */
 export async function executeCommandStreaming(
   file: string,
@@ -128,8 +117,9 @@ export async function executeCommandStreaming(
   options: StreamingCommandOptions = {}
 ): Promise<CommandResult> {
   return new Promise((resolve, reject) => {
-    // Escape args for Windows shell
-    const escapedArgs = isWindows ? args.map(escapeArgForWindows) : args;
+    // Escape args for Windows shell to prevent injection
+    // Note: file is not escaped - it should be a simple command name (e.g., "codex", "node")
+    const escapedArgs = isWindows ? args.map(escapeArgForWindowsShell) : args;
 
     console.error(
       chalk.blue('Executing (streaming):'),
@@ -138,7 +128,8 @@ export async function executeCommandStreaming(
     );
 
     const child = spawn(file, escapedArgs, {
-      shell: isWindows, // Use shell on Windows to inherit PATH correctly
+      // Use shell on Windows to resolve .cmd/.bat executables (e.g., codex.cmd)
+      shell: isWindows,
       env: process.env,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
@@ -202,11 +193,13 @@ export async function executeCommandStreaming(
         }
       }
 
-      if (code === 0 || stdout || stderr) {
-        // Success or we have output (treat as success like the original)
-        if (code !== 0 && (stdout || stderr)) {
+      // Accept exit code 0, or non-zero with stdout output.
+      // Do NOT accept non-zero with only stderr - this would mask ENOENT errors
+      // when shell: true is used (command not found produces stderr, not 'error' event)
+      if (code === 0 || stdout) {
+        if (code !== 0 && stdout) {
           console.error(
-            chalk.yellow('Command failed but produced output, using output')
+            chalk.yellow('Command failed but produced stdout, using output')
           );
         }
         resolve({ stdout, stderr });
@@ -215,7 +208,7 @@ export async function executeCommandStreaming(
           new CommandExecutionError(
             [file, ...args].join(' '),
             `Command exited with code ${code}`,
-            new Error(`Exit code: ${code}`)
+            new Error(stderr || `Exit code: ${code}`)
           )
         );
       }
