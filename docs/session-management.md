@@ -4,7 +4,8 @@
 The Codex MCP Server provides advanced session management with native Codex CLI v0.50.0+ integration, enabling persistent conversational context and sophisticated AI coding assistance.
 
 Sessions are created on first use when a sessionId is provided. If no sessionId
-is supplied, no session is created and listSessions remains empty.
+is supplied, this request does not create a session (so it won't appear in
+listSessions).
 
 ## Architecture
 
