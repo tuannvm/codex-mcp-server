@@ -32,7 +32,29 @@ export class ValidationError extends Error {
 
 export function handleError(error: unknown, context: string): string {
   if (error instanceof Error) {
-    return `Error in ${context}: ${error.message}`;
+    const messages: string[] = [error.message];
+
+    // Traverse the cause chain to get root cause details
+    let current: unknown = error.cause;
+    while (current) {
+      if (current instanceof Error) {
+        messages.push(current.message);
+        current = current.cause;
+      } else if (typeof current === 'string') {
+        messages.push(current);
+        break;
+      } else {
+        messages.push(String(current));
+        break;
+      }
+    }
+
+    // Deduplicate consecutive identical messages
+    const uniqueMessages = messages.filter(
+      (msg, idx) => idx === 0 || msg !== messages[idx - 1]
+    );
+
+    return `Error in ${context}: ${uniqueMessages.join(' - Caused by: ')}`;
   }
   return `Error in ${context}: ${String(error)}`;
 }
