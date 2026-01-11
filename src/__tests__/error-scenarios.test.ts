@@ -1,7 +1,7 @@
 import { CodexToolHandler } from '../tools/handlers.js';
 import { InMemorySessionStorage } from '../session/storage.js';
 import { executeCommand } from '../utils/command.js';
-import { ToolExecutionError } from '../errors.js';
+import { ToolExecutionError, ValidationError } from '../errors.js';
 
 // Mock the command execution
 jest.mock('../utils/command.js', () => ({
@@ -85,6 +85,15 @@ describe('Error Handling Scenarios', () => {
     });
 
     expect(result.content[0].text).toBe('Response');
+  });
+
+  test('should reject invalid sessionId values', async () => {
+    await expect(
+      handler.execute({
+        prompt: 'Test prompt',
+        sessionId: 'bad id',
+      })
+    ).rejects.toThrow(ValidationError);
   });
 
   test('should handle corrupted session data', async () => {
