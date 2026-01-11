@@ -3,6 +3,9 @@
 ## Overview
 The Codex MCP Server provides advanced session management with native Codex CLI v0.50.0+ integration, enabling persistent conversational context and sophisticated AI coding assistance.
 
+Sessions are created on first use when a sessionId is provided. If no sessionId
+is supplied, no session is created and listSessions remains empty.
+
 ## Architecture
 
 ### Session Storage
@@ -84,10 +87,7 @@ interface ConversationTurn {
 
 ### Basic Session Usage
 ```bash
-# Automatic session creation with optimal defaults
-codex "Analyze this authentication system"
-
-# Explicit session management
+# Explicit session management (creates the session on first use)
 codex --sessionId "auth-review" "Continue analysis"
 codex --sessionId "auth-review" --resetSession true "Start fresh review"
 ```
@@ -110,10 +110,11 @@ listSessions  # View all active sessions
 ```mermaid
 graph TD
     A[User Request] --> B{Session ID provided?}
-    B -->|Yes| C{Reset Session?}
-    B -->|No| D[Direct Execution]
-    C -->|Yes| E[Clear Session History]
-    C -->|No| F{Codex Conversation ID exists?}
+    B -->|Yes| C[Ensure Session Exists]
+    C --> D{Reset Session?}
+    B -->|No| M[Execute with Default Model]
+    D -->|Yes| E[Clear Session History]
+    D -->|No| F{Codex Conversation ID exists?}
     E --> G[Execute with Default Model]
     F -->|Yes| H[Use Codex Resume]
     F -->|No| I[Build Enhanced Context]
@@ -121,7 +122,6 @@ graph TD
     I --> J
     G --> K[Extract Conversation ID]
     J --> L[Save Turn to Session]
-    D --> M[Execute with Default Model]
     K --> L
     M --> N[Return Response]
     L --> N
@@ -134,7 +134,8 @@ graph TD
 - **Fallback Mechanisms**: Manual context building when native resume fails
 
 ### Performance Considerations
-- **Memory Management**: Automatic cleanup of expired sessions (24hr TTL)
+- **Memory Management**: Automatic cleanup of expired sessions (24hr TTL)       
 - **Session Limits**: Maximum 100 concurrent sessions to prevent memory exhaustion
 - **Context Optimization**: Only recent turns (last 2) used for manual context building
-- **Efficient Storage**: Minimal session metadata for optimal memory usage
+- **Efficient Storage**: Minimal session metadata for optimal memory usage      
+
