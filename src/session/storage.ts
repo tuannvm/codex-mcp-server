@@ -16,6 +16,7 @@ export interface SessionData {
 
 export interface SessionStorage {
   createSession(): string;
+  ensureSession(sessionId: string): void;
   getSession(sessionId: string): SessionData | undefined;
   updateSession(sessionId: string, data: Partial<SessionData>): void;
   deleteSession(sessionId: string): boolean;
@@ -46,6 +47,26 @@ export class InMemorySessionStorage implements SessionStorage {
 
     this.enforceMaxSessions();
     return sessionId;
+  }
+
+  ensureSession(sessionId: string): void {
+    this.cleanupExpiredSessions();
+
+    const existing = this.sessions.get(sessionId);
+    if (existing) {
+      existing.lastAccessedAt = new Date();
+      return;
+    }
+
+    const now = new Date();
+    this.sessions.set(sessionId, {
+      id: sessionId,
+      createdAt: now,
+      lastAccessedAt: now,
+      turns: [],
+    });
+
+    this.enforceMaxSessions();
   }
 
   getSession(sessionId: string): SessionData | undefined {

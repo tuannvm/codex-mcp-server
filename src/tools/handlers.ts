@@ -52,6 +52,7 @@ export class CodexToolHandler {
       let codexConversationId: string | undefined;
 
       if (sessionId) {
+        this.sessionStorage.ensureSession(sessionId);
         if (resetSession) {
           this.sessionStorage.resetSession(sessionId);
         }
