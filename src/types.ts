@@ -60,8 +60,10 @@ export const CodexToolSchema = z.object({
   prompt: z.string(),
   sessionId: z
     .string()
-    .max(256)
-    .regex(/^[a-zA-Z0-9_-]+$/)
+    .max(256, { message: 'Session ID must be 256 characters or fewer' })
+    .regex(/^[a-zA-Z0-9_-]+$/, {
+      message: 'Session ID can only contain letters, numbers, hyphens, and underscores',
+    })
     .optional(),
   resetSession: z.boolean().optional(),
   model: z.string().optional(),

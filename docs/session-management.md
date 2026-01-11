@@ -135,7 +135,8 @@ graph TD
 - **Fallback Mechanisms**: Manual context building when native resume fails
 
 ### Performance Considerations
-- **Memory Management**: Automatic cleanup of expired sessions (24hr TTL)       
+- **Memory Management**: In-memory, per-process sessions with automatic cleanup
+  of expired sessions (24hr TTL)
 - **Session Limits**: Maximum 100 concurrent sessions to prevent memory exhaustion
 - **Context Optimization**: Only recent turns (last 2) used for manual context building
 - **Efficient Storage**: Minimal session metadata for optimal memory usage      

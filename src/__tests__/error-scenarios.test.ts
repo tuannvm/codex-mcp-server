@@ -94,6 +94,8 @@ describe('Error Handling Scenarios', () => {
         sessionId: 'bad id',
       })
     ).rejects.toThrow(ValidationError);
+
+    expect(mockedExecuteCommand).not.toHaveBeenCalled();
   });
 
   test('should handle corrupted session data', async () => {

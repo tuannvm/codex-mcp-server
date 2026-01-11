@@ -31,6 +31,7 @@ export class InMemorySessionStorage implements SessionStorage {
   private sessions = new Map<string, SessionData>();
   private readonly maxSessions = 100;
   private readonly sessionTtl = 24 * 60 * 60 * 1000; // 24 hours
+  private readonly maxSessionIdLength = 256;
 
   createSession(): string {
     this.cleanupExpiredSessions();
@@ -51,6 +52,10 @@ export class InMemorySessionStorage implements SessionStorage {
 
   ensureSession(sessionId: string): void {
     this.cleanupExpiredSessions();
+
+    if (!sessionId || sessionId.length > this.maxSessionIdLength) {
+      throw new Error('Invalid sessionId');
+    }
 
     const existing = this.sessions.get(sessionId);
     if (existing) {

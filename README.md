@@ -70,7 +70,7 @@ Use codex with sessionId "refactor" to analyze this module
 Use codex with sessionId "refactor" to implement your suggestions
 ```
 Passing a sessionId creates the session on first use, so listSessions will show
-it and subsequent calls can resume context.
+it (for this server instance) and subsequent calls can resume context.
 
 **Code review:**
 ```
