@@ -1,4 +1,6 @@
 import { randomUUID } from 'crypto';
+import { TOOLS } from '../types.js';
+import { ValidationError } from '../errors.js';
 
 export interface ConversationTurn {
   prompt: string;
@@ -32,6 +34,7 @@ export class InMemorySessionStorage implements SessionStorage {
   private readonly maxSessions = 100;
   private readonly sessionTtl = 24 * 60 * 60 * 1000; // 24 hours
   private readonly maxSessionIdLength = 256;
+  private readonly sessionIdPattern = /^[a-zA-Z0-9_-]+$/;
 
   createSession(): string {
     this.cleanupExpiredSessions();
@@ -53,8 +56,15 @@ export class InMemorySessionStorage implements SessionStorage {
   ensureSession(sessionId: string): void {
     this.cleanupExpiredSessions();
 
-    if (!sessionId || sessionId.length > this.maxSessionIdLength) {
-      throw new Error('Invalid sessionId');
+    if (
+      !sessionId ||
+      sessionId.length > this.maxSessionIdLength ||
+      !this.sessionIdPattern.test(sessionId)
+    ) {
+      throw new ValidationError(
+        TOOLS.CODEX,
+        'Session ID must be 1-256 characters and contain only letters, numbers, hyphens, and underscores'
+      );
     }
 
     const existing = this.sessions.get(sessionId);

@@ -182,6 +182,9 @@ export class CodexToolHandler {
         },
       };
     } catch (error) {
+      if (error instanceof ValidationError) {
+        throw error;
+      }
       if (error instanceof ZodError) {
         throw new ValidationError(TOOLS.CODEX, error.message);
       }
