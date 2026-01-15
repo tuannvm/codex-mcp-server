@@ -58,7 +58,13 @@ export const SandboxMode = z.enum([
 // Zod schemas for tool arguments
 export const CodexToolSchema = z.object({
   prompt: z.string(),
-  sessionId: z.string().optional(),
+  sessionId: z
+    .string()
+    .max(256, { error: 'Session ID must be 256 characters or fewer' })
+    .regex(/^[a-zA-Z0-9_-]+$/, {
+      error: 'Session ID can only contain letters, numbers, hyphens, and underscores',
+    })
+    .optional(),
   resetSession: z.boolean().optional(),
   model: z.string().optional(),
   reasoningEffort: z.enum(['minimal', 'low', 'medium', 'high']).optional(),

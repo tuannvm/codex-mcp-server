@@ -1,4 +1,6 @@
 import { randomUUID } from 'crypto';
+import { TOOLS } from '../types.js';
+import { ValidationError } from '../errors.js';
 
 export interface ConversationTurn {
   prompt: string;
@@ -16,6 +18,7 @@ export interface SessionData {
 
 export interface SessionStorage {
   createSession(): string;
+  ensureSession(sessionId: string): void;
   getSession(sessionId: string): SessionData | undefined;
   updateSession(sessionId: string, data: Partial<SessionData>): void;
   deleteSession(sessionId: string): boolean;
@@ -30,6 +33,8 @@ export class InMemorySessionStorage implements SessionStorage {
   private sessions = new Map<string, SessionData>();
   private readonly maxSessions = 100;
   private readonly sessionTtl = 24 * 60 * 60 * 1000; // 24 hours
+  private readonly maxSessionIdLength = 256;
+  private readonly sessionIdPattern = /^[a-zA-Z0-9_-]+$/;
 
   createSession(): string {
     this.cleanupExpiredSessions();
@@ -46,6 +51,37 @@ export class InMemorySessionStorage implements SessionStorage {
 
     this.enforceMaxSessions();
     return sessionId;
+  }
+
+  ensureSession(sessionId: string): void {
+    this.cleanupExpiredSessions();
+
+    if (
+      !sessionId ||
+      sessionId.length > this.maxSessionIdLength ||
+      !this.sessionIdPattern.test(sessionId)
+    ) {
+      throw new ValidationError(
+        TOOLS.CODEX,
+        'Session ID must be 1-256 characters and contain only letters, numbers, hyphens, and underscores'
+      );
+    }
+
+    const existing = this.sessions.get(sessionId);
+    if (existing) {
+      existing.lastAccessedAt = new Date();
+      return;
+    }
+
+    const now = new Date();
+    this.sessions.set(sessionId, {
+      id: sessionId,
+      createdAt: now,
+      lastAccessedAt: now,
+      turns: [],
+    });
+
+    this.enforceMaxSessions();
   }
 
   getSession(sessionId: string): SessionData | undefined {

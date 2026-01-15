@@ -52,6 +52,7 @@ export class CodexToolHandler {
       let codexConversationId: string | undefined;
 
       if (sessionId) {
+        this.sessionStorage.ensureSession(sessionId);
         if (resetSession) {
           this.sessionStorage.resetSession(sessionId);
         }
@@ -181,6 +182,9 @@ export class CodexToolHandler {
         },
       };
     } catch (error) {
+      if (error instanceof ValidationError) {
+        throw error;
+      }
       if (error instanceof ZodError) {
         throw new ValidationError(TOOLS.CODEX, error.message);
       }
