@@ -358,6 +358,13 @@ export class ReviewToolHandler {
         workingDirectory,
       }: ReviewToolArgs = ReviewToolSchema.parse(args);
 
+      if (prompt && uncommitted) {
+        throw new ValidationError(
+          TOOLS.REVIEW,
+          'The review prompt cannot be combined with uncommitted=true. Use a base/commit review or omit the prompt.'
+        );
+      }
+
       // Build command arguments for codex exec review
       // All exec options (-C, --skip-git-repo-check, -c) must come BEFORE 'review' subcommand
       const cmdArgs = ['exec'];
@@ -433,6 +440,9 @@ export class ReviewToolHandler {
     } catch (error) {
       if (error instanceof ZodError) {
         throw new ValidationError(TOOLS.REVIEW, error.message);
+      }
+      if (error instanceof ValidationError) {
+        throw error;
       }
       throw new ToolExecutionError(
         TOOLS.REVIEW,
