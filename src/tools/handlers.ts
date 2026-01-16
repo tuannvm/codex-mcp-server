@@ -340,25 +340,19 @@ export class ReviewToolHandler {
         workingDirectory,
       }: ReviewToolArgs = ReviewToolSchema.parse(args);
 
-      // Build command arguments for codex exec review
-      // All exec options (-C, --skip-git-repo-check, -c) must come BEFORE 'review' subcommand
-      const cmdArgs = ['exec'];
+      // Build command arguments for codex review (top-level command, not subcommand of exec)
+      // Note: 'review' is a standalone command like 'exec', not 'exec review'
+      const cmdArgs = ['review'];
 
-      // Add working directory if specified (must be before subcommand)
-      if (workingDirectory) {
-        cmdArgs.push('-C', workingDirectory);
-      }
-
-      // Skip git repo check (required for running outside trusted directories)
-      cmdArgs.push('--skip-git-repo-check');
-
-      // Add model parameter (use default if not specified, must be before subcommand)
+      // Add model parameter via config
       const selectedModel =
         model || process.env.CODEX_DEFAULT_MODEL || 'gpt-5.2-codex';
       cmdArgs.push('-c', `model="${selectedModel}"`);
 
-      // Add the review subcommand
-      cmdArgs.push('review');
+      // Add working directory if specified
+      if (workingDirectory) {
+        cmdArgs.push('-C', workingDirectory);
+      }
 
       // Add review-specific flags
       if (uncommitted) {
