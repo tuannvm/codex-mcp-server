@@ -106,6 +106,7 @@ Execute Codex CLI with advanced session management and model control.
 | `sandbox` | enum | ❌ | - | Sandbox policy: `read-only`, `workspace-write`, `danger-full-access` |
 | `fullAuto` | boolean | ❌ | `false` | Enable full-auto mode (sandboxed automatic execution) |
 | `workingDirectory` | string | ❌ | - | Working directory for the agent |
+| `callbackUri` | string | ❌ | - | Static MCP callback URI passed via env to Codex |
 
 #### Model Options
 - `gpt-5.2-codex` (default) - Latest specialized coding model optimized for agentic tasks
@@ -131,6 +132,8 @@ interface CodexToolResponse {
     sessionId?: string;
     model: string;
     reasoningEffort?: string;
+    threadId?: string;
+    callbackUri?: string;
   };
 }
 ```
@@ -399,6 +402,9 @@ interface ErrorResponse {
 
 ### Environment Variables
 None required - authentication handled by Codex CLI.
+
+Optional:
+- `CODEX_MCP_CALLBACK_URI`: Static MCP callback URI passed to Codex CLI when invoking tools.
 
 ### Codex CLI Requirements
 - **Version**: 0.36.0 or later

@@ -71,6 +71,7 @@ export const CodexToolSchema = z.object({
   sandbox: SandboxMode.optional(),
   fullAuto: z.boolean().optional(),
   workingDirectory: z.string().optional(),
+  callbackUri: z.string().optional(),
 });
 
 // Review tool schema

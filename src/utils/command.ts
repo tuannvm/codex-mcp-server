@@ -27,11 +27,13 @@ export type ProgressCallback = (message: string) => void;
 
 export interface StreamingCommandOptions {
   onProgress?: ProgressCallback;
+  envOverride?: NodeJS.ProcessEnv;
 }
 
 export async function executeCommand(
   file: string,
-  args: string[] = []
+  args: string[] = [],
+  envOverride?: NodeJS.ProcessEnv
 ): Promise<CommandResult> {
   return new Promise((resolve, reject) => {
     // Escape args for Windows shell
@@ -41,7 +43,7 @@ export async function executeCommand(
 
     const child = spawn(file, escapedArgs, {
       shell: isWindows,
-      env: process.env,
+      env: envOverride ? { ...process.env, ...envOverride } : process.env,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
 
@@ -139,7 +141,9 @@ export async function executeCommandStreaming(
 
     const child = spawn(file, escapedArgs, {
       shell: isWindows, // Use shell on Windows to inherit PATH correctly
-      env: process.env,
+      env: options.envOverride
+        ? { ...process.env, ...options.envOverride }
+        : process.env,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
 

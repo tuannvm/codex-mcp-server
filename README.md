@@ -82,6 +82,7 @@ Use review with uncommitted true to review my local changes
 ```
 Use codex with model "o3" and reasoningEffort "high" for complex analysis
 Use codex with fullAuto true and sandbox "workspace-write" for automated tasks
+Use codex with callbackUri "http://localhost:1234/callback" for static callbacks
 ```
 
 ## Requirements
@@ -94,6 +95,9 @@ Use codex with fullAuto true and sandbox "workspace-write" for automated tasks
 - **[API Reference](docs/api-reference.md)** — Full tool parameters and response formats
 - **[Session Management](docs/session-management.md)** — How conversations work
 - **[Codex CLI Integration](docs/codex-cli-integration.md)** — Version compatibility and CLI details
+
+## Environment Variables
+- `CODEX_MCP_CALLBACK_URI`: Static MCP callback URI passed to Codex when set (overridden by `callbackUri` tool arg)
 
 ## Development
 

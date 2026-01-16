@@ -97,6 +97,11 @@ This MCP server is optimized for **codex CLI v0.75.0 or later** for full feature
 - **Fallback Strategy**: Manual context building when resume unavailable
 - **Session Integration**: Seamless integration with session management
 
+### 8. Thread ID Metadata (v0.81.0+)
+- **Output**: Codex CLI now includes `threadId` in MCP server responses
+- **Server Behavior**: This MCP server surfaces `threadId` in tool response metadata when present
+- **Regex Pattern**: `/thread\s*id\s*:\s*([a-zA-Z0-9_-]+)/i`
+
 ## Features Not Yet Supported
 
 The following Codex CLI features are not currently exposed through the MCP server:
@@ -114,6 +119,12 @@ The following Codex CLI features are not currently exposed through the MCP serve
 | Output File | `-o, --output-last-message` | Write response to file |
 
 These features may be added in future versions based on user demand.
+
+## MCP Callback URI (v0.81.0+)
+Codex CLI added static MCP callback URI support. This MCP server forwards the callback URI via environment variable when provided.
+
+- **Env Var**: `CODEX_MCP_CALLBACK_URI`
+- **MCP Parameter**: `callbackUri` (takes precedence over the env var)
 
 ## Implementation Details
 

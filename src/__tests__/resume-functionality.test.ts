@@ -19,6 +19,7 @@ describe('Codex Resume Functionality', () => {
     sessionStorage = new InMemorySessionStorage();
     handler = new CodexToolHandler(sessionStorage);
     mockedExecuteCommand.mockClear();
+    delete process.env.CODEX_MCP_CALLBACK_URI;
   });
 
   test('should use exec for new session without codex session ID', async () => {
@@ -56,6 +57,37 @@ describe('Codex Resume Functionality', () => {
 
     expect(sessionStorage.getCodexConversationId(sessionId)).toBe(
       'abc-123-def'
+    );
+  });
+
+  test('should surface threadId in response metadata when present', async () => {
+    mockedExecuteCommand.mockResolvedValue({
+      stdout: 'thread id: th_123',
+      stderr: '',
+    });
+
+    const result = await handler.execute({
+      prompt: 'Thread metadata check',
+    });
+
+    expect(result._meta?.threadId).toBe('th_123');
+  });
+
+  test('should pass callback URI via environment when provided', async () => {
+    mockedExecuteCommand.mockResolvedValue({
+      stdout: 'Test response',
+      stderr: '',
+    });
+
+    await handler.execute({
+      prompt: 'Callback check',
+      callbackUri: 'http://localhost:1234/callback',
+    });
+
+    expect(mockedExecuteCommand).toHaveBeenCalledWith(
+      'codex',
+      expect.any(Array),
+      { CODEX_MCP_CALLBACK_URI: 'http://localhost:1234/callback' }
     );
   });
 

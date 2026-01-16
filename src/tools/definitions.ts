@@ -48,6 +48,11 @@ export const toolDefinitions: ToolDefinition[] = [
           description:
             'Working directory for the agent to use as its root (passed via -C flag)',
         },
+        callbackUri: {
+          type: 'string',
+          description:
+            'Static MCP callback URI to pass to Codex via environment (if provided)',
+        },
       },
       required: ['prompt'],
     },

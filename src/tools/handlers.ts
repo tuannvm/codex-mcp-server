@@ -42,6 +42,7 @@ export class CodexToolHandler {
         sandbox,
         fullAuto,
         workingDirectory,
+        callbackUri,
       }: CodexToolArgs = CodexToolSchema.parse(args);
 
       let activeSessionId = sessionId;
@@ -77,6 +78,9 @@ export class CodexToolHandler {
       // Build command arguments with v0.75.0+ features
       const selectedModel =
         model || process.env.CODEX_DEFAULT_MODEL || 'gpt-5.2-codex'; // Default to gpt-5.2-codex
+
+      const effectiveCallbackUri =
+        callbackUri || process.env.CODEX_MCP_CALLBACK_URI;
 
       let cmdArgs: string[];
 
@@ -133,14 +137,21 @@ export class CodexToolHandler {
 
       // Use streaming execution if progress is enabled
       const useStreaming = !!context.progressToken;
+      const envOverride = effectiveCallbackUri
+        ? { CODEX_MCP_CALLBACK_URI: effectiveCallbackUri }
+        : undefined;
+
       const result = useStreaming
         ? await executeCommandStreaming('codex', cmdArgs, {
             onProgress: (message) => {
               // Send progress notification for each chunk of output
               context.sendProgress(message);
             },
+            envOverride,
           })
-        : await executeCommand('codex', cmdArgs);
+        : envOverride
+          ? await executeCommand('codex', cmdArgs, envOverride)
+          : await executeCommand('codex', cmdArgs);
 
       // Codex CLI may output to stderr, so check both
       const response = result.stdout || result.stderr || 'No output from Codex';
@@ -158,6 +169,11 @@ export class CodexToolHandler {
           );
         }
       }
+
+      const threadIdMatch = (result.stderr || result.stdout)?.match(
+        /thread\s*id\s*:\s*([a-zA-Z0-9_-]+)/i
+      );
+      const threadId = threadIdMatch ? threadIdMatch[1] : undefined;
 
       // Save turn only if using a session
       if (activeSessionId) {
@@ -179,6 +195,8 @@ export class CodexToolHandler {
         _meta: {
           ...(activeSessionId && { sessionId: activeSessionId }),
           model: selectedModel,
+          ...(threadId && { threadId }),
+          ...(effectiveCallbackUri && { callbackUri: effectiveCallbackUri }),
         },
       };
     } catch (error) {
