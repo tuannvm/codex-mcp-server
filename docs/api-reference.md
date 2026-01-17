@@ -102,13 +102,14 @@ Execute Codex CLI with advanced session management and model control.
 | `sessionId` | string | ❌ | - | Session ID for conversational context |
 | `resetSession` | boolean | ❌ | `false` | Reset session history before processing |
 | `model` | string | ❌ | `gpt-5.2-codex` | Model to use for processing |
-| `reasoningEffort` | enum | ❌ | - | Control reasoning depth |
+| `reasoningEffort` | enum | ❌ | - | Control reasoning depth (`minimal`, `low`, `medium`, `high`, `xhigh` — `xhigh` requires a supported model) |
 | `sandbox` | enum | ❌ | - | Sandbox policy: `read-only`, `workspace-write`, `danger-full-access` |
 | `fullAuto` | boolean | ❌ | `false` | Enable full-auto mode (sandboxed automatic execution) |
 | `workingDirectory` | string | ❌ | - | Working directory for the agent |
 
 #### Model Options
 - `gpt-5.2-codex` (default) - Latest specialized coding model optimized for agentic tasks
+- `gpt-5.2` - Latest general model with xhigh reasoning support
 - `gpt-5.1-codex` - Previous coding model version
 - `gpt-5.1-codex-max` - Enhanced coding model for complex tasks
 - `gpt-5-codex` - Base GPT-5 coding model
@@ -116,9 +117,11 @@ Execute Codex CLI with advanced session management and model control.
 - `gpt-4` - Advanced reasoning capabilities
 
 #### Reasoning Effort Levels
+- `minimal` - Fastest responses, shallow processing
 - `low` - Quick responses, minimal processing
 - `medium` - Balanced quality and speed
 - `high` - Thorough analysis and comprehensive responses
+- `xhigh` - Deepest analysis (supported models: `gpt-5.2-codex`, `gpt-5.2`, `gpt-5.1-codex-max`)
 
 #### Response Format
 ```typescript

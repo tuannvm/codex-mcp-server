@@ -24,13 +24,13 @@ export const toolDefinitions: ToolDefinition[] = [
         model: {
           type: 'string',
           description:
-            'Specify which model to use (defaults to gpt-5.2-codex). Options: gpt-5.2-codex, gpt-5.1-codex, gpt-5.1-codex-max, gpt-5-codex, gpt-4o, gpt-4, o3, o4-mini',
+            'Specify which model to use (defaults to gpt-5.2-codex). Options: gpt-5.2-codex, gpt-5.2, gpt-5.1-codex, gpt-5.1-codex-max, gpt-5-codex, gpt-4o, gpt-4, o3, o4-mini',
         },
         reasoningEffort: {
           type: 'string',
-          enum: ['minimal', 'low', 'medium', 'high'],
+          enum: ['minimal', 'low', 'medium', 'high', 'xhigh'],
           description:
-            'Control reasoning depth (minimal < low < medium < high)',
+            'Control reasoning depth (minimal < low < medium < high < xhigh)',
         },
         sandbox: {
           type: 'string',

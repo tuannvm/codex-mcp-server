@@ -44,7 +44,7 @@ interface ConversationTurn {
 - **sessionId** (optional): Session ID for conversational context
 - **resetSession** (optional): Reset session history before processing
 - **model** (optional): Model selection (defaults to `gpt-5.2-codex`)
-- **reasoningEffort** (optional): Control reasoning depth (low/medium/high)
+- **reasoningEffort** (optional): Control reasoning depth (minimal/low/medium/high/xhigh)
 - **Smart context building**: Uses native resume or fallback context
 - **Robust error handling**: Graceful degradation for various failure modes
 
@@ -140,4 +140,3 @@ graph TD
 - **Session Limits**: Maximum 100 concurrent sessions to prevent memory exhaustion
 - **Context Optimization**: Only recent turns (last 2) used for manual context building
 - **Efficient Storage**: Minimal session metadata for optimal memory usage      
-

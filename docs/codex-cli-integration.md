@@ -75,6 +75,7 @@ This MCP server is optimized for **codex CLI v0.75.0 or later** for full feature
 - **CLI Flag**: `--model <model-name>`
 - **Supported Models**:
   - `gpt-5.2-codex` (default, specialized for agentic coding)
+  - `gpt-5.2` (latest general model with xhigh support)
   - `gpt-5.1-codex` (previous coding model)
   - `gpt-5.1-codex-max` (enhanced coding)
   - `gpt-5-codex` (base GPT-5 coding)
@@ -86,8 +87,9 @@ This MCP server is optimized for **codex CLI v0.75.0 or later** for full feature
 
 ### 6. Reasoning Effort Control
 - **CLI Flag**: `-c model_reasoning_effort="<level>"`
-- **Levels**: `minimal`, `low`, `medium`, `high`
+- **Levels**: `minimal`, `low`, `medium`, `high`, `xhigh`
 - **MCP Parameter**: `reasoningEffort` parameter in codex tool
+- **Model Support**: `xhigh` is limited to `gpt-5.2-codex`, `gpt-5.2`, and `gpt-5.1-codex-max`
 - **Note**: The standalone `--reasoning-effort` flag was removed in v0.50.0, now uses quoted config values for consistency
 
 ### 7. Native Resume Functionality

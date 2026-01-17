@@ -20,10 +20,33 @@ import { ToolExecutionError, ValidationError } from '../errors.js';
 import { executeCommand, executeCommandStreaming } from '../utils/command.js';
 import { ZodError } from 'zod';
 
+const XHIGH_SUPPORTED_MODELS = new Set([
+  'gpt-5.2-codex',
+  'gpt-5.2',
+  'gpt-5.1-codex-max',
+]);
+
 // Default no-op context for handlers that don't need progress
 const defaultContext: ToolHandlerContext = {
   sendProgress: async () => {},
 };
+
+function validateReasoningEffortForModel(
+  selectedModel: string,
+  reasoningEffort: CodexToolArgs['reasoningEffort']
+): void {
+  if (reasoningEffort !== 'xhigh') {
+    return;
+  }
+
+  if (!XHIGH_SUPPORTED_MODELS.has(selectedModel)) {
+    const supportedModels = Array.from(XHIGH_SUPPORTED_MODELS).join(', ');
+    throw new ValidationError(
+      TOOLS.CODEX,
+      `reasoningEffort "xhigh" is only supported for models: ${supportedModels}. Selected model: ${selectedModel}`
+    );
+  }
+}
 
 export class CodexToolHandler {
   constructor(private sessionStorage: SessionStorage) {}
@@ -77,6 +100,8 @@ export class CodexToolHandler {
       // Build command arguments with v0.75.0+ features
       const selectedModel =
         model || process.env.CODEX_DEFAULT_MODEL || 'gpt-5.2-codex'; // Default to gpt-5.2-codex
+
+      validateReasoningEffortForModel(selectedModel, reasoningEffort);
 
       let cmdArgs: string[];
 
