@@ -22,6 +22,10 @@ jest.mock('../utils/command.js', () => ({
 import { TOOLS } from '../types.js';
 import { toolDefinitions } from '../tools/definitions.js';
 import {
+  CallToolResultSchema,
+  ListToolsResultSchema,
+} from '@modelcontextprotocol/sdk/types.js';
+import {
   toolHandlers,
   CodexToolHandler,
   ReviewToolHandler,
@@ -50,6 +54,14 @@ describe('Codex MCP Server', () => {
       expect(toolNames).toContain(TOOLS.PING);
       expect(toolNames).toContain(TOOLS.HELP);
       expect(toolNames).toContain(TOOLS.LIST_SESSIONS);
+    });
+
+    test('codex tool should define output schema', () => {
+      const codexTool = toolDefinitions.find(
+        (tool) => tool.name === TOOLS.CODEX
+      );
+      expect(codexTool?.outputSchema).toBeDefined();
+      expect(codexTool?.outputSchema?.type).toBe('object');
     });
 
     test('codex tool should have required prompt parameter', () => {
@@ -128,6 +140,24 @@ describe('Codex MCP Server', () => {
       const config = { name: 'test-server', version: '1.0.0' };
       const server = new CodexMcpServer(config);
       expect(server).toBeInstanceOf(CodexMcpServer);
+    });
+  });
+
+  describe('MCP schema compatibility', () => {
+    test('codex tool results should validate against CallToolResultSchema', () => {
+      const result = {
+        content: [{ type: 'text', text: 'ok', _meta: { threadId: 'th_123' } }],
+        structuredContent: { threadId: 'th_123' },
+        _meta: { model: 'gpt-5.2-codex' },
+      };
+
+      const parsed = CallToolResultSchema.safeParse(result);
+      expect(parsed.success).toBe(true);
+    });
+
+    test('tool definitions should validate against ListToolsResultSchema', () => {
+      const parsed = ListToolsResultSchema.safeParse({ tools: toolDefinitions });
+      expect(parsed.success).toBe(true);
     });
   });
 });

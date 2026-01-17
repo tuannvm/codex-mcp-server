@@ -127,7 +127,11 @@ interface CodexToolResponse {
   content: Array<{
     type: 'text';
     text: string;
+    _meta?: { threadId?: string };
   }>;
+  structuredContent?: {
+    threadId?: string;
+  };
   _meta?: {
     sessionId?: string;
     model: string;
@@ -135,6 +139,17 @@ interface CodexToolResponse {
     threadId?: string;
     callbackUri?: string;
   };
+}
+```
+
+#### Output Schema (structuredContent)
+The `codex` tool advertises an `outputSchema` that describes the structure of `structuredContent` returned in tool results.
+```json
+{
+  "type": "object",
+  "properties": {
+    "threadId": { "type": "string" }
+  }
 }
 ```
 

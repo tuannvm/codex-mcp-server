@@ -56,6 +56,12 @@ export const toolDefinitions: ToolDefinition[] = [
       },
       required: ['prompt'],
     },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        threadId: { type: 'string' },
+      },
+    },
     annotations: {
       title: 'Execute Codex CLI',
       readOnlyHint: false,

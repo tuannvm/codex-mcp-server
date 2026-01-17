@@ -170,7 +170,9 @@ export class CodexToolHandler {
         }
       }
 
-      const threadIdMatch = (result.stderr || result.stdout)?.match(
+      const combinedOutput = `${result.stderr || ''}
+${result.stdout || ''}`.trim();
+      const threadIdMatch = combinedOutput.match(
         /thread\s*id\s*:\s*([a-zA-Z0-9_-]+)/i
       );
       const threadId = threadIdMatch ? threadIdMatch[1] : undefined;
@@ -190,8 +192,14 @@ export class CodexToolHandler {
           {
             type: 'text',
             text: response,
+            _meta: {
+              ...(threadId && { threadId }),
+            },
           },
         ],
+        structuredContent: {
+          ...(threadId && { threadId }),
+        },
         _meta: {
           ...(activeSessionId && { sessionId: activeSessionId }),
           model: selectedModel,

@@ -51,7 +51,7 @@ Use review to check my uncommitted changes
 
 | Tool | Description |
 |------|-------------|
-| `codex` | AI coding assistant with session support and model selection |
+| `codex` | AI coding assistant with session support, model selection, and structured output metadata |
 | `review` | AI-powered code review for uncommitted changes, branches, or commits |
 | `listSessions` | View active conversation sessions |
 | `ping` | Test server connection |
@@ -83,6 +83,7 @@ Use review with uncommitted true to review my local changes
 Use codex with model "o3" and reasoningEffort "high" for complex analysis
 Use codex with fullAuto true and sandbox "workspace-write" for automated tasks
 Use codex with callbackUri "http://localhost:1234/callback" for static callbacks
+Use codex to return structuredContent with threadId metadata when available
 ```
 
 ## Requirements

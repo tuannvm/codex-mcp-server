@@ -99,7 +99,7 @@ This MCP server is optimized for **codex CLI v0.75.0 or later** for full feature
 
 ### 8. Thread ID Metadata (v0.81.0+)
 - **Output**: Codex CLI now includes `threadId` in MCP server responses
-- **Server Behavior**: This MCP server surfaces `threadId` in tool response metadata when present
+- **Server Behavior**: This MCP server surfaces `threadId` in tool response metadata, structuredContent, and content element metadata when present
 - **Regex Pattern**: `/thread\s*id\s*:\s*([a-zA-Z0-9_-]+)/i`
 
 ## Features Not Yet Supported
