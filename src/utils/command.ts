@@ -1,3 +1,4 @@
+type ProcessEnv = Record<string, string | undefined>;
 import { spawn } from 'child_process';
 import { Buffer } from 'node:buffer';
 import chalk from 'chalk';
@@ -27,13 +28,13 @@ export type ProgressCallback = (message: string) => void;
 
 export interface StreamingCommandOptions {
   onProgress?: ProgressCallback;
-  envOverride?: NodeJS.ProcessEnv;
+  envOverride?: ProcessEnv;
 }
 
 export async function executeCommand(
   file: string,
   args: string[] = [],
-  envOverride?: NodeJS.ProcessEnv
+  envOverride?: ProcessEnv
 ): Promise<CommandResult> {
   return new Promise((resolve, reject) => {
     // Escape args for Windows shell

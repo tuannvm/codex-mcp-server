@@ -48,12 +48,12 @@ describe('MCP stdio integration', () => {
         return;
       }
       const id = request.id as number;
-      const timer = setTimeout(() => {
+      const timer = globalThis.setTimeout(() => {
         pending.delete(id);
         reject(new Error(`Timed out waiting for response ${id}`));
       }, TEST_TIMEOUT_MS);
       pending.set(id, (payload) => {
-        clearTimeout(timer);
+        globalThis.clearTimeout(timer);
         resolve(payload);
       });
       server.stdin.write(`${JSON.stringify(request)}\n`);
@@ -82,7 +82,10 @@ describe('MCP stdio integration', () => {
         buffer = buffer.slice(newlineIndex + 1);
         if (line) {
           try {
-            const payload = JSON.parse(line) as { id?: number; result?: unknown };
+            const payload = JSON.parse(line) as {
+              id?: number;
+              result?: unknown;
+            };
             if (typeof payload.id === 'number') {
               const resolver = pending.get(payload.id);
               if (resolver) {
@@ -115,7 +118,12 @@ describe('MCP stdio integration', () => {
       id: 1,
       method: 'tools/list',
       params: {},
-    })) as { tools: Array<{ name: string; outputSchema?: { properties?: Record<string, unknown> } }> };
+    })) as {
+      tools: Array<{
+        name: string;
+        outputSchema?: { properties?: Record<string, unknown> };
+      }>;
+    };
 
     const listParse = ListToolsResultSchema.safeParse(listResponse);
     expect(listParse.success).toBe(true);
@@ -131,7 +139,11 @@ describe('MCP stdio integration', () => {
       method: 'tools/call',
       params: { name: 'codex', arguments: { prompt: 'Test prompt' } },
     })) as {
-      content: Array<{ type: string; text: string; _meta?: { threadId?: string } }>;
+      content: Array<{
+        type: string;
+        text: string;
+        _meta?: { threadId?: string };
+      }>;
       structuredContent?: { threadId?: string };
       _meta?: { callbackUri?: string };
     };

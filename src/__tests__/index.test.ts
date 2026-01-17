@@ -156,7 +156,9 @@ describe('Codex MCP Server', () => {
     });
 
     test('tool definitions should validate against ListToolsResultSchema', () => {
-      const parsed = ListToolsResultSchema.safeParse({ tools: toolDefinitions });
+      const parsed = ListToolsResultSchema.safeParse({
+        tools: toolDefinitions,
+      });
       expect(parsed.success).toBe(true);
     });
   });
