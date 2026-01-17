@@ -91,6 +91,9 @@ Use codex to return structuredContent with threadId metadata when available
 - **Codex CLI v0.75.0+** — Install with `npm i -g @openai/codex` or `brew install codex`
 - **OpenAI API key** — Run `codex login --api-key "your-key"` to authenticate
 
+## Codex 0.87 Compatibility
+- **Thread ID + structured output**: When Codex CLI emits `threadId`, this server returns it in content metadata and `structuredContent`, and advertises an `outputSchema` for structured responses.
+
 ## Documentation
 
 - **[API Reference](docs/api-reference.md)** — Full tool parameters and response formats
