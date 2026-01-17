@@ -57,6 +57,23 @@ describe('Model Selection and Reasoning Effort', () => {
     ]);
   });
 
+  test('should pass xhigh reasoning effort to codex CLI', async () => {
+    await handler.execute({
+      prompt: 'Deep analysis',
+      reasoningEffort: 'xhigh',
+    });
+
+    expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
+      'exec',
+      '--model',
+      'gpt-5.2-codex',
+      '-c',
+      'model_reasoning_effort="xhigh"',
+      '--skip-git-repo-check',
+      'Deep analysis',
+    ]);
+  });
+
   test('should combine model and reasoning effort', async () => {
     await handler.execute({
       prompt: 'Advanced task',
@@ -72,6 +89,36 @@ describe('Model Selection and Reasoning Effort', () => {
       'model_reasoning_effort="medium"',
       '--skip-git-repo-check',
       'Advanced task',
+    ]);
+  });
+
+  test('should reject xhigh for unsupported models', async () => {
+    await expect(
+      handler.execute({
+        prompt: 'Unsupported effort',
+        model: 'gpt-4',
+        reasoningEffort: 'xhigh',
+      })
+    ).rejects.toThrow('xhigh');
+
+    expect(mockedExecuteCommand).not.toHaveBeenCalled();
+  });
+
+  test('should allow xhigh for supported models', async () => {
+    await handler.execute({
+      prompt: 'Supported effort',
+      model: 'gpt-5.2',
+      reasoningEffort: 'xhigh',
+    });
+
+    expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
+      'exec',
+      '--model',
+      'gpt-5.2',
+      '-c',
+      'model_reasoning_effort="xhigh"',
+      '--skip-git-repo-check',
+      'Supported effort',
     ]);
   });
 
@@ -109,6 +156,29 @@ describe('Model Selection and Reasoning Effort', () => {
         reasoningEffort: 'invalid' as 'low',
       })
     ).rejects.toThrow();
+  });
+
+  test('should allow xhigh in resume mode', async () => {
+    const sessionId = sessionStorage.createSession();
+    sessionStorage.setCodexConversationId(sessionId, 'existing-conv-id');
+
+    await handler.execute({
+      prompt: 'Resume with xhigh',
+      sessionId,
+      reasoningEffort: 'xhigh',
+    });
+
+    expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
+      'exec',
+      '--skip-git-repo-check',
+      '-c',
+      'model="gpt-5.2-codex"',
+      '-c',
+      'model_reasoning_effort="xhigh"',
+      'resume',
+      'existing-conv-id',
+      'Resume with xhigh',
+    ]);
   });
 
   test('should pass minimal reasoning effort to CLI', async () => {
