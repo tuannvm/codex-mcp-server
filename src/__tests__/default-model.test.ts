@@ -23,6 +23,7 @@ describe('Default Model Configuration', () => {
       stdout: 'Test response',
       stderr: '',
     });
+    delete process.env.CODEX_MCP_CALLBACK_URI;
   });
 
   test('should use gpt-5.2-codex as default model when no model specified', async () => {
@@ -41,6 +42,7 @@ describe('Default Model Configuration', () => {
     const result = await handler.execute({ prompt: 'Test prompt' });
 
     expect(result._meta?.model).toBe('gpt-5.2-codex');
+    expect(result._meta?.callbackUri).toBeUndefined();
   });
 
   test('should override default model when explicit model provided', async () => {

@@ -51,7 +51,7 @@ Use review to check my uncommitted changes
 
 | Tool | Description |
 |------|-------------|
-| `codex` | AI coding assistant with session support and model selection |
+| `codex` | AI coding assistant with session support, model selection, and structured output metadata |
 | `review` | AI-powered code review for uncommitted changes, branches, or commits |
 | `listSessions` | View active conversation sessions |
 | `ping` | Test server connection |
@@ -82,6 +82,8 @@ Use review with uncommitted true to review my local changes
 ```
 Use codex with model "o3" and reasoningEffort "high" for complex analysis
 Use codex with fullAuto true and sandbox "workspace-write" for automated tasks
+Use codex with callbackUri "http://localhost:1234/callback" for static callbacks
+Use codex to return structuredContent with threadId metadata when available
 ```
 
 ## Requirements
@@ -89,11 +91,17 @@ Use codex with fullAuto true and sandbox "workspace-write" for automated tasks
 - **Codex CLI v0.75.0+** — Install with `npm i -g @openai/codex` or `brew install codex`
 - **OpenAI API key** — Run `codex login --api-key "your-key"` to authenticate
 
+## Codex 0.87 Compatibility
+- **Thread ID + structured output**: When Codex CLI emits `threadId`, this server returns it in content metadata and `structuredContent`, and advertises an `outputSchema` for structured responses.
+
 ## Documentation
 
 - **[API Reference](docs/api-reference.md)** — Full tool parameters and response formats
 - **[Session Management](docs/session-management.md)** — How conversations work
 - **[Codex CLI Integration](docs/codex-cli-integration.md)** — Version compatibility and CLI details
+
+## Environment Variables
+- `CODEX_MCP_CALLBACK_URI`: Static MCP callback URI passed to Codex when set (overridden by `callbackUri` tool arg)
 
 ## Development
 

@@ -29,6 +29,11 @@ export interface ToolDefinition {
     properties: Record<string, unknown>;
     required: string[];
   };
+  outputSchema?: {
+    type: 'object';
+    properties?: Record<string, unknown>;
+    required?: string[];
+  };
   annotations?: ToolAnnotations;
 }
 
@@ -37,7 +42,9 @@ export interface ToolResult {
   content: Array<{
     type: 'text';
     text: string;
+    _meta?: Record<string, unknown>;
   }>;
+  structuredContent?: Record<string, unknown>;
   isError?: boolean;
   _meta?: Record<string, unknown>;
 }
@@ -71,6 +78,7 @@ export const CodexToolSchema = z.object({
   sandbox: SandboxMode.optional(),
   fullAuto: z.boolean().optional(),
   workingDirectory: z.string().optional(),
+  callbackUri: z.string().optional(),
 });
 
 // Review tool schema

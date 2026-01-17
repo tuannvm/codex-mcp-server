@@ -42,6 +42,7 @@ export class CodexToolHandler {
         sandbox,
         fullAuto,
         workingDirectory,
+        callbackUri,
       }: CodexToolArgs = CodexToolSchema.parse(args);
 
       let activeSessionId = sessionId;
@@ -77,6 +78,9 @@ export class CodexToolHandler {
       // Build command arguments with v0.75.0+ features
       const selectedModel =
         model || process.env.CODEX_DEFAULT_MODEL || 'gpt-5.2-codex'; // Default to gpt-5.2-codex
+
+      const effectiveCallbackUri =
+        callbackUri || process.env.CODEX_MCP_CALLBACK_URI;
 
       let cmdArgs: string[];
 
@@ -133,14 +137,21 @@ export class CodexToolHandler {
 
       // Use streaming execution if progress is enabled
       const useStreaming = !!context.progressToken;
+      const envOverride = effectiveCallbackUri
+        ? { CODEX_MCP_CALLBACK_URI: effectiveCallbackUri }
+        : undefined;
+
       const result = useStreaming
         ? await executeCommandStreaming('codex', cmdArgs, {
             onProgress: (message) => {
               // Send progress notification for each chunk of output
               context.sendProgress(message);
             },
+            envOverride,
           })
-        : await executeCommand('codex', cmdArgs);
+        : envOverride
+          ? await executeCommand('codex', cmdArgs, envOverride)
+          : await executeCommand('codex', cmdArgs);
 
       // Codex CLI may output to stderr, so check both
       const response = result.stdout || result.stderr || 'No output from Codex';
@@ -159,6 +170,13 @@ export class CodexToolHandler {
         }
       }
 
+      const combinedOutput = `${result.stderr || ''}
+${result.stdout || ''}`.trim();
+      const threadIdMatch = combinedOutput.match(
+        /thread\s*id\s*:\s*([a-zA-Z0-9_-]+)/i
+      );
+      const threadId = threadIdMatch ? threadIdMatch[1] : undefined;
+
       // Save turn only if using a session
       if (activeSessionId) {
         const turn: ConversationTurn = {
@@ -174,11 +192,19 @@ export class CodexToolHandler {
           {
             type: 'text',
             text: response,
+            _meta: {
+              ...(threadId && { threadId }),
+            },
           },
         ],
+        structuredContent: {
+          ...(threadId && { threadId }),
+        },
         _meta: {
           ...(activeSessionId && { sessionId: activeSessionId }),
           model: selectedModel,
+          ...(threadId && { threadId }),
+          ...(effectiveCallbackUri && { callbackUri: effectiveCallbackUri }),
         },
       };
     } catch (error) {
@@ -340,6 +366,13 @@ export class ReviewToolHandler {
         workingDirectory,
       }: ReviewToolArgs = ReviewToolSchema.parse(args);
 
+      if (prompt && uncommitted) {
+        throw new ValidationError(
+          TOOLS.REVIEW,
+          'The review prompt cannot be combined with uncommitted=true. Use a base/commit review or omit the prompt.'
+        );
+      }
+
       // Build command arguments for codex exec review
       // All exec options (-C, --skip-git-repo-check, -c) must come BEFORE 'review' subcommand
       const cmdArgs = ['exec'];
@@ -415,6 +448,9 @@ export class ReviewToolHandler {
     } catch (error) {
       if (error instanceof ZodError) {
         throw new ValidationError(TOOLS.REVIEW, error.message);
+      }
+      if (error instanceof ValidationError) {
+        throw error;
       }
       throw new ToolExecutionError(
         TOOLS.REVIEW,
