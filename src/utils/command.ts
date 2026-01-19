@@ -84,13 +84,12 @@ export async function executeCommand(
         console.error(chalk.yellow('Command stderr:'), stderr);
       }
 
-      // Accept exit code 0 or if we got stdout output
-      // Note: Unlike executeCommandStreaming, we only accept stdout here
-      // to avoid silently swallowing failures that only produce stderr
-      if (code === 0 || stdout) {
-        if (code !== 0 && stdout) {
+      // Accept exit code 0 or if we got stdout/stderr output
+      // Note: codex CLI writes most output to stderr, so we must check both
+      if (code === 0 || stdout || stderr) {
+        if (code !== 0 && (stdout || stderr)) {
           console.error(
-            chalk.yellow('Command failed but produced output, using stdout')
+            chalk.yellow('Command failed but produced output, using output')
           );
         }
         resolve({ stdout, stderr });
