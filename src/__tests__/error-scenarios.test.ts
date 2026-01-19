@@ -1,4 +1,4 @@
-import { CodexToolHandler } from '../tools/handlers.js';
+import { CodexToolHandler, ReviewToolHandler } from '../tools/handlers.js';
 import { InMemorySessionStorage } from '../session/storage.js';
 import { executeCommand } from '../utils/command.js';
 import { ToolExecutionError, ValidationError } from '../errors.js';
@@ -85,6 +85,19 @@ describe('Error Handling Scenarios', () => {
     });
 
     expect(result.content[0].text).toBe('Response');
+  });
+
+  test('should reject review prompt with uncommitted', async () => {
+    const reviewHandler = new ReviewToolHandler();
+
+    await expect(
+      reviewHandler.execute({
+        prompt: 'Review instructions',
+        uncommitted: true,
+      })
+    ).rejects.toThrow(ValidationError);
+
+    expect(mockedExecuteCommand).not.toHaveBeenCalled();
   });
 
   test('should reject invalid sessionId values', async () => {
