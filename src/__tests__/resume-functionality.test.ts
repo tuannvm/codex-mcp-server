@@ -26,7 +26,7 @@ describe('Codex Resume Functionality', () => {
     const sessionId = sessionStorage.createSession();
     mockedExecuteCommand.mockResolvedValue({
       stdout: 'Test response',
-      stderr: 'session id: abc-123-def',
+      stderr: 'conversation id: abc-123-def',
     });
 
     await handler.execute({
@@ -47,7 +47,7 @@ describe('Codex Resume Functionality', () => {
     const sessionId = sessionStorage.createSession();
     mockedExecuteCommand.mockResolvedValue({
       stdout: 'Test response',
-      stderr: 'session id: abc-123-def',
+      stderr: 'conversation id: abc-123-def',
     });
 
     await handler.execute({
@@ -155,7 +155,7 @@ describe('Codex Resume Functionality', () => {
 
     mockedExecuteCommand.mockResolvedValue({
       stdout: 'Test response',
-      stderr: 'session id: new-session-id',
+      stderr: 'conversation id: new-session-id',
     });
 
     await handler.execute({

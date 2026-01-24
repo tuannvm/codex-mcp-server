@@ -79,12 +79,13 @@ export const toolDefinitions: ToolDefinition[] = [
       properties: {
         prompt: {
           type: 'string',
-          description: 'Custom review instructions or focus areas',
+          description:
+            'Custom review instructions or focus areas (cannot be used with uncommitted=true; use base/commit review instead)',
         },
         uncommitted: {
           type: 'boolean',
           description:
-            'Review staged, unstaged, and untracked changes (working tree)',
+            'Review staged, unstaged, and untracked changes (working tree) - cannot be combined with custom prompt',
         },
         base: {
           type: 'string',
@@ -106,7 +107,8 @@ export const toolDefinitions: ToolDefinition[] = [
         },
         workingDirectory: {
           type: 'string',
-          description: 'Working directory containing the repository to review',
+          description:
+            'Working directory to run the review in (passed via -C as a global Codex option)',
         },
       },
       required: [],
