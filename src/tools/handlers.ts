@@ -205,7 +205,8 @@ ${result.stdout || ''}`.trim();
             _meta: metadata,
           },
         ],
-        structuredContent: Object.keys(metadata).length > 0 ? metadata : undefined,
+        structuredContent:
+          Object.keys(metadata).length > 0 ? metadata : undefined,
       };
     } catch (error) {
       if (error instanceof ValidationError) {
