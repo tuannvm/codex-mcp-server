@@ -187,16 +187,25 @@ ${result.stdout || ''}`.trim();
         this.sessionStorage.addTurn(activeSessionId, turn);
       }
 
+      // Prepare metadata for dual approach:
+      // - content[0]._meta: For Claude Code compatibility (avoids structuredContent bug)
+      // - structuredContent: For other MCP clients that properly support it
+      const metadata: Record<string, unknown> = {
+        ...(threadId && { threadId }),
+        ...(selectedModel && { model: selectedModel }),
+        ...(activeSessionId && { sessionId: activeSessionId }),
+        ...(effectiveCallbackUri && { callbackUri: effectiveCallbackUri }),
+      };
+
       return {
         content: [
           {
             type: 'text',
             text: response,
-            _meta: {
-              ...(threadId && { threadId }),
-            },
+            _meta: metadata,
           },
         ],
+        structuredContent: Object.keys(metadata).length > 0 ? metadata : undefined,
       };
     } catch (error) {
       if (error instanceof ValidationError) {
@@ -417,18 +426,24 @@ export class ReviewToolHandler {
       const response =
         result.stdout || result.stderr || 'No review output from Codex';
 
+      // Prepare metadata for dual approach:
+      // - content[0]._meta: For Claude Code compatibility (avoids structuredContent bug)
+      // - structuredContent: For other MCP clients that properly support it
+      const metadata: Record<string, unknown> = {
+        model: selectedModel,
+        ...(base && { base }),
+        ...(commit && { commit }),
+      };
+
       return {
         content: [
           {
             type: 'text',
             text: response,
+            _meta: metadata,
           },
         ],
-        _meta: {
-          model: selectedModel,
-          ...(base && { base }),
-          ...(commit && { commit }),
-        },
+        structuredContent: metadata,
       };
     } catch (error) {
       if (error instanceof ZodError) {

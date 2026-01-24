@@ -41,7 +41,8 @@ describe('Default Model Configuration', () => {
   test('should include default model in response metadata', async () => {
     const result = await handler.execute({ prompt: 'Test prompt' });
 
-    expect(result._meta?.model).toBe('gpt-5.2-codex');
+    expect(result.content[0]._meta?.model).toBe('gpt-5.2-codex');
+    expect(result.structuredContent?.model).toBe('gpt-5.2-codex');
     expect(result._meta?.callbackUri).toBeUndefined();
   });
 

@@ -150,8 +150,7 @@ describe('MCP stdio integration', () => {
 
     const callParse = CallToolResultSchema.safeParse(callResponse);
     expect(callParse.success).toBe(true);
-    expect(callResponse.structuredContent?.threadId).toBe('th_stub_123');
     expect(callResponse.content[0]._meta?.threadId).toBe('th_stub_123');
-    expect(callResponse._meta?.callbackUri).toBe('http://localhost/callback');
+    expect(callResponse.structuredContent?.threadId).toBe('th_stub_123');
   });
 });

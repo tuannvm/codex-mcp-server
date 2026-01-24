@@ -82,9 +82,8 @@ describe('Model Selection and Reasoning Effort', () => {
       reasoningEffort: 'low',
     });
 
-    expect(result._meta).toEqual({
-      model: 'gpt-3.5-turbo',
-    });
+    expect(result.content[0]._meta?.model).toBe('gpt-3.5-turbo');
+    expect(result.structuredContent?.model).toBe('gpt-3.5-turbo');
   });
 
   test('should work with sessions and model selection', async () => {
@@ -96,10 +95,10 @@ describe('Model Selection and Reasoning Effort', () => {
       model: 'gpt-4',
     });
 
-    expect(result._meta).toEqual({
-      sessionId,
-      model: 'gpt-4',
-    });
+    expect(result.content[0]._meta?.model).toBe('gpt-4');
+    expect(result.content[0]._meta?.sessionId).toBe(sessionId);
+    expect(result.structuredContent?.model).toBe('gpt-4');
+    expect(result.structuredContent?.sessionId).toBe(sessionId);
   });
 
   test('should validate reasoning effort enum', async () => {

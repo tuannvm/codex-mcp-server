@@ -70,9 +70,8 @@ describe('Codex Resume Functionality', () => {
       prompt: 'Thread metadata check',
     });
 
-    expect(result._meta?.threadId).toBe('th_123');
-    expect(result.structuredContent?.threadId).toBe('th_123');
     expect(result.content[0]._meta?.threadId).toBe('th_123');
+    expect(result.structuredContent?.threadId).toBe('th_123');
   });
 
   test('should surface threadId when stderr has output and stdout contains thread id', async () => {
@@ -85,9 +84,8 @@ describe('Codex Resume Functionality', () => {
       prompt: 'Thread metadata mixed output',
     });
 
-    expect(result._meta?.threadId).toBe('th_stdout_456');
-    expect(result.structuredContent?.threadId).toBe('th_stdout_456');
     expect(result.content[0]._meta?.threadId).toBe('th_stdout_456');
+    expect(result.structuredContent?.threadId).toBe('th_stdout_456');
   });
 
   test('should surface threadId when stdout has noise and stderr contains thread id', async () => {
@@ -100,9 +98,8 @@ describe('Codex Resume Functionality', () => {
       prompt: 'Thread metadata mixed output stderr',
     });
 
-    expect(result._meta?.threadId).toBe('th_stderr_789');
-    expect(result.structuredContent?.threadId).toBe('th_stderr_789');
     expect(result.content[0]._meta?.threadId).toBe('th_stderr_789');
+    expect(result.structuredContent?.threadId).toBe('th_stderr_789');
   });
 
   test('should pass callback URI via environment when provided', async () => {

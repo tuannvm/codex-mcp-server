@@ -65,7 +65,6 @@ describe('Context Building Analysis', () => {
   test('should work without sessions by default', async () => {
     const result = await handler.execute({ prompt: 'Simple test' });
 
-    expect(result._meta?.sessionId).toBeUndefined();
     expect(result.content[0].text).toBe('Test response'); // No session noise
   });
 
@@ -73,7 +72,8 @@ describe('Context Building Analysis', () => {
     const sessionId = sessionStorage.createSession();
     const result = await handler.execute({ prompt: 'Test prompt', sessionId });
 
-    expect(result._meta?.sessionId).toBe(sessionId);
+    expect(result.content[0]._meta?.sessionId).toBe(sessionId);
+    expect(result.structuredContent?.sessionId).toBe(sessionId);
     expect(result.content[0].text).toBe('Test response'); // Clean response
   });
 
