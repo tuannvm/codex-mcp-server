@@ -33,8 +33,8 @@ interface ConversationTurn {
 ```
 
 ### Native Codex Integration
-- **Automatic conversation ID extraction** from Codex CLI output
-- **Resume functionality** using `codex resume <conversation-id>`
+- **Automatic conversation ID extraction** from Codex CLI output (supports both "session id" and "conversation id" formats)
+- **Resume functionality** using `codex exec resume <conversation-id>`
 - **Fallback context building** when native resume unavailable
 - **Model consistency** across session interactions
 

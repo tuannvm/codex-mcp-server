@@ -127,16 +127,17 @@ interface CodexToolResponse {
   content: Array<{
     type: 'text';
     text: string;
-    _meta?: { threadId?: string };
+    _meta?: {
+      threadId?: string;
+      model?: string;
+      sessionId?: string;
+      callbackUri?: string;
+    };
   }>;
   structuredContent?: {
     threadId?: string;
-  };
-  _meta?: {
+    model?: string;
     sessionId?: string;
-    model: string;
-    reasoningEffort?: string;
-    threadId?: string;
     callbackUri?: string;
   };
 }
@@ -205,8 +206,8 @@ Run AI-powered code reviews against your repository using Codex CLI.
 | `base` | string | ❌ | - | Review changes against a specific base branch |
 | `commit` | string | ❌ | - | Review changes introduced by a specific commit SHA |
 | `title` | string | ❌ | - | Title to display in the review summary |
-| `model` | string | ❌ | `gpt-5.2-codex` | Model to use for the review |
-| `workingDirectory` | string | ❌ | - | Working directory containing the repository |
+| `model` | string | ❌ | `gpt-5.2-codex` | Model to use for the review (passed via `-c model="..."`) |
+| `workingDirectory` | string | ❌ | - | Working directory to run the review in (passed via `-C`) |
 
 #### Examples
 
@@ -239,8 +240,13 @@ interface ReviewToolResponse {
   content: Array<{
     type: 'text';
     text: string; // Review output from Codex
+    _meta?: {
+      model: string;
+      base?: string;
+      commit?: string;
+    };
   }>;
-  _meta?: {
+  structuredContent?: {
     model: string;
     base?: string;
     commit?: string;
@@ -356,8 +362,8 @@ interface ConversationTurn {
 
 The server leverages Codex CLI v0.50.0+ native resume functionality:
 
-1. **Conversation ID Extraction**: Automatically captures conversation IDs from Codex output
-2. **Native Resume**: Uses `codex resume <conversation-id>` for optimal continuity
+1. **Conversation ID Extraction**: Automatically captures conversation IDs from Codex output (supports both "session id" and "conversation id" formats)
+2. **Native Resume**: Uses `codex exec resume <conversation-id>` for optimal continuity
 3. **Fallback Context**: Manual context building when native resume unavailable
 4. **Seamless Integration**: Transparent to end users
 

@@ -156,16 +156,16 @@ export class CodexToolHandler {
       // Codex CLI may output to stderr, so check both
       const response = result.stdout || result.stderr || 'No output from Codex';
 
-      // Extract session ID from new conversations for future resume
-      // Note: Codex v0.75.0 uses "session id:" format
+      // Extract conversation/session ID from new conversations for future resume
+      // Codex CLI outputs have varied between "session id" and "conversation id"
       if (activeSessionId && !useResume) {
         const conversationIdMatch = result.stderr?.match(
-          /session\s*id\s*:\s*([a-zA-Z0-9-]+)/i
+          /(conversation|session)\s*id\s*:\s*([a-zA-Z0-9-]+)/i
         );
         if (conversationIdMatch) {
           this.sessionStorage.setCodexConversationId(
             activeSessionId,
-            conversationIdMatch[1]
+            conversationIdMatch[2]
           );
         }
       }
@@ -374,19 +374,19 @@ export class ReviewToolHandler {
         );
       }
 
-      // Build command arguments for codex exec review
-      // All exec options (-C, --skip-git-repo-check, -c) must come BEFORE 'review' subcommand
-      const cmdArgs = ['exec', '--skip-git-repo-check'];
+      // Build command arguments for codex review
+      const cmdArgs: string[] = [];
+
+      if (workingDirectory) {
+        cmdArgs.push('-C', workingDirectory);
+      }
 
       // Add model parameter via config
       const selectedModel =
         model || process.env.CODEX_DEFAULT_MODEL || 'gpt-5.2-codex';
       cmdArgs.push('-c', `model="${selectedModel}"`);
 
-      // Add working directory if specified
-      if (workingDirectory) {
-        cmdArgs.push('-C', workingDirectory);
-      }
+      cmdArgs.push('review');
 
       // Add review-specific flags
       if (uncommitted) {
