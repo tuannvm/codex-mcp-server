@@ -197,15 +197,6 @@ ${result.stdout || ''}`.trim();
             },
           },
         ],
-        structuredContent: {
-          ...(threadId && { threadId }),
-        },
-        _meta: {
-          ...(activeSessionId && { sessionId: activeSessionId }),
-          model: selectedModel,
-          ...(threadId && { threadId }),
-          ...(effectiveCallbackUri && { callbackUri: effectiveCallbackUri }),
-        },
       };
     } catch (error) {
       if (error instanceof ValidationError) {
