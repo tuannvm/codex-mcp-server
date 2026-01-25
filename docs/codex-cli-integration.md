@@ -99,9 +99,9 @@ This MCP server is optimized for **codex CLI v0.75.0 or later** for full feature
 
 ### 8. Thread ID Metadata (v0.87.0+)
 - **Output**: Codex CLI emits `threadId` in MCP responses
-- **Server Behavior**: This MCP server surfaces `threadId` in tool response metadata, structuredContent, and content element metadata when present
+- **Server Behavior**: This MCP server surfaces `threadId` in tool response metadata and content element metadata when present. `structuredContent` is only emitted when `STRUCTURED_CONTENT_ENABLED` is truthy and is **disabled by default**.
 - **Regex Pattern**: `/thread\s*id\s*:\s*([a-zA-Z0-9_-]+)/i`
-- **Structured Output**: The codex tool advertises an `outputSchema` for `structuredContent` (currently `threadId`).
+- **Structured Output**: The codex tool advertises an `outputSchema` for `structuredContent` (currently `threadId`) when enabled.
 
 ## Features Not Yet Supported
 

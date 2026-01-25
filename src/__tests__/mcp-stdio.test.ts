@@ -69,6 +69,7 @@ describe('MCP stdio integration', () => {
         ...process.env,
         PATH: `${stubDir}${path.delimiter}${process.env.PATH}`,
         CODEX_MCP_CALLBACK_URI: 'http://localhost/callback',
+        STRUCTURED_CONTENT_ENABLED: '1',
       },
       stdio: ['pipe', 'pipe', 'pipe'],
     });

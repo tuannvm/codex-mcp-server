@@ -143,8 +143,10 @@ interface CodexToolResponse {
 }
 ```
 
+**Note:** `structuredContent` is only emitted when `STRUCTURED_CONTENT_ENABLED` is set to a truthy value (`1`, `true`, `yes`, `on`). It is **disabled by default**. `_meta` remains available in `content` for Claude Code compatibility.
+
 #### Output Schema (structuredContent)
-The `codex` tool advertises an `outputSchema` that describes the structure of `structuredContent` returned in tool results.
+The `codex` tool advertises an `outputSchema` that describes the structure of `structuredContent` returned in tool results when enabled.
 ```json
 {
   "type": "object",
@@ -253,6 +255,8 @@ interface ReviewToolResponse {
   };
 }
 ```
+
+**Note:** `structuredContent` is only emitted when `STRUCTURED_CONTENT_ENABLED` is set to a truthy value (`1`, `true`, `yes`, `on`). It is **disabled by default**. `_meta` remains available in `content` for Claude Code compatibility.
 
 ---
 
