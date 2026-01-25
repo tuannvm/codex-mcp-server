@@ -14,6 +14,19 @@ const mockedExecuteCommand = executeCommand as jest.MockedFunction<
 describe('Context Building Analysis', () => {
   let handler: CodexToolHandler;
   let sessionStorage: InMemorySessionStorage;
+  let originalStructuredContent: string | undefined;
+
+  beforeAll(() => {
+    originalStructuredContent = process.env.STRUCTURED_CONTENT_ENABLED;
+  });
+
+  afterAll(() => {
+    if (originalStructuredContent) {
+      process.env.STRUCTURED_CONTENT_ENABLED = originalStructuredContent;
+    } else {
+      delete process.env.STRUCTURED_CONTENT_ENABLED;
+    }
+  });
 
   beforeEach(() => {
     sessionStorage = new InMemorySessionStorage();
@@ -23,6 +36,7 @@ describe('Context Building Analysis', () => {
       stdout: 'Test response',
       stderr: '',
     });
+    process.env.STRUCTURED_CONTENT_ENABLED = '1';
   });
 
   test('should build enhanced prompt correctly', async () => {

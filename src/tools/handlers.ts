@@ -25,11 +25,11 @@ const defaultContext: ToolHandlerContext = {
   sendProgress: async () => {},
 };
 
-const structuredContentEnabled = (() => {
+const isStructuredContentEnabled = (): boolean => {
   const raw = process.env.STRUCTURED_CONTENT_ENABLED;
   if (!raw) return false;
   return ['1', 'true', 'yes', 'on'].includes(raw.toLowerCase());
-})();
+};
 
 export class CodexToolHandler {
   constructor(private sessionStorage: SessionStorage) {}
@@ -212,7 +212,7 @@ ${result.stdout || ''}`.trim();
           },
         ],
         structuredContent:
-          structuredContentEnabled && Object.keys(metadata).length > 0
+          isStructuredContentEnabled() && Object.keys(metadata).length > 0
             ? metadata
             : undefined,
       };
@@ -452,7 +452,7 @@ export class ReviewToolHandler {
             _meta: metadata,
           },
         ],
-        structuredContent: structuredContentEnabled ? metadata : undefined,
+        structuredContent: isStructuredContentEnabled() ? metadata : undefined,
       };
     } catch (error) {
       if (error instanceof ZodError) {

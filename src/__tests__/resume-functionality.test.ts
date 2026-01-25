@@ -14,11 +14,25 @@ const mockedExecuteCommand = executeCommand as jest.MockedFunction<
 describe('Codex Resume Functionality', () => {
   let handler: CodexToolHandler;
   let sessionStorage: InMemorySessionStorage;
+  let originalStructuredContent: string | undefined;
+
+  beforeAll(() => {
+    originalStructuredContent = process.env.STRUCTURED_CONTENT_ENABLED;
+  });
+
+  afterAll(() => {
+    if (originalStructuredContent) {
+      process.env.STRUCTURED_CONTENT_ENABLED = originalStructuredContent;
+    } else {
+      delete process.env.STRUCTURED_CONTENT_ENABLED;
+    }
+  });
 
   beforeEach(() => {
     sessionStorage = new InMemorySessionStorage();
     handler = new CodexToolHandler(sessionStorage);
     mockedExecuteCommand.mockClear();
+    process.env.STRUCTURED_CONTENT_ENABLED = '1';
     delete process.env.CODEX_MCP_CALLBACK_URI;
   });
 
