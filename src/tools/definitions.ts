@@ -28,9 +28,9 @@ export const toolDefinitions: ToolDefinition[] = [
         },
         reasoningEffort: {
           type: 'string',
-          enum: ['minimal', 'low', 'medium', 'high'],
+          enum: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'],
           description:
-            'Control reasoning depth (minimal < low < medium < high)',
+            'Control reasoning depth (none < minimal < low < medium < high < xhigh)',
         },
         sandbox: {
           type: 'string',

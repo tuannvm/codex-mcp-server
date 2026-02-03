@@ -74,7 +74,7 @@ export const CodexToolSchema = z.object({
     .optional(),
   resetSession: z.boolean().optional(),
   model: z.string().optional(),
-  reasoningEffort: z.enum(['minimal', 'low', 'medium', 'high']).optional(),
+  reasoningEffort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh']).optional(),
   sandbox: SandboxMode.optional(),
   fullAuto: z.boolean().optional(),
   workingDirectory: z.string().optional(),

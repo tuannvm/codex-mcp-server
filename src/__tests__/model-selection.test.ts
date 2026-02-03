@@ -140,4 +140,38 @@ describe('Model Selection and Reasoning Effort', () => {
       'Quick task',
     ]);
   });
+
+  test('should pass none reasoning effort to CLI', async () => {
+    await handler.execute({
+      prompt: 'Simple task',
+      reasoningEffort: 'none',
+    });
+
+    expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
+      'exec',
+      '--model',
+      'gpt-5.2-codex',
+      '-c',
+      'model_reasoning_effort="none"',
+      '--skip-git-repo-check',
+      'Simple task',
+    ]);
+  });
+
+  test('should pass xhigh reasoning effort to CLI', async () => {
+    await handler.execute({
+      prompt: 'Complex task',
+      reasoningEffort: 'xhigh',
+    });
+
+    expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
+      'exec',
+      '--model',
+      'gpt-5.2-codex',
+      '-c',
+      'model_reasoning_effort="xhigh"',
+      '--skip-git-repo-check',
+      'Complex task',
+    ]);
+  });
 });
