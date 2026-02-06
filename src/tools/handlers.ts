@@ -85,7 +85,9 @@ export class CodexToolHandler {
 
       // Build command arguments with v0.75.0+ features
       const selectedModel =
-        model || process.env[CODEX_DEFAULT_MODEL_ENV_VAR] || DEFAULT_CODEX_MODEL;
+        model ||
+        process.env[CODEX_DEFAULT_MODEL_ENV_VAR] ||
+        DEFAULT_CODEX_MODEL;
 
       const effectiveCallbackUri =
         callbackUri || process.env.CODEX_MCP_CALLBACK_URI;
@@ -393,7 +395,9 @@ export class ReviewToolHandler {
 
       // Add model parameter via config
       const selectedModel =
-        model || process.env[CODEX_DEFAULT_MODEL_ENV_VAR] || DEFAULT_CODEX_MODEL;
+        model ||
+        process.env[CODEX_DEFAULT_MODEL_ENV_VAR] ||
+        DEFAULT_CODEX_MODEL;
       cmdArgs.push('-c', `model="${selectedModel}"`);
 
       cmdArgs.push('review');
