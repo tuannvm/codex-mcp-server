@@ -1,4 +1,4 @@
-import { TOOLS, type ToolDefinition } from '../types.js';
+import { TOOLS, getModelDescription, type ToolDefinition } from '../types.js';
 
 export const toolDefinitions: ToolDefinition[] = [
   {
@@ -23,8 +23,7 @@ export const toolDefinitions: ToolDefinition[] = [
         },
         model: {
           type: 'string',
-          description:
-            'Specify which model to use (defaults to gpt-5.2-codex). Options: gpt-5.2-codex, gpt-5.1-codex, gpt-5.1-codex-max, gpt-5-codex, gpt-4o, gpt-4, o3, o4-mini',
+          description: getModelDescription('codex'),
         },
         reasoningEffort: {
           type: 'string',
@@ -102,8 +101,7 @@ export const toolDefinitions: ToolDefinition[] = [
         },
         model: {
           type: 'string',
-          description:
-            'Specify which model to use for the review (defaults to gpt-5.2-codex)',
+          description: getModelDescription('review'),
         },
         workingDirectory: {
           type: 'string',

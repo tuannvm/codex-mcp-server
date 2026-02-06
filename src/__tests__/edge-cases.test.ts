@@ -133,7 +133,7 @@ describe('Edge Cases and Integration Issues', () => {
 
     // Should only use recent turns, not crash with too much context
     const call = mockedExecuteCommand.mock.calls[0];
-    const prompt = call?.[1]?.[4]; // After exec, --model, gpt-5.2-codex, --skip-git-repo-check, prompt
+    const prompt = call?.[1]?.[4]; // After exec, --model, gpt-5.3-codex, --skip-git-repo-check, prompt
     expect(typeof prompt).toBe('string');
     if (prompt) {
       expect(prompt.length).toBeLessThan(5000); // Reasonable limit
