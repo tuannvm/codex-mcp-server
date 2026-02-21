@@ -110,6 +110,10 @@ Use websearch with query "React Server Components" and searchDepth "full"
 
 ## Environment Variables
 - `CODEX_MCP_CALLBACK_URI`: Static MCP callback URI passed to Codex when set (overridden by `callbackUri` tool arg)
+- `CODEX_MCP_MEMORY_ONLY`: Set to `true` to use in-memory session storage instead of file-based persistence (default: file-based)
+- `CODEX_MCP_SESSION_FILE`: Custom path for the session storage file (default: `~/.codex-mcp/sessions.json`)
+
+> **Note**: The file-based session storage is designed for single-process use. If multiple MCP server processes access the same session file concurrently, data may be overwritten. Each Claude Code session typically runs its own MCP server process.
 
 ## Development
 

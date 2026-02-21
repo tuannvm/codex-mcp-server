@@ -20,6 +20,7 @@ import {
   type SessionStorage,
   type ConversationTurn,
 } from '../session/storage.js';
+import { FileSessionStorage } from '../session/file-storage.js';
 import { ToolExecutionError, ValidationError } from '../errors.js';
 import { executeCommand, executeCommandStreaming } from '../utils/command.js';
 import { ZodError } from 'zod';
@@ -555,7 +556,14 @@ export class WebSearchToolHandler {
 }
 
 // Tool handler registry
-const sessionStorage = new InMemorySessionStorage();
+function createSessionStorage(): SessionStorage {
+  if (process.env.CODEX_MCP_MEMORY_ONLY === 'true') {
+    return new InMemorySessionStorage();
+  }
+  return new FileSessionStorage(process.env.CODEX_MCP_SESSION_FILE || undefined);
+}
+
+const sessionStorage = createSessionStorage();
 
 export const toolHandlers = {
   [TOOLS.CODEX]: new CodexToolHandler(sessionStorage),
