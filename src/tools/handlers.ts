@@ -501,7 +501,12 @@ export class WebSearchToolHandler {
       const searchPrompt = `Search for: ${query}. Provide ${numResults} key findings.${searchDepth === 'full' ? ' Include detailed analysis and context.' : ''}`;
 
       // Build codex command with --search flag before exec subcommand
-      const cmdArgs = ['--search', 'exec', '--skip-git-repo-check', searchPrompt];
+      const cmdArgs = [
+        '--search',
+        'exec',
+        '--skip-git-repo-check',
+        searchPrompt,
+      ];
 
       // Use streaming execution if progress is enabled
       const useStreaming = !!context.progressToken;
