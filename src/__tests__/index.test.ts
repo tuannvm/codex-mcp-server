@@ -32,6 +32,7 @@ import {
   PingToolHandler,
   HelpToolHandler,
   ListSessionsToolHandler,
+  WebSearchToolHandler,
 } from '../tools/handlers.js';
 import { InMemorySessionStorage } from '../session/storage.js';
 import { CodexMcpServer } from '../server.js';
@@ -46,11 +47,12 @@ describe('Codex MCP Server', () => {
 
   describe('Tool Definitions', () => {
     test('should have all required tools defined', () => {
-      expect(toolDefinitions).toHaveLength(5);
+      expect(toolDefinitions).toHaveLength(6);
 
       const toolNames = toolDefinitions.map((tool) => tool.name);
       expect(toolNames).toContain(TOOLS.CODEX);
       expect(toolNames).toContain(TOOLS.REVIEW);
+      expect(toolNames).toContain(TOOLS.WEBSEARCH);
       expect(toolNames).toContain(TOOLS.PING);
       expect(toolNames).toContain(TOOLS.HELP);
       expect(toolNames).toContain(TOOLS.LIST_SESSIONS);
@@ -92,6 +94,9 @@ describe('Codex MCP Server', () => {
     test('should have handlers for all tools', () => {
       expect(toolHandlers[TOOLS.CODEX]).toBeInstanceOf(CodexToolHandler);
       expect(toolHandlers[TOOLS.REVIEW]).toBeInstanceOf(ReviewToolHandler);
+      expect(toolHandlers[TOOLS.WEBSEARCH]).toBeInstanceOf(
+        WebSearchToolHandler
+      );
       expect(toolHandlers[TOOLS.PING]).toBeInstanceOf(PingToolHandler);
       expect(toolHandlers[TOOLS.HELP]).toBeInstanceOf(HelpToolHandler);
       expect(toolHandlers[TOOLS.LIST_SESSIONS]).toBeInstanceOf(
@@ -132,6 +137,15 @@ describe('Codex MCP Server', () => {
       expect(reviewTool).toBeDefined();
       expect(reviewTool?.inputSchema.required).toEqual([]);
       expect(reviewTool?.description).toContain('code review');
+    });
+
+    test('websearch tool should have correct definition', () => {
+      const websearchTool = toolDefinitions.find(
+        (tool) => tool.name === TOOLS.WEBSEARCH
+      );
+      expect(websearchTool).toBeDefined();
+      expect(websearchTool?.inputSchema.required).toEqual(['query']);
+      expect(websearchTool?.description).toContain('web search');
     });
   });
 

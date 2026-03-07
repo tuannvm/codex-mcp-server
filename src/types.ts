@@ -7,6 +7,7 @@ export const TOOLS = {
   PING: 'ping',
   HELP: 'help',
   LIST_SESSIONS: 'listSessions',
+  WEBSEARCH: 'websearch',
 } as const;
 
 export type ToolName = typeof TOOLS[keyof typeof TOOLS];
@@ -126,10 +127,18 @@ export const HelpToolSchema = z.object({});
 
 export const ListSessionsToolSchema = z.object({});
 
+// Web search tool schema
+export const WebSearchToolSchema = z.object({
+  query: z.string().min(1, 'Search query cannot be empty'),
+  numResults: z.number().int().min(1).max(50).optional().default(10),
+  searchDepth: z.enum(['basic', 'full']).optional().default('basic'),
+});
+
 export type CodexToolArgs = z.infer<typeof CodexToolSchema>;
 export type ReviewToolArgs = z.infer<typeof ReviewToolSchema>;
 export type PingToolArgs = z.infer<typeof PingToolSchema>;
 export type ListSessionsToolArgs = z.infer<typeof ListSessionsToolSchema>;
+export type WebSearchToolArgs = z.infer<typeof WebSearchToolSchema>;
 
 // Command execution result
 export interface CommandResult {

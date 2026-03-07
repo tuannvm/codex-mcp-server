@@ -172,4 +172,37 @@ export const toolDefinitions: ToolDefinition[] = [
       openWorldHint: false,
     },
   },
+  {
+    name: TOOLS.WEBSEARCH,
+    description: 'Perform web search using Codex CLI with web search enabled',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'The search query to execute',
+        },
+        numResults: {
+          type: 'integer',
+          description: 'Number of search results to return (1-50, default: 10)',
+          minimum: 1,
+          maximum: 50,
+        },
+        searchDepth: {
+          type: 'string',
+          enum: ['basic', 'full'],
+          description:
+            'Search depth: basic (faster) or full (deeper analysis, default: basic)',
+        },
+      },
+      required: ['query'],
+    },
+    annotations: {
+      title: 'Web Search',
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
+  },
 ];

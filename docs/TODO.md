@@ -65,6 +65,14 @@ These features were introduced/stabilized in Codex CLI v0.98.0 but are not yet i
   - Added `'none'` and `'xhigh'` to reasoningEffort enum
   - Full range: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`
 
+### ✅ Web Search Tool
+- **Status**: Implemented
+- **Description**: Web search capability using Codex CLI
+- **Changes**:
+  - Added `websearch` tool with `query`, `numResults`, and `searchDepth` parameters
+  - Leverages Codex CLI's natural web search capability through crafted prompts
+  - Supports streaming progress updates for long-running searches
+
 ---
 
 ## Future Considerations

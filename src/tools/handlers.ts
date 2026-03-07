@@ -7,11 +7,13 @@ import {
   type CodexToolArgs,
   type ReviewToolArgs,
   type PingToolArgs,
+  type WebSearchToolArgs,
   CodexToolSchema,
   ReviewToolSchema,
   PingToolSchema,
   HelpToolSchema,
   ListSessionsToolSchema,
+  WebSearchToolSchema,
 } from '../types.js';
 import {
   InMemorySessionStorage,
@@ -476,6 +478,78 @@ export class ReviewToolHandler {
   }
 }
 
+/**
+ * WebSearchToolHandler - Perform web search via Codex CLI with search enabled
+ * Uses Codex's natural web search capability through crafted prompts
+ */
+export class WebSearchToolHandler {
+  async execute(
+    args: unknown,
+    context: ToolHandlerContext = defaultContext
+  ): Promise<ToolResult> {
+    try {
+      const {
+        query,
+        numResults = 10,
+        searchDepth = 'basic',
+      }: WebSearchToolArgs = WebSearchToolSchema.parse(args);
+
+      // Send initial progress notification
+      await context.sendProgress(`Searching for: ${query}...`, 0);
+
+      // Build command arguments for Codex exec with search prompt
+      // Note: We use Codex's natural web search capability by crafting a search-focused prompt
+      const searchPrompt = `Search the web for "${query}" and provide a comprehensive summary with ${numResults} key findings. ${searchDepth === 'full' ? 'Include detailed analysis and context.' : 'Focus on the most relevant results.'}`;
+
+      // Build codex exec command with skip-git-repo-check
+      const cmdArgs = ['exec', '--skip-git-repo-check', searchPrompt];
+
+      // Use streaming execution if progress is enabled
+      const useStreaming = !!context.progressToken;
+
+      const result = useStreaming
+        ? await executeCommandStreaming('codex', cmdArgs, {
+            onProgress: (message) => {
+              context.sendProgress(message);
+            },
+          })
+        : await executeCommand('codex', cmdArgs);
+
+      // Combine stdout and stderr for the response
+      const response =
+        result.stdout || result.stderr || 'No search output from Codex';
+
+      // Prepare metadata
+      const metadata: Record<string, unknown> = {
+        query,
+        numResults,
+        searchDepth,
+        timestamp: new Date().toISOString(),
+      };
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: response,
+            _meta: metadata,
+          },
+        ],
+        structuredContent: isStructuredContentEnabled() ? metadata : undefined,
+      };
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw new ValidationError(TOOLS.WEBSEARCH, error.message);
+      }
+      throw new ToolExecutionError(
+        TOOLS.WEBSEARCH,
+        'Failed to execute web search',
+        error
+      );
+    }
+  }
+}
+
 // Tool handler registry
 const sessionStorage = new InMemorySessionStorage();
 
@@ -485,4 +559,5 @@ export const toolHandlers = {
   [TOOLS.PING]: new PingToolHandler(),
   [TOOLS.HELP]: new HelpToolHandler(),
   [TOOLS.LIST_SESSIONS]: new ListSessionsToolHandler(sessionStorage),
+  [TOOLS.WEBSEARCH]: new WebSearchToolHandler(),
 } as const;
