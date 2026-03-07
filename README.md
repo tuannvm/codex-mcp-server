@@ -53,6 +53,7 @@ Use review to check my uncommitted changes
 |------|-------------|
 | `codex` | AI coding assistant with session support, model selection, and structured output metadata |
 | `review` | AI-powered code review for uncommitted changes, branches, or commits |
+| `websearch` | Web search using Codex CLI with customizable result count and search depth |
 | `listSessions` | View active conversation sessions |
 | `ping` | Test server connection |
 | `help` | Get Codex CLI help |
@@ -84,6 +85,13 @@ Use codex with model "o3" and reasoningEffort "high" for complex analysis
 Use codex with fullAuto true and sandbox "workspace-write" for automated tasks
 Use codex with callbackUri "http://localhost:1234/callback" for static callbacks
 Use codex to return structuredContent with threadId metadata when available
+```
+
+**Web search:**
+```
+Use websearch with query "TypeScript 5.8 new features"
+Use websearch with query "Rust vs Go performance 2025" and numResults 15
+Use websearch with query "React Server Components" and searchDepth "full"
 ```
 
 ## Requirements

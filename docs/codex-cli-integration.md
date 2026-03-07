@@ -113,13 +113,23 @@ The following Codex CLI features are not currently exposed through the MCP serve
 | OSS/Local Models | `--oss`, `--local-provider` | LMStudio/Ollama support |
 | Config Profiles | `-p, --profile` | Named configuration profiles |
 | Approval Policy | `-a, --ask-for-approval` | Fine-grained approval control |
-| Web Search | `--search` | Enable web search tool |
 | Additional Dirs | `--add-dir` | Extra writable directories |
 | JSON Output | `--json` | JSONL event stream output |
 | Output Schema | `--output-schema` | Structured JSON output |
 | Output File | `-o, --output-last-message` | Write response to file |
 
 These features may be added in future versions based on user demand.
+
+## Web Search Implementation
+
+**Note:** While Codex CLI's native `--search` flag is deprecated, this MCP server provides web search capability through the dedicated `websearch` tool. This tool leverages Codex CLI's natural web search capabilities through crafted prompts, providing:
+
+- Customizable result count (1-50 results)
+- Search depth control (basic/full)
+- Streaming progress updates
+- Integration with Codex's search-enabled models
+
+See the Tools section in README.md for usage examples.
 
 ## MCP Callback URI (v0.81.0+)
 Codex CLI added static MCP callback URI support. This MCP server forwards the callback URI via environment variable when provided.
