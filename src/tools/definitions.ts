@@ -183,7 +183,7 @@ export const toolDefinitions: ToolDefinition[] = [
           description: 'The search query to execute',
         },
         numResults: {
-          type: 'number',
+          type: 'integer',
           description: 'Number of search results to return (1-50, default: 10)',
           minimum: 1,
           maximum: 50,
@@ -196,22 +196,6 @@ export const toolDefinitions: ToolDefinition[] = [
         },
       },
       required: ['query'],
-    },
-    outputSchema: {
-      type: 'object',
-      properties: {
-        results: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              title: { type: 'string' },
-              url: { type: 'string' },
-              snippet: { type: 'string' },
-            },
-          },
-        },
-      },
     },
     annotations: {
       title: 'Web Search',

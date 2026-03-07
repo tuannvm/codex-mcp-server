@@ -480,7 +480,7 @@ export class ReviewToolHandler {
 
 /**
  * WebSearchToolHandler - Perform web search via Codex CLI with search enabled
- * Uses Codex's exec command with web search capabilities
+ * Uses Codex's natural web search capability through crafted prompts
  */
 export class WebSearchToolHandler {
   async execute(
@@ -504,12 +504,16 @@ export class WebSearchToolHandler {
       // Build codex exec command with skip-git-repo-check
       const cmdArgs = ['exec', '--skip-git-repo-check', searchPrompt];
 
-      // Use streaming execution for better progress feedback
-      const result = await executeCommandStreaming('codex', cmdArgs, {
-        onProgress: (message) => {
-          context.sendProgress(message);
-        },
-      });
+      // Use streaming execution if progress is enabled
+      const useStreaming = !!context.progressToken;
+
+      const result = useStreaming
+        ? await executeCommandStreaming('codex', cmdArgs, {
+            onProgress: (message) => {
+              context.sendProgress(message);
+            },
+          })
+        : await executeCommand('codex', cmdArgs);
 
       // Combine stdout and stderr for the response
       const response =
