@@ -122,7 +122,7 @@ These features may be added in future versions based on user demand.
 
 ## Web Search Implementation
 
-**Note:** While Codex CLI's native `--search` flag is deprecated, this MCP server provides web search capability through the dedicated `websearch` tool. This tool leverages Codex CLI's natural web search capabilities through crafted prompts, providing:
+**Note:** This MCP server provides web search capability through the dedicated `websearch` tool. The tool uses `codex --search exec` to enable Codex's native web_search tool, providing:
 
 - Customizable result count (1-50 results)
 - Search depth control (basic/full)

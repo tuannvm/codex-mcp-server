@@ -479,8 +479,8 @@ export class ReviewToolHandler {
 }
 
 /**
- * WebSearchToolHandler - Perform web search via Codex CLI with search enabled
- * Uses Codex's natural web search capability through crafted prompts
+ * WebSearchToolHandler - Perform web search via Codex CLI with --search flag
+ * Enables Codex's native web_search tool by using --search before exec subcommand
  */
 export class WebSearchToolHandler {
   async execute(
@@ -497,12 +497,16 @@ export class WebSearchToolHandler {
       // Send initial progress notification
       await context.sendProgress(`Searching for: ${query}...`, 0);
 
-      // Build command arguments for Codex exec with search prompt
-      // Note: We use Codex's natural web search capability by crafting a search-focused prompt
-      const searchPrompt = `Search the web for "${query}" and provide a comprehensive summary with ${numResults} key findings. ${searchDepth === 'full' ? 'Include detailed analysis and context.' : 'Focus on the most relevant results.'}`;
+      // Build direct search prompt that leverages the enabled web_search tool
+      const searchPrompt = `Search for: ${query}. Provide ${numResults} key findings.${searchDepth === 'full' ? ' Include detailed analysis and context.' : ''}`;
 
-      // Build codex exec command with skip-git-repo-check
-      const cmdArgs = ['exec', '--skip-git-repo-check', searchPrompt];
+      // Build codex command with --search flag before exec subcommand
+      const cmdArgs = [
+        '--search',
+        'exec',
+        '--skip-git-repo-check',
+        searchPrompt,
+      ];
 
       // Use streaming execution if progress is enabled
       const useStreaming = !!context.progressToken;
@@ -515,7 +519,7 @@ export class WebSearchToolHandler {
           })
         : await executeCommand('codex', cmdArgs);
 
-      // Combine stdout and stderr for the response
+      // Get response from stdout or stderr (Codex may output to either)
       const response =
         result.stdout || result.stderr || 'No search output from Codex';
 
