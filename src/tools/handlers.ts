@@ -488,8 +488,11 @@ export class WebSearchToolHandler {
     context: ToolHandlerContext = defaultContext
   ): Promise<ToolResult> {
     try {
-      const { query, numResults = 10, searchDepth = 'basic' }: WebSearchToolArgs =
-        WebSearchToolSchema.parse(args);
+      const {
+        query,
+        numResults = 10,
+        searchDepth = 'basic',
+      }: WebSearchToolArgs = WebSearchToolSchema.parse(args);
 
       // Send initial progress notification
       await context.sendProgress(`Searching for: ${query}...`, 0);
@@ -509,7 +512,8 @@ export class WebSearchToolHandler {
       });
 
       // Combine stdout and stderr for the response
-      const response = result.stdout || result.stderr || 'No search output from Codex';
+      const response =
+        result.stdout || result.stderr || 'No search output from Codex';
 
       // Prepare metadata
       const metadata: Record<string, unknown> = {

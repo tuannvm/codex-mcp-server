@@ -191,7 +191,8 @@ export const toolDefinitions: ToolDefinition[] = [
         searchDepth: {
           type: 'string',
           enum: ['basic', 'full'],
-          description: 'Search depth: basic (faster) or full (deeper analysis, default: basic)',
+          description:
+            'Search depth: basic (faster) or full (deeper analysis, default: basic)',
         },
       },
       required: ['query'],
