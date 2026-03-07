@@ -7,15 +7,32 @@
 Bridge between Claude and OpenAI's Codex CLI — get AI-powered code analysis, generation, and review right in your editor.
 
 ```mermaid
-graph LR
-    A[Claude Code] --> B[Codex MCP Server]
-    B --> C[Codex CLI]
-    C --> D[OpenAI API]
+flowchart LR
+    You["👤 You<br/>Ask questions • Analyze code<br/>Review changes • Search web"]
 
-    style A fill:#FF6B35
-    style B fill:#4A90E2
-    style C fill:#00D4AA
-    style D fill:#FFA500
+    subgraph Tools["🛠️ Tools"]
+        CodexT["codex<br/>AI coding assistant<br/>Sessions • Models • Sandbox"]
+        ReviewT["review<br/>Code review<br/>Uncommitted • Base branch<br/>Commit SHA"]
+        WebT["websearch<br/>Web search<br/>Query • Results count<br/>Search depth"]
+        SessionsT["listSessions<br/>View active chats<br/>Session metadata"]
+        PingT["ping<br/>Test connection<br/>Health check"]
+        HelpT["help<br/>Get CLI help<br/>Documentation"]
+    end
+
+    CodexCLI["🤖 Codex CLI<br/>OpenAI GPT-5.3, 5.2, O3, O4-mini"]
+
+    You --> Tools
+    Tools --> CodexCLI
+
+    style You fill:#FFE5D9,stroke:#FF6B35,stroke-width:2px
+    style Tools fill:#E3F2FD,stroke:#4A90E2,stroke-width:2px
+    style CodexCLI fill:#E8F5E9,stroke:#00D4AA,stroke-width:2px
+    style CodexT fill:#BBDEFB,stroke:#4A90E2
+    style ReviewT fill:#90CAF9,stroke:#4A90E2
+    style WebT fill:#64B5F6,stroke:#4A90E2
+    style SessionsT fill:#42A5F5,stroke:#4A90E2
+    style PingT fill:#2196F3,stroke:#4A90E2
+    style HelpT fill:#1E88E5,stroke:#4A90E2
 ```
 
 ## Quick Start
