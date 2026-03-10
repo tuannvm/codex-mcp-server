@@ -31,6 +31,18 @@ export const AVAILABLE_CODEX_MODELS = [
 
 // Helper function to generate model description
 export const getModelDescription = (toolType: 'codex' | 'review') => {
+  const envModel = process.env[CODEX_DEFAULT_MODEL_ENV_VAR];
+  const defaultModel = envModel || DEFAULT_CODEX_MODEL;
+
+  if (envModel) {
+    // When env var is set, don't show hardcoded model list (it may be outdated)
+    if (toolType === 'codex') {
+      return `Specify which model to use (defaults to ${defaultModel})`;
+    }
+    return `Specify which model to use for the review (defaults to ${defaultModel})`;
+  }
+
+  // Fallback to original behavior with model list
   const modelList = AVAILABLE_CODEX_MODELS.join(', ');
   if (toolType === 'codex') {
     return `Specify which model to use (defaults to ${DEFAULT_CODEX_MODEL}). Options: ${modelList}`;
