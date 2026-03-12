@@ -24,12 +24,22 @@
   <nav class="tabs">
     <button class="tab active" data-tab="news" onclick="switchTab('news')">News Feed</button>
     <button class="tab" data-tab="stats" onclick="switchTab('stats')">Overview</button>
+    <button class="tab" data-tab="aum" onclick="switchTab('aum')">AUM</button>
+    <button class="tab" data-tab="sec" onclick="switchTab('sec')">SEC Filings</button>
+    <button class="tab" data-tab="predictions" onclick="switchTab('predictions')">Predictions</button>
     <button class="tab" data-tab="calendar" onclick="switchTab('calendar')">Gov Calendar</button>
     <button class="tab" data-tab="log" onclick="switchTab('log')">Crawl Log</button>
   </nav>
 
   <!-- ── News Feed Tab ─────────────────────────── -->
   <section id="tab-news" class="tab-content active">
+    <div id="prioritySection" class="priority-section" style="display:none;">
+      <div class="priority-header">
+        <span class="priority-icon">&#9733;</span>
+        Priority: Interest Rate &amp; Monetary Policy
+      </div>
+      <div id="priorityArticles" class="priority-articles"></div>
+    </div>
     <div class="filters">
       <div class="filter-group">
         <label>Company</label>
@@ -93,6 +103,90 @@
     </div>
     <div id="calendarView" class="calendar-view">
       <div class="loading">Loading events...</div>
+    </div>
+  </section>
+
+  <!-- ── AUM Tab ──────────────────────────────── -->
+  <section id="tab-aum" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>Assets Under Management</h2>
+      <span class="tab-subtitle">Approximate AUA/AUM from public filings and disclosures (in billions)</span>
+    </div>
+    <div id="aumChart" class="aum-chart">
+      <div class="loading">Loading AUM data...</div>
+    </div>
+    <div class="aum-update-form">
+      <h3>Update AUM Entry</h3>
+      <div class="form-row">
+        <select id="aumEntity"></select>
+        <input type="number" id="aumValue" placeholder="AUM in billions" step="0.1">
+        <input type="text" id="aumSource" placeholder="Source (e.g., ADV filing)">
+        <button class="btn btn-primary" onclick="updateAum()">Update</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SEC Filings Tab ─────────────────────── -->
+  <section id="tab-sec" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>SEC Filings Scanner</h2>
+      <div class="tab-actions">
+        <input type="text" id="secQuery" placeholder="Custom search query (optional)">
+        <button id="btnSecScan" class="btn btn-primary" onclick="triggerSecScan()">Scan SEC EDGAR</button>
+      </div>
+    </div>
+    <div class="filters">
+      <div class="filter-group">
+        <label>Entity</label>
+        <select id="filterSecEntity" onchange="loadSecFilings()">
+          <option value="">All</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Filing Type</label>
+        <select id="filterSecType" onchange="loadSecFilings()">
+          <option value="">All Types</option>
+          <option value="10-K">10-K</option>
+          <option value="10-Q">10-Q</option>
+          <option value="ADV">ADV</option>
+          <option value="8-K">8-K</option>
+          <option value="13F">13F</option>
+          <option value="S-1">S-1</option>
+        </select>
+      </div>
+    </div>
+    <div id="secFilingsList" class="sec-filings-list">
+      <div class="empty">Click "Scan SEC EDGAR" to search for filings.</div>
+    </div>
+  </section>
+
+  <!-- ── Predictions Tab ─────────────────────── -->
+  <section id="tab-predictions" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>Prediction Markets</h2>
+      <div class="tab-actions">
+        <button id="btnPredCrawl" class="btn btn-primary" onclick="triggerPredictionsCrawl()">Refresh Predictions</button>
+      </div>
+    </div>
+    <div class="filters">
+      <div class="filter-group">
+        <label>Category</label>
+        <select id="filterPredCat" onchange="loadPredictions()">
+          <option value="all">All Categories</option>
+          <option value="Federal Reserve">Federal Reserve</option>
+          <option value="Interest Rates">Interest Rates</option>
+          <option value="Inflation">Inflation</option>
+          <option value="Energy">Energy</option>
+          <option value="GDP/Growth">GDP/Growth</option>
+          <option value="Employment">Employment</option>
+          <option value="Regulation">Regulation</option>
+          <option value="Trade">Trade</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div id="predictionsList" class="predictions-grid">
+      <div class="empty">Click "Refresh Predictions" to load prediction markets.</div>
     </div>
   </section>
 

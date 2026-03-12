@@ -1,6 +1,6 @@
 import { getStore } from '@netlify/blobs';
-import type { Article, GovEvent, CrawlLogEntry } from '../config/competitors.js';
-import { ALL_ENTITIES } from '../config/competitors.js';
+import type { Article, GovEvent, CrawlLogEntry, AumEntry, SecFiling, PredictionMarket } from '../config/competitors.js';
+import { ALL_ENTITIES, SEED_AUM_DATA } from '../config/competitors.js';
 
 function articleStore() {
   return getStore({ name: 'articles', consistency: 'strong' });
@@ -46,10 +46,11 @@ export async function getAllArticles(filters?: {
   entityId?: string;
   sentiment?: string;
   search?: string;
+  priority?: boolean;
   limit?: number;
   offset?: number;
 }): Promise<Article[]> {
-  const { entityId, sentiment, search, limit = 100, offset = 0 } = filters || {};
+  const { entityId, sentiment, search, priority, limit = 100, offset = 0 } = filters || {};
 
   let all: Article[] = [];
 
@@ -71,6 +72,9 @@ export async function getAllArticles(filters?: {
       a.title.toLowerCase().includes(q) ||
       (a.snippet && a.snippet.toLowerCase().includes(q))
     );
+  }
+  if (priority) {
+    all = all.filter(a => a.priority === true);
   }
 
   // Sort by date descending
@@ -183,4 +187,134 @@ export async function logCrawl(entry: Omit<CrawlLogEntry, 'started_at'>): Promis
 export async function getCrawlLog(): Promise<CrawlLogEntry[]> {
   const store = logStore();
   return (await store.get('log', { type: 'json' })) || [];
+}
+
+// ── AUM Data ────────────────────────────────────────────
+
+function aumStore() {
+  return getStore({ name: 'aum-data', consistency: 'strong' });
+}
+
+export async function getAumData(): Promise<AumEntry[]> {
+  const store = aumStore();
+  const data = await store.get('all', { type: 'json' });
+  return (data as AumEntry[]) || [];
+}
+
+export async function saveAumData(entries: AumEntry[]): Promise<void> {
+  const store = aumStore();
+  await store.setJSON('all', entries);
+}
+
+export async function upsertAumEntry(entry: AumEntry): Promise<void> {
+  const existing = await getAumData();
+  const idx = existing.findIndex(e => e.entity_id === entry.entity_id);
+  if (idx >= 0) {
+    existing[idx] = { ...entry, updated_at: new Date().toISOString() };
+  } else {
+    existing.push({ ...entry, updated_at: new Date().toISOString() });
+  }
+  await saveAumData(existing);
+}
+
+export async function seedAumIfEmpty(): Promise<boolean> {
+  const existing = await getAumData();
+  if (existing.length > 0) return false;
+  await saveAumData(SEED_AUM_DATA);
+  return true;
+}
+
+// ── SEC Filings ─────────────────────────────────────────
+
+function secStore() {
+  return getStore({ name: 'sec-filings', consistency: 'strong' });
+}
+
+export async function getSecFilings(filters?: {
+  entityName?: string;
+  filingType?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<SecFiling[]> {
+  const store = secStore();
+  let all: SecFiling[] = ((await store.get('all', { type: 'json' })) as SecFiling[]) || [];
+  const { entityName, filingType, limit = 100, offset = 0 } = filters || {};
+
+  if (entityName) {
+    const q = entityName.toLowerCase();
+    all = all.filter(f => f.entity_names.some(n => n.toLowerCase().includes(q)) ||
+      f.company_name.toLowerCase().includes(q));
+  }
+  if (filingType) {
+    all = all.filter(f => f.filing_type === filingType);
+  }
+
+  all.sort((a, b) => new Date(b.filed_date).getTime() - new Date(a.filed_date).getTime());
+  return all.slice(offset, offset + limit);
+}
+
+export async function addSecFilings(newFilings: SecFiling[]): Promise<number> {
+  const store = secStore();
+  const existing: SecFiling[] = ((await store.get('all', { type: 'json' })) as SecFiling[]) || [];
+  const existingUrls = new Set(existing.map(f => f.document_url));
+
+  const unique = newFilings.filter(f => !existingUrls.has(f.document_url));
+  if (unique.length === 0) return 0;
+
+  const merged = [...unique, ...existing]
+    .sort((a, b) => new Date(b.filed_date).getTime() - new Date(a.filed_date).getTime())
+    .slice(0, 1000);
+
+  await store.setJSON('all', merged);
+  return unique.length;
+}
+
+// ── Prediction Markets ──────────────────────────────────
+
+function predictionsStore() {
+  return getStore({ name: 'prediction-markets', consistency: 'strong' });
+}
+
+export async function getPredictionMarkets(filters?: {
+  category?: string;
+}): Promise<PredictionMarket[]> {
+  const store = predictionsStore();
+  let all: PredictionMarket[] = ((await store.get('all', { type: 'json' })) as PredictionMarket[]) || [];
+
+  if (filters?.category && filters.category !== 'all') {
+    all = all.filter(m => m.category === filters.category);
+  }
+
+  return all.sort((a, b) => b.volume - a.volume);
+}
+
+export async function addPredictionMarkets(markets: PredictionMarket[]): Promise<number> {
+  const store = predictionsStore();
+  const existing: PredictionMarket[] = ((await store.get('all', { type: 'json' })) as PredictionMarket[]) || [];
+
+  const existingByQuestion = new Map(existing.map(m => [m.question.toLowerCase(), m]));
+  let newCount = 0;
+
+  for (const market of markets) {
+    const key = market.question.toLowerCase();
+    if (existingByQuestion.has(key)) {
+      const ex = existingByQuestion.get(key)!;
+      ex.probability = market.probability;
+      ex.volume = market.volume;
+      ex.last_updated = market.last_updated;
+    } else {
+      existingByQuestion.set(key, market);
+      newCount++;
+    }
+  }
+
+  const merged = Array.from(existingByQuestion.values())
+    .filter(m => {
+      if (!m.end_date) return true;
+      return new Date(m.end_date).getTime() > Date.now() - 7 * 86400000;
+    })
+    .slice(0, 500);
+
+  await store.setJSON('all', merged);
+  return newCount;
 }

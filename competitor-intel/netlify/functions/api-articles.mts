@@ -9,7 +9,9 @@ export default async (req: Request) => {
   const limit = parseInt(url.searchParams.get('limit') || '100');
   const offset = parseInt(url.searchParams.get('offset') || '0');
 
-  const articles = await getAllArticles({ entityId: entity, sentiment, search, limit, offset });
+  const priority = url.searchParams.get('priority') === 'true' || undefined;
+
+  const articles = await getAllArticles({ entityId: entity, sentiment, search, priority, limit, offset });
 
   return new Response(JSON.stringify(articles), {
     headers: { 'Content-Type': 'application/json' },
