@@ -842,6 +842,97 @@ header {
   color: var(--text-muted);
 }
 
+/* ── Custom Entities ─────────────────────── */
+.custom-entities-section {
+  margin-top: 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+}
+.custom-entities-section h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+.custom-entity-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.custom-entity-form input {
+  padding: 8px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  min-width: 200px;
+}
+.custom-entity-form input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+.custom-entities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.custom-empty {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+.custom-entity-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.custom-entity-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.custom-entity-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+.custom-entity-link {
+  font-size: 12px;
+  color: var(--primary);
+  text-decoration: none;
+}
+.custom-entity-link:hover { text-decoration: underline; }
+.custom-entity-date {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.btn-remove {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 18px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-remove:hover {
+  background: var(--negative-bg);
+  border-color: var(--negative);
+  color: var(--negative);
+}
+
 /* ── Predictions Grid ────────────────────── */
 .predictions-grid {
   display: grid;
@@ -925,6 +1016,8 @@ header {
   .tab-actions input { min-width: 0; flex: 1; }
   .form-row { flex-direction: column; }
   .form-row select, .form-row input { width: 100%; min-width: 0; }
+  .custom-entity-form { flex-direction: column; }
+  .custom-entity-form input { min-width: 0; width: 100%; }
   .tabs { overflow-x: auto; flex-wrap: nowrap; }
   .tab { white-space: nowrap; flex-shrink: 0; }
 }

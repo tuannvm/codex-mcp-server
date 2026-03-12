@@ -1,5 +1,5 @@
 import { getStore } from '@netlify/blobs';
-import type { Article, GovEvent, CrawlLogEntry, AumEntry, SecFiling, PredictionMarket } from '../config/competitors.js';
+import type { Article, GovEvent, CrawlLogEntry, AumEntry, SecFiling, PredictionMarket, CustomEntity, Entity } from '../config/competitors.js';
 import { ALL_ENTITIES, SEED_AUM_DATA } from '../config/competitors.js';
 
 function articleStore() {
@@ -317,4 +317,37 @@ export async function addPredictionMarkets(markets: PredictionMarket[]): Promise
 
   await store.setJSON('all', merged);
   return newCount;
+}
+
+// ── Custom Entities ─────────────────────────────────────
+
+function customEntitiesStore() {
+  return getStore({ name: 'custom-entities', consistency: 'strong' });
+}
+
+export async function getCustomEntities(): Promise<CustomEntity[]> {
+  const store = customEntitiesStore();
+  return ((await store.get('all', { type: 'json' })) as CustomEntity[]) || [];
+}
+
+export async function addCustomEntity(entity: CustomEntity): Promise<void> {
+  const existing = await getCustomEntities();
+  if (existing.some(e => e.id === entity.id)) return;
+  existing.push(entity);
+  const store = customEntitiesStore();
+  await store.setJSON('all', existing);
+}
+
+export async function removeCustomEntity(entityId: string): Promise<boolean> {
+  const existing = await getCustomEntities();
+  const filtered = existing.filter(e => e.id !== entityId);
+  if (filtered.length === existing.length) return false;
+  const store = customEntitiesStore();
+  await store.setJSON('all', filtered);
+  return true;
+}
+
+export async function getAllEntitiesWithCustom(): Promise<Entity[]> {
+  const custom = await getCustomEntities();
+  return [...ALL_ENTITIES, ...custom];
 }

@@ -1,6 +1,6 @@
 import type { SecFiling } from '../config/competitors.js';
 import { ALL_ENTITIES, SEC_KEYWORD_CATEGORIES } from '../config/competitors.js';
-import { addSecFilings, logCrawl } from '../services/blobStore.js';
+import { addSecFilings, logCrawl, getAllEntitiesWithCustom } from '../services/blobStore.js';
 
 const SEC_SEARCH_BASE = 'https://efts.sec.gov/LATEST/search-index/';
 const USER_AGENT = 'The Dobbs Group Competitor Intel alerts@dobbsgroup.com';
@@ -118,9 +118,10 @@ export async function scanSec(customQuery?: string): Promise<number> {
   const endDate = new Date().toISOString().split('T')[0];
   const startDate = new Date(Date.now() - 90 * 86400000).toISOString().split('T')[0];
 
+  const allEntities = await getAllEntitiesWithCustom();
   const queries = customQuery
     ? [customQuery]
-    : ALL_ENTITIES.map(e => e.name);
+    : allEntities.map(e => e.name);
 
   let totalNew = 0;
 

@@ -87,6 +87,11 @@ export interface CrawlLogEntry {
   finished_at: string;
 }
 
+export interface CustomEntity extends Entity {
+  custom: true;
+  added_at: string;
+}
+
 export const SELF: Entity = {
   id: 'dobbs-group',
   name: 'The Dobbs Group',

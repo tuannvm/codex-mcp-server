@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 import { SELF, ALL_ENTITIES, type Article } from '../config/competitors.js';
-import { getUnalertedNegativeArticles, markAlerted, getArticlesForEntity } from './blobStore.js';
+import { getUnalertedNegativeArticles, markAlerted, getArticlesForEntity, getAllEntitiesWithCustom } from './blobStore.js';
 
 async function markAlertedAll(articles: Article[]): Promise<void> {
   const byEntity = new Map<string, string[]>();
@@ -70,8 +70,9 @@ export async function checkAndAlertNegativeArticles(): Promise<{
   // Gather negative articles about self + priority interest rate articles from all entities
   const negativeArticles = await getUnalertedNegativeArticles(SELF.id);
 
+  const allEntities = await getAllEntitiesWithCustom();
   const priorityArticles: Article[] = [];
-  for (const entity of ALL_ENTITIES) {
+  for (const entity of allEntities) {
     const entityArticles = await getArticlesForEntity(entity.id);
     const unalertedPriority = entityArticles.filter(a => a.priority === true && !a.alerted);
     priorityArticles.push(...unalertedPriority);

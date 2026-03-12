@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadArticles();
   loadPriorityArticles();
   loadStats();
+  loadCustomEntities();
 
   // Default calendar date range: today - 7 days to today + 90 days
   const now = new Date();
@@ -358,7 +359,7 @@ function switchTab(tabName) {
   document.getElementById(`tab-${tabName}`).classList.add('active');
 
   // Lazy load tab data
-  if (tabName === 'stats') loadStats();
+  if (tabName === 'stats') { loadStats(); loadCustomEntities(); }
   if (tabName === 'aum') loadAum();
   if (tabName === 'sec') loadSecFilings();
   if (tabName === 'predictions') loadPredictions();
@@ -788,6 +789,73 @@ async function triggerPredictionsCrawl() {
     btn.textContent = 'Error';
     setTimeout(() => { btn.textContent = 'Refresh Predictions'; btn.disabled = false; }, 3000);
   }
+}
+
+// ── Custom Entities ─────────────────────────────────────
+async function addCustomEntity() {
+  const nameInput = document.getElementById('customEntityName');
+  const websiteInput = document.getElementById('customEntityWebsite');
+  const name = nameInput.value.trim();
+  const website = websiteInput.value.trim();
+
+  if (!name) {
+    alert('Please enter a company name.');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/entities/custom', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, website }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      alert(err.error || 'Failed to add entity');
+      return;
+    }
+    nameInput.value = '';
+    websiteInput.value = '';
+    await loadEntities();
+    loadCustomEntities();
+    populateAumEntitySelect();
+    populateSecEntitySelect();
+  } catch (err) {
+    console.error('Failed to add custom entity:', err);
+  }
+}
+
+async function removeCustomEntity(entityId) {
+  if (!confirm('Remove this competitor from tracking?')) return;
+  try {
+    await fetch(`/api/entities/custom?id=${encodeURIComponent(entityId)}`, { method: 'DELETE' });
+    await loadEntities();
+    loadCustomEntities();
+    populateAumEntitySelect();
+    populateSecEntitySelect();
+  } catch (err) {
+    console.error('Failed to remove custom entity:', err);
+  }
+}
+
+async function loadCustomEntities() {
+  const container = document.getElementById('customEntitiesList');
+  if (!container) return;
+  const custom = (entities.custom || []);
+  if (custom.length === 0) {
+    container.innerHTML = '<div class="custom-empty">No custom competitors added yet.</div>';
+    return;
+  }
+  container.innerHTML = custom.map(e => `
+    <div class="custom-entity-item">
+      <div class="custom-entity-info">
+        <span class="custom-entity-name">${escHtml(e.name)}</span>
+        ${e.website ? `<a href="${escHtml(e.website)}" target="_blank" rel="noopener" class="custom-entity-link">${escHtml(e.website)}</a>` : ''}
+        <span class="custom-entity-date">Added ${new Date(e.added_at).toLocaleDateString()}</span>
+      </div>
+      <button class="btn-remove" onclick="removeCustomEntity('${escHtml(e.id)}')" title="Remove">&times;</button>
+    </div>
+  `).join('');
 }
 
 // ── Helpers ──────────────────────────────────────────────

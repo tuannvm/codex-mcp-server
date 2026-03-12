@@ -1,6 +1,6 @@
 import RSSParser from 'rss-parser';
 import { ALL_ENTITIES, PRIORITY_KEYWORDS, type Entity, type Article } from '../config/competitors.js';
-import { addArticles, logCrawl } from '../services/blobStore.js';
+import { addArticles, logCrawl, getAllEntitiesWithCustom } from '../services/blobStore.js';
 import { analyzeSentiment } from '../services/sentiment.js';
 
 const parser = new RSSParser({
@@ -70,12 +70,13 @@ async function crawlEntityQueries(entity: Entity): Promise<Article[]> {
 }
 
 export async function crawlAll(): Promise<number> {
-  console.log(`[${new Date().toISOString()}] Starting parallel news crawl for ${ALL_ENTITIES.length} entities...`);
+  const allEntities = await getAllEntitiesWithCustom();
+  console.log(`[${new Date().toISOString()}] Starting parallel news crawl for ${allEntities.length} entities...`);
   let totalNew = 0;
 
   // Crawl all entities in parallel for speed (no delays needed in serverless)
   const results = await Promise.allSettled(
-    ALL_ENTITIES.map(async (entity) => {
+    allEntities.map(async (entity) => {
       try {
         const articles = await crawlEntityQueries(entity);
         const newCount = await addArticles(entity.id, articles);
@@ -113,7 +114,8 @@ export async function crawlAll(): Promise<number> {
 }
 
 export async function crawlSingle(entityId: string): Promise<number> {
-  const entity = ALL_ENTITIES.find(e => e.id === entityId);
+  const allEntities = await getAllEntitiesWithCustom();
+  const entity = allEntities.find(e => e.id === entityId);
   if (!entity) throw new Error(`Entity not found: ${entityId}`);
 
   const articles = await crawlEntityQueries(entity);

@@ -77,6 +77,17 @@
     <div id="statsGrid" class="stats-grid">
       <div class="loading">Loading stats...</div>
     </div>
+
+    <!-- Custom Entities Management -->
+    <div class="custom-entities-section">
+      <h3>Track a New Competitor</h3>
+      <div class="custom-entity-form">
+        <input type="text" id="customEntityName" placeholder="Company name (e.g., Merrill Lynch)">
+        <input type="text" id="customEntityWebsite" placeholder="Website (optional)">
+        <button class="btn btn-primary" onclick="addCustomEntity()">Add Competitor</button>
+      </div>
+      <div id="customEntitiesList" class="custom-entities-list"></div>
+    </div>
   </section>
 
   <!-- ── Government Calendar Tab ───────────────── -->
