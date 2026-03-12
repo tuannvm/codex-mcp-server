@@ -359,6 +359,7 @@ function switchTab(tabName) {
   document.getElementById(`tab-${tabName}`).classList.add('active');
 
   // Lazy load tab data
+  if (tabName === 'brief') loadBrief();
   if (tabName === 'stats') { loadStats(); loadCustomEntities(); }
   if (tabName === 'aum') loadAum();
   if (tabName === 'sec') loadSecFilings();
@@ -856,6 +857,300 @@ async function loadCustomEntities() {
       <button class="btn-remove" onclick="removeCustomEntity('${escHtml(e.id)}')" title="Remove">&times;</button>
     </div>
   `).join('');
+}
+
+// ── Daily Brief ─────────────────────────────────────────
+async function loadBrief() {
+  try {
+    const res = await fetch('/api/brief');
+    if (res.status === 404) {
+      document.getElementById('briefContent').innerHTML =
+        '<div class="empty">No brief generated yet. Click "Generate Brief" to create one.</div>';
+      return;
+    }
+    const brief = await res.json();
+    renderBrief(brief);
+  } catch (err) {
+    console.error('Failed to load brief:', err);
+  }
+}
+
+async function refreshBrief() {
+  const btn = document.getElementById('btnRefreshBrief');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generating...';
+  document.getElementById('briefContent').innerHTML =
+    '<div class="loading">Analyzing data across all sources...</div>';
+
+  try {
+    const res = await fetch('/api/brief', { method: 'POST' });
+    const brief = await res.json();
+    btn.textContent = 'Generate Brief';
+    btn.disabled = false;
+    renderBrief(brief);
+  } catch (err) {
+    console.error('Brief generation error:', err);
+    btn.textContent = 'Error';
+    document.getElementById('briefContent').innerHTML =
+      '<div class="empty">Failed to generate brief. Try again later.</div>';
+    setTimeout(() => { btn.textContent = 'Generate Brief'; btn.disabled = false; }, 3000);
+  }
+}
+
+function renderBrief(brief) {
+  const container = document.getElementById('briefContent');
+  const ts = document.getElementById('briefTimestamp');
+
+  if (brief.generated_at) {
+    ts.textContent = `Generated: ${new Date(brief.generated_at).toLocaleString()}`;
+  }
+
+  const s = brief.market_sentiment;
+  const trendIcon = s.trend === 'improving' ? '&#9650;' : s.trend === 'declining' ? '&#9660;' : '&#9644;';
+  const trendClass = s.trend === 'improving' ? 'trend-up' : s.trend === 'declining' ? 'trend-down' : 'trend-flat';
+
+  let html = '';
+
+  // 1. Market Sentiment
+  html += `
+    <div class="brief-section">
+      <h3 class="brief-section-title">Market Sentiment</h3>
+      <div class="sentiment-dashboard">
+        <div class="sentiment-score-box">
+          <div class="sentiment-big-score">${s.avg_score.toFixed(2)}</div>
+          <div class="sentiment-trend ${trendClass}">${trendIcon} ${s.trend}</div>
+          <div class="sentiment-articles">${s.total_articles} articles (24h)</div>
+        </div>
+        <div class="sentiment-bars">
+          <div class="sent-bar-row">
+            <span class="sent-label pos-label">Positive</span>
+            <div class="sent-bar-track"><div class="sent-bar-fill pos-fill" style="width:${s.positive_pct}%"></div></div>
+            <span class="sent-pct">${s.positive_pct}%</span>
+          </div>
+          <div class="sent-bar-row">
+            <span class="sent-label neu-label">Neutral</span>
+            <div class="sent-bar-track"><div class="sent-bar-fill neu-fill" style="width:${s.neutral_pct}%"></div></div>
+            <span class="sent-pct">${s.neutral_pct}%</span>
+          </div>
+          <div class="sent-bar-row">
+            <span class="sent-label neg-label">Negative</span>
+            <div class="sent-bar-track"><div class="sent-bar-fill neg-fill" style="width:${s.negative_pct}%"></div></div>
+            <span class="sent-pct">${s.negative_pct}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // 2. Top Stories
+  if (brief.top_stories.length > 0) {
+    html += `
+      <div class="brief-section">
+        <h3 class="brief-section-title">Top Stories</h3>
+        <div class="brief-stories">
+          ${brief.top_stories.map(st => `
+            <div class="brief-story">
+              <div class="brief-story-header">
+                <span class="brief-reason brief-reason-${st.reason.toLowerCase().replace(/\s+/g, '-')}">${escHtml(st.reason)}</span>
+                <span class="sentiment-badge sentiment-${st.sentiment_label}">${st.sentiment_label}</span>
+              </div>
+              <a href="${escHtml(st.link)}" target="_blank" rel="noopener" class="brief-story-title">${escHtml(st.title)}</a>
+              <div class="brief-story-meta">
+                <span class="entity-tag">${escHtml(st.entity_name)}</span>
+                <span>${new Date(st.pub_date).toLocaleDateString()}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // 3. Risk Alerts
+  if (brief.risk_alerts.length > 0) {
+    html += `
+      <div class="brief-section">
+        <h3 class="brief-section-title">Risk Alerts</h3>
+        <div class="brief-risks">
+          ${brief.risk_alerts.map(r => `
+            <div class="brief-risk brief-risk-${r.risk_level}">
+              <div class="brief-risk-header">
+                <span class="risk-badge risk-${r.risk_level}">${r.risk_level.toUpperCase()} (${r.risk_score})</span>
+                <span class="sec-type-badge">${escHtml(r.filing_type)}</span>
+              </div>
+              <div class="brief-risk-company">${escHtml(r.company_name)}</div>
+              <div class="brief-risk-desc">${escHtml(r.description)}</div>
+              <a href="${escHtml(r.document_url)}" target="_blank" rel="noopener" class="read-more">View Filing &#8594;</a>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // 4. Prediction Movers
+  if (brief.prediction_movers.length > 0) {
+    html += `
+      <div class="brief-section">
+        <h3 class="brief-section-title">Prediction Markets</h3>
+        <div class="brief-predictions">
+          ${brief.prediction_movers.map(p => {
+            const pct = Math.round(p.probability);
+            const color = pct >= 70 ? 'var(--positive)' : pct >= 40 ? 'var(--gold)' : 'var(--negative)';
+            return `
+              <div class="brief-pred">
+                <div class="brief-pred-info">
+                  <span class="pred-category">${escHtml(p.category)}</span>
+                  <span class="brief-pred-q">${escHtml(p.question)}</span>
+                </div>
+                <div class="brief-pred-bar">
+                  <div class="pred-bar-track"><div class="pred-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+                  <span class="pred-prob" style="color:${color}">${pct}%</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // 5. Upcoming Events
+  if (brief.upcoming_events.length > 0) {
+    html += `
+      <div class="brief-section">
+        <h3 class="brief-section-title">Upcoming Events (7 days)</h3>
+        <div class="brief-events">
+          ${brief.upcoming_events.map(e => `
+            <div class="brief-event">
+              <span class="brief-event-date">${new Date(e.event_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+              <span class="event-cat ${getCatClass(e.category)}">${escHtml(e.category)}</span>
+              <span class="brief-event-title">${escHtml(e.title)}</span>
+              ${e.link ? `<a href="${escHtml(e.link)}" target="_blank" rel="noopener" class="brief-event-link">&#8594;</a>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // 6. Competitor Activity
+  if (brief.competitor_activity.length > 0) {
+    const maxCount = Math.max(...brief.competitor_activity.map(c => c.article_count));
+    html += `
+      <div class="brief-section">
+        <h3 class="brief-section-title">Competitor Activity (24h)</h3>
+        <div class="brief-activity">
+          ${brief.competitor_activity.map(c => {
+            const pct = Math.max((c.article_count / maxCount) * 100, 5);
+            const isSelf = c.entity_id === 'dobbs-group';
+            return `
+              <div class="activity-row${isSelf ? ' activity-self' : ''}">
+                <div class="activity-label">
+                  <span class="activity-name">${escHtml(c.entity_name)}</span>
+                  <span class="activity-count">${c.article_count}</span>
+                </div>
+                <div class="activity-bar-track">
+                  <div class="activity-bar-fill${isSelf ? ' self-fill' : ''}" style="width:${pct}%"></div>
+                </div>
+                <a href="${escHtml(c.top_link)}" target="_blank" rel="noopener" class="activity-headline">${escHtml(c.top_headline.substring(0, 80))}${c.top_headline.length > 80 ? '...' : ''}</a>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // 7. Key Themes
+  if (brief.key_themes.length > 0) {
+    html += `
+      <div class="brief-section">
+        <h3 class="brief-section-title">Key Themes</h3>
+        <div class="brief-themes">
+          ${brief.key_themes.map(t => `
+            <span class="theme-pill" style="opacity:${Math.min(0.4 + (t.count / brief.key_themes[0].count) * 0.6, 1)}">${escHtml(t.theme)} <strong>${t.count}</strong></span>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+}
+
+// ── Competitor Discovery ────────────────────────────────
+async function discoverCompetitors() {
+  const btn = document.getElementById('btnDiscover');
+  const container = document.getElementById('discoverySuggestions');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Scanning...';
+  container.innerHTML = '<div class="loading">Searching SEC EDGAR for investment advisory firms...</div>';
+
+  try {
+    const res = await fetch('/api/entities/discover', { method: 'POST' });
+    const data = await res.json();
+    btn.textContent = `Found ${data.count} suggestions`;
+    setTimeout(() => { btn.textContent = 'Scan EDGAR'; btn.disabled = false; }, 3000);
+    renderDiscoverySuggestions(data.suggestions || []);
+  } catch (err) {
+    console.error('Discovery error:', err);
+    btn.textContent = 'Error';
+    container.innerHTML = '<div class="empty">Failed to scan EDGAR. Try again later.</div>';
+    setTimeout(() => { btn.textContent = 'Scan EDGAR'; btn.disabled = false; }, 3000);
+  }
+}
+
+function renderDiscoverySuggestions(suggestions) {
+  const container = document.getElementById('discoverySuggestions');
+  if (!suggestions || suggestions.length === 0) {
+    container.innerHTML = '<div class="empty">No new competitors found. All known firms are already tracked.</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  for (const s of suggestions) {
+    const card = document.createElement('div');
+    card.className = 'discovery-card';
+    card.innerHTML = `
+      <div class="discovery-card-main">
+        <div class="discovery-card-info">
+          <span class="discovery-name">${escHtml(s.name)}</span>
+          <span class="discovery-sic">${escHtml(s.sic_description)} (SIC ${escHtml(s.sic_code)})</span>
+        </div>
+        <div class="discovery-card-stats">
+          <span class="discovery-filings">${s.filing_count} filing${s.filing_count !== 1 ? 's' : ''}</span>
+          ${s.recent_filing_types.length > 0 ? `<span class="discovery-types">${s.recent_filing_types.map(t => escHtml(t)).join(', ')}</span>` : ''}
+          ${s.latest_filing_date ? `<span class="discovery-date">Latest: ${new Date(s.latest_filing_date).toLocaleDateString()}</span>` : ''}
+        </div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="addDiscoveredEntity('${escHtml(s.name)}', '${escHtml(s.cik)}')">Add</button>
+    `;
+    container.appendChild(card);
+  }
+}
+
+async function addDiscoveredEntity(name, cik) {
+  try {
+    const res = await fetch('/api/entities/custom', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, website: `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${cik}` }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      alert(err.error || 'Failed to add entity');
+      return;
+    }
+    await loadEntities();
+    loadCustomEntities();
+    populateAumEntitySelect();
+    populateSecEntitySelect();
+    // Re-run discovery to update suggestions (remove added entity)
+    discoverCompetitors();
+  } catch (err) {
+    console.error('Failed to add discovered entity:', err);
+  }
 }
 
 // ── Helpers ──────────────────────────────────────────────

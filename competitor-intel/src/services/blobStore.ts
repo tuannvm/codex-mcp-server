@@ -1,5 +1,5 @@
 import { getStore } from '@netlify/blobs';
-import type { Article, GovEvent, CrawlLogEntry, AumEntry, SecFiling, PredictionMarket, CustomEntity, Entity } from '../config/competitors.js';
+import type { Article, GovEvent, CrawlLogEntry, AumEntry, SecFiling, PredictionMarket, CustomEntity, Entity, DailyBrief } from '../config/competitors.js';
 import { ALL_ENTITIES, SEED_AUM_DATA } from '../config/competitors.js';
 
 function articleStore() {
@@ -350,4 +350,20 @@ export async function removeCustomEntity(entityId: string): Promise<boolean> {
 export async function getAllEntitiesWithCustom(): Promise<Entity[]> {
   const custom = await getCustomEntities();
   return [...ALL_ENTITIES, ...custom];
+}
+
+// ── Daily Briefs ────────────────────────────────────────
+
+function briefStore() {
+  return getStore({ name: 'daily-briefs', consistency: 'strong' });
+}
+
+export async function saveBrief(brief: DailyBrief): Promise<void> {
+  const store = briefStore();
+  await store.setJSON('latest', brief);
+}
+
+export async function getLatestBrief(): Promise<DailyBrief | null> {
+  const store = briefStore();
+  return ((await store.get('latest', { type: 'json' })) as DailyBrief) || null;
 }

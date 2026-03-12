@@ -23,6 +23,7 @@
 
   <nav class="tabs">
     <button class="tab active" data-tab="news" onclick="switchTab('news')">News Feed</button>
+    <button class="tab" data-tab="brief" onclick="switchTab('brief')">Daily Brief</button>
     <button class="tab" data-tab="stats" onclick="switchTab('stats')">Overview</button>
     <button class="tab" data-tab="aum" onclick="switchTab('aum')">AUM</button>
     <button class="tab" data-tab="sec" onclick="switchTab('sec')">SEC Filings</button>
@@ -72,10 +73,34 @@
     </div>
   </section>
 
+  <!-- ── Daily Brief Tab ────────────────────────── -->
+  <section id="tab-brief" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>Daily Intelligence Brief</h2>
+      <div class="tab-actions">
+        <span id="briefTimestamp" class="brief-timestamp"></span>
+        <button id="btnRefreshBrief" class="btn btn-primary" onclick="refreshBrief()">Generate Brief</button>
+      </div>
+    </div>
+    <div id="briefContent" class="brief-content">
+      <div class="empty">Click "Generate Brief" to create your daily intelligence summary.</div>
+    </div>
+  </section>
+
   <!-- ── Overview / Stats Tab ──────────────────── -->
   <section id="tab-stats" class="tab-content">
     <div id="statsGrid" class="stats-grid">
       <div class="loading">Loading stats...</div>
+    </div>
+
+    <!-- Competitor Discovery -->
+    <div class="discovery-section">
+      <div class="discovery-header">
+        <h3>Discover Competitors</h3>
+        <button id="btnDiscover" class="btn btn-secondary" onclick="discoverCompetitors()">Scan EDGAR</button>
+      </div>
+      <p class="discovery-desc">Search SEC EDGAR for investment advisory firms (SIC 6282, 6726, 6211) not yet tracked.</p>
+      <div id="discoverySuggestions" class="discovery-suggestions"></div>
     </div>
 
     <!-- Custom Entities Management -->

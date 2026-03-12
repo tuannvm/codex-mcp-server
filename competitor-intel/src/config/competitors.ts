@@ -92,6 +92,60 @@ export interface CustomEntity extends Entity {
   added_at: string;
 }
 
+export interface DailyBrief {
+  generated_at: string;
+  market_sentiment: {
+    avg_score: number;
+    trend: 'improving' | 'stable' | 'declining';
+    positive_pct: number;
+    neutral_pct: number;
+    negative_pct: number;
+    total_articles: number;
+    prev_avg_score: number;
+  };
+  top_stories: Array<{
+    title: string;
+    link: string;
+    entity_name: string;
+    sentiment_label: string;
+    pub_date: string;
+    reason: string;
+  }>;
+  risk_alerts: Array<{
+    company_name: string;
+    filing_type: string;
+    risk_level: string;
+    risk_score: number;
+    filed_date: string;
+    document_url: string;
+    description: string;
+  }>;
+  prediction_movers: Array<{
+    question: string;
+    probability: number;
+    volume: number;
+    category: string;
+    url: string;
+  }>;
+  upcoming_events: Array<{
+    title: string;
+    event_date: string;
+    category: string;
+    link: string;
+  }>;
+  competitor_activity: Array<{
+    entity_id: string;
+    entity_name: string;
+    article_count: number;
+    top_headline: string;
+    top_link: string;
+  }>;
+  key_themes: Array<{
+    theme: string;
+    count: number;
+  }>;
+}
+
 export const SELF: Entity = {
   id: 'dobbs-group',
   name: 'The Dobbs Group',
