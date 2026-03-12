@@ -1,6 +1,6 @@
 import type { SecFiling } from '../config/competitors.js';
 import { ALL_ENTITIES, SEC_KEYWORD_CATEGORIES } from '../config/competitors.js';
-import { addSecFilings, logCrawl, getAllEntitiesWithCustom } from '../services/blobStore.js';
+import { addSecFilings, getSecFilings, logCrawl, getAllEntitiesWithCustom } from '../services/blobStore.js';
 
 const SEC_SEARCH_BASE = 'https://efts.sec.gov/LATEST/search-index';
 const USER_AGENT = 'The Dobbs Group Competitor Intel alerts@dobbsgroup.com';
@@ -258,4 +258,38 @@ export async function scanSec(customQuery?: string): Promise<number> {
   });
 
   return totalNew;
+}
+
+/** Backfill keywords for filings that don't have them yet */
+export async function enrichFilingKeywords(): Promise<number> {
+  const allFilings = await getSecFilings({ limit: 1000 });
+  const needsKeywords = allFilings.filter(f => (!f.top_words || f.top_words.length === 0) && f.document_url);
+
+  if (needsKeywords.length === 0) return 0;
+
+  // Process in batches of 10 with concurrent fetching (cap at 50 per call)
+  const batchSize = 10;
+  let enriched = 0;
+  const toProcess = needsKeywords.slice(0, 50);
+
+  for (let i = 0; i < toProcess.length; i += batchSize) {
+    const batch = toProcess.slice(i, i + batchSize);
+    const results = await Promise.all(
+      batch.map(f => fetchDocTopWords(f.document_url))
+    );
+
+    for (let k = 0; k < batch.length; k++) {
+      if (results[k].length > 0) {
+        batch[k].top_words = results[k];
+        enriched++;
+      }
+    }
+  }
+
+  // Save updated filings back (use addSecFilings with refreshKeywords to update in place)
+  if (enriched > 0) {
+    await addSecFilings(allFilings, true);
+  }
+
+  return enriched;
 }

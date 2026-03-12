@@ -718,6 +718,23 @@ async function triggerSecScan() {
   }
 }
 
+async function enrichSecKeywords() {
+  const btn = document.getElementById('btnSecEnrich');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Enriching...';
+
+  try {
+    const res = await fetch('/api/sec/enrich', { method: 'POST' });
+    const data = await res.json();
+    btn.textContent = `Done! (${data.enriched} enriched)`;
+    setTimeout(() => { btn.textContent = 'Enrich Keywords'; btn.disabled = false; }, 3000);
+    loadSecFilings();
+  } catch (err) {
+    btn.textContent = 'Error';
+    setTimeout(() => { btn.textContent = 'Enrich Keywords'; btn.disabled = false; }, 3000);
+  }
+}
+
 // ── Predictions ─────────────────────────────────────────
 async function loadPredictions() {
   const category = document.getElementById('filterPredCat').value;
