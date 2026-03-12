@@ -73,11 +73,12 @@ async function fetchInfoTable(cik: string, accession: string): Promise<Holding13
     const indexData = await indexRes.json();
     const items = indexData.directory?.item || [];
 
-    // Find the information table XML
-    const infoTableFile = items.find((item: any) =>
-      item.name.toLowerCase().includes('infotable') &&
-      (item.name.endsWith('.xml') || item.name.endsWith('.XML'))
-    );
+    // Find the information table XML — filenames vary (e.g. "infotable.xml", "Information_Table_12.31.2025.xml")
+    const infoTableFile = items.find((item: any) => {
+      const lower = item.name.toLowerCase();
+      return (lower.includes('infotable') || lower.includes('information_table') || lower.includes('info_table')) &&
+        (lower.endsWith('.xml'));
+    });
 
     if (!infoTableFile) {
       console.warn(`[13F] No info table found for ${cik}/${accession}`);
@@ -99,25 +100,15 @@ async function fetchInfoTable(cik: string, accession: string): Promise<Holding13
 function parseInfoTableXml(xml: string): Holding13F[] {
   const holdings: Holding13F[] = [];
 
-  // Simple XML parsing for info table entries
-  const entryPattern = /<infoTable[^>]*>([\s\S]*?)<\/infoTable>/gi;
-  const entries = xml.match(entryPattern) || [];
-
-  // If no entries found with infoTable tags, try ns1:infoTable or other namespace patterns
-  const altPattern = /<(?:ns1:|)[iI]nfo[tT]able[^>]*>([\s\S]*?)<\/(?:ns1:|)[iI]nfo[tT]able>/gi;
-  const allEntries = entries.length > 0 ? entries : (xml.match(altPattern) || []);
+  // Match infoTable entries with any namespace prefix (ns1:infoTable, infoTable, etc.)
+  const entryPattern = /<(?:\w+:)?infoTable\b[^>]*>([\s\S]*?)<\/(?:\w+:)?infoTable>/gi;
+  const allEntries = xml.match(entryPattern) || [];
 
   for (const entry of allEntries) {
     const getField = (name: string): string => {
-      const patterns = [
-        new RegExp(`<(?:ns1:)?${name}[^>]*>([^<]*)<`, 'i'),
-        new RegExp(`<${name}>([^<]*)`, 'i'),
-      ];
-      for (const p of patterns) {
-        const m = entry.match(p);
-        if (m) return m[1].trim();
-      }
-      return '';
+      const p = new RegExp(`<(?:\\w+:)?${name}[^>]*>([^<]*)`, 'i');
+      const m = entry.match(p);
+      return m ? m[1].trim() : '';
     };
 
     const issuer = getField('nameOfIssuer');
