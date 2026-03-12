@@ -870,26 +870,30 @@ header {
 }
 .sentiment-dashboard {
   display: grid;
-  grid-template-columns: 180px 1fr;
+  grid-template-columns: 200px 1fr;
   gap: 24px;
   align-items: center;
 }
-.sentiment-score-box {
+.sentiment-gauge-box {
   text-align: center;
-  padding: 16px;
+  padding: 12px 16px 8px;
   background: var(--surface2);
   border-radius: 8px;
+  position: relative;
 }
-.sentiment-big-score {
-  font-size: 36px;
-  font-weight: 800;
-  color: var(--text);
-}
+.gauge-svg { display: block; margin: 0 auto; }
+.gauge-bg { fill: none; stroke: var(--border); stroke-width: 10; stroke-linecap: round; }
+.gauge-fill { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1.2s ease-out, stroke 0.6s ease; }
+.gauge-score-text { font-size: 28px; font-weight: 800; fill: var(--text); }
+.gauge-label-text { font-size: 10px; fill: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.gauge-range { display: flex; justify-content: space-between; padding: 0 8px; margin-top: -2px; }
+.gauge-range span { font-size: 9px; color: var(--text-muted); }
 .sentiment-trend {
   font-size: 14px;
   font-weight: 600;
-  margin-top: 4px;
+  margin-top: 6px;
   text-transform: capitalize;
+  text-align: center;
 }
 .trend-up { color: var(--positive); }
 .trend-down { color: var(--negative); }
@@ -897,7 +901,8 @@ header {
 .sentiment-articles {
   font-size: 11px;
   color: var(--text-muted);
-  margin-top: 6px;
+  margin-top: 2px;
+  text-align: center;
 }
 .sentiment-bars {
   display: flex;

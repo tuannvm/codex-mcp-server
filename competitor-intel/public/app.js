@@ -911,36 +911,65 @@ function renderBrief(brief) {
 
   let html = '';
 
-  // 1. Market Sentiment
+  // 1. Market Sentiment — SVG arc gauge
+  // Score range: -1 (bearish) to +1 (bullish), default to 0 for no data
+  const gaugeScore = s.avg_score;
+  const normalized = Math.max(0, Math.min(1, (gaugeScore + 1) / 2)); // map -1..+1 to 0..1
+  const arcRadius = 60;
+  const arcLen = Math.PI * arcRadius; // semicircle circumference
+  const dashOffset = arcLen * (1 - normalized);
+  // Color: red(-1) -> yellow(0) -> green(+1)
+  const gaugeHue = Math.round(normalized * 120); // 0=red, 60=yellow, 120=green
+  const gaugeColor = `hsl(${gaugeHue}, 70%, 50%)`;
+  const periodLabel = s.total_articles > 0 ? '24h' : 'all time';
+
   html += `
     <div class="brief-section">
       <h3 class="brief-section-title">Market Sentiment</h3>
       <div class="sentiment-dashboard">
-        <div class="sentiment-score-box">
-          <div class="sentiment-big-score">${s.avg_score.toFixed(2)}</div>
-          <div class="sentiment-trend ${trendClass}">${trendIcon} ${s.trend}</div>
-          <div class="sentiment-articles">${s.total_articles} articles (24h)</div>
+        <div class="sentiment-gauge-box">
+          <svg class="gauge-svg" width="170" height="100" viewBox="0 0 170 100">
+            <path class="gauge-bg" d="M 15 90 A ${arcRadius} ${arcRadius} 0 0 1 155 90" />
+            <path class="gauge-fill" id="gaugeFill"
+              d="M 15 90 A ${arcRadius} ${arcRadius} 0 0 1 155 90"
+              stroke="${gaugeColor}"
+              stroke-dasharray="${arcLen}"
+              stroke-dashoffset="${arcLen}" />
+            <text class="gauge-score-text" x="85" y="75" text-anchor="middle">${gaugeScore.toFixed(2)}</text>
+            <text class="gauge-label-text" x="85" y="92" text-anchor="middle">${s.total_articles} articles (${periodLabel})</text>
+          </svg>
+          <div class="gauge-range"><span>Bearish</span><span>Bullish</span></div>
+          <div class="sentiment-trend ${trendClass}">${trendIcon} ${escHtml(s.trend)}</div>
         </div>
         <div class="sentiment-bars">
           <div class="sent-bar-row">
             <span class="sent-label pos-label">Positive</span>
-            <div class="sent-bar-track"><div class="sent-bar-fill pos-fill" style="width:${s.positive_pct}%"></div></div>
+            <div class="sent-bar-track"><div class="sent-bar-fill pos-fill" style="width:0%"></div></div>
             <span class="sent-pct">${s.positive_pct}%</span>
           </div>
           <div class="sent-bar-row">
             <span class="sent-label neu-label">Neutral</span>
-            <div class="sent-bar-track"><div class="sent-bar-fill neu-fill" style="width:${s.neutral_pct}%"></div></div>
+            <div class="sent-bar-track"><div class="sent-bar-fill neu-fill" style="width:0%"></div></div>
             <span class="sent-pct">${s.neutral_pct}%</span>
           </div>
           <div class="sent-bar-row">
             <span class="sent-label neg-label">Negative</span>
-            <div class="sent-bar-track"><div class="sent-bar-fill neg-fill" style="width:${s.negative_pct}%"></div></div>
+            <div class="sent-bar-track"><div class="sent-bar-fill neg-fill" style="width:0%"></div></div>
             <span class="sent-pct">${s.negative_pct}%</span>
           </div>
         </div>
       </div>
     </div>
   `;
+
+  // Animate gauge and bars after render
+  setTimeout(() => {
+    const fill = document.getElementById('gaugeFill');
+    if (fill) fill.setAttribute('stroke-dashoffset', String(dashOffset));
+    document.querySelectorAll('.sent-bar-fill.pos-fill').forEach(el => el.style.width = s.positive_pct + '%');
+    document.querySelectorAll('.sent-bar-fill.neu-fill').forEach(el => el.style.width = s.neutral_pct + '%');
+    document.querySelectorAll('.sent-bar-fill.neg-fill').forEach(el => el.style.width = s.negative_pct + '%');
+  }, 50);
 
   // 2. Top Stories
   if (brief.top_stories.length > 0) {

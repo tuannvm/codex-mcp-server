@@ -64,9 +64,12 @@ export async function generateBrief(): Promise<DailyBrief> {
   }
 
   // Last 24h articles
-  const recentArticles = allArticles.filter(
+  const last24h = allArticles.filter(
     a => new Date(a.pub_date) >= oneDayAgo
   );
+
+  // Fall back to all articles if none in last 24h
+  const recentArticles = last24h.length > 0 ? last24h : allArticles;
 
   // Previous 24h articles (for trend comparison)
   const prevArticles = allArticles.filter(
