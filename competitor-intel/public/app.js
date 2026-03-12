@@ -563,6 +563,48 @@ async function loadSecFilings() {
   }
 }
 
+// Filing type reference data (mirrors server-side FILING_TYPE_INFO)
+const FILING_TYPE_INFO = {
+  'ADV': { label: 'Adviser Registration', desc: 'AUM, fees, conflicts, disciplinary history' },
+  'ADV-W': { label: 'Adviser Withdrawal', desc: 'Investment adviser deregistration' },
+  '10-K': { label: 'Annual Report', desc: 'Annual financial report with audited statements' },
+  '10-Q': { label: 'Quarterly Report', desc: 'Quarterly financial update' },
+  '8-K': { label: 'Current Report', desc: 'Leadership changes, M&A, material agreements' },
+  '13F': { label: 'Holdings Report', desc: 'Quarterly institutional holdings ($100M+)' },
+  'S-1': { label: 'IPO Registration', desc: 'Initial public offering registration' },
+  'DEF 14A': { label: 'Proxy Statement', desc: 'Exec compensation, board info, proposals' },
+  'N-CSR': { label: 'Fund Annual Report', desc: 'Shareholder report for investment companies' },
+  '4': { label: 'Insider Trade', desc: 'Changes in beneficial ownership by insiders' },
+  'SC 13D': { label: 'Beneficial Ownership', desc: 'Ownership above 5% with activist intent' },
+  'SC 13G': { label: 'Passive Ownership', desc: 'Passive ownership above 5%' },
+};
+
+const SIC_DESCRIPTIONS = {
+  '6020': 'Commercial Banking', '6021': 'National Commercial Banks',
+  '6022': 'State Commercial Banks', '6035': 'Savings Institutions',
+  '6099': 'Financial Services', '6141': 'Personal Credit',
+  '6153': 'Short-Term Business Credit', '6159': 'Federal Loan Agencies',
+  '6162': 'Mortgage Bankers', '6199': 'Finance Services',
+  '6200': 'Security & Commodity Brokers', '6211': 'Security Brokers & Dealers',
+  '6282': 'Investment Advice', '6311': 'Fire, Marine & Casualty Insurance',
+  '6321': 'Health Insurance', '6399': 'Insurance', '6500': 'Real Estate',
+  '6726': 'Investment Offices', '6770': 'Blank Checks',
+};
+
+// Keyword severity categories (mirrors server-side SEC_KEYWORD_CATEGORIES)
+const KEYWORD_SEVERITY = {};
+['enforcement','fraud','penalty','sanction','cease and desist','disgorgement',
+ 'insider trading','violation','criminal','whistleblower','revocation','barred','suspension'
+].forEach(k => KEYWORD_SEVERITY[k] = 'critical');
+['investigation','material weakness','deficiency','settlement','arbitration',
+ 'conflict of interest','breach','restatement','adverse','litigation','class action',
+ 'subpoena','regulatory action','consent order'
+].forEach(k => KEYWORD_SEVERITY[k] = 'warning');
+['risk','fiduciary','compliance','audit','custody','best execution','advisory fee',
+ 'proxy','material change','governance','disclosure','amendment','corrective action',
+ 'remediation','oversight'
+].forEach(k => KEYWORD_SEVERITY[k] = 'monitor');
+
 function renderSecFilings(filings) {
   const container = document.getElementById('secFilingsList');
   if (!filings || filings.length === 0) {
@@ -573,22 +615,63 @@ function renderSecFilings(filings) {
   container.innerHTML = '';
   for (const f of filings) {
     const card = document.createElement('div');
-    card.className = 'sec-card';
+    const riskClass = f.risk_level || 'info';
+    card.className = `sec-card sec-risk-${riskClass}`;
 
-    const keywordPills = Object.entries(f.keyword_hits || {})
-      .filter(([, count]) => count > 0)
-      .sort((a, b) => b[1] - a[1])
-      .map(([word, count]) => `<span class="keyword-pill ${getKeywordClass(word)}">${escHtml(word)} <strong>${count}</strong></span>`)
+    // Group keywords by severity
+    const kwEntries = Object.entries(f.keyword_hits || {}).filter(([, c]) => c > 0);
+    const grouped = { critical: [], warning: [], monitor: [] };
+    for (const [word, count] of kwEntries) {
+      const sev = KEYWORD_SEVERITY[word.toLowerCase()] || 'monitor';
+      grouped[sev].push({ word, count });
+    }
+    // Sort each group by count desc
+    for (const g of Object.values(grouped)) g.sort((a, b) => b.count - a.count);
+
+    const keywordHtml = ['critical', 'warning', 'monitor']
+      .filter(sev => grouped[sev].length > 0)
+      .map(sev => {
+        const pills = grouped[sev]
+          .map(({ word, count }) => `<span class="keyword-pill kw-${sev}">${escHtml(word)} <strong>${count}</strong></span>`)
+          .join('');
+        return `<div class="kw-group"><span class="kw-group-label kw-label-${sev}">${sev.toUpperCase()}</span>${pills}</div>`;
+      })
       .join('');
+
+    // Filing type info
+    const typeInfo = FILING_TYPE_INFO[f.filing_type] || null;
+    const typeLabel = typeInfo ? typeInfo.label : f.filing_type;
+    const typeDesc = typeInfo ? typeInfo.desc : '';
+
+    // SIC industry
+    const sicDesc = f.sic_code ? (SIC_DESCRIPTIONS[f.sic_code] || `SIC ${f.sic_code}`) : '';
+
+    // Detail items
+    const details = [];
+    if (f.period_ending) details.push(`<span class="sec-detail"><strong>Period:</strong> ${new Date(f.period_ending).toLocaleDateString()}</span>`);
+    if (f.cik) details.push(`<span class="sec-detail"><strong>CIK:</strong> ${escHtml(f.cik)}</span>`);
+    if (sicDesc) details.push(`<span class="sec-detail"><strong>Industry:</strong> ${escHtml(sicDesc)}</span>`);
+    if (f.file_number) details.push(`<span class="sec-detail"><strong>File #:</strong> ${escHtml(f.file_number)}</span>`);
+
+    // Risk badge
+    const riskLabels = { critical: 'CRITICAL', warning: 'WARNING', monitor: 'MONITOR', info: 'INFO' };
+    const riskBadge = `<span class="risk-badge risk-${riskClass}">${riskLabels[riskClass] || 'INFO'}${f.risk_score ? ` (${f.risk_score})` : ''}</span>`;
 
     card.innerHTML = `
       <div class="sec-card-header">
-        <span class="sec-type-badge">${escHtml(f.filing_type)}</span>
-        <span class="sec-date">${f.filed_date ? new Date(f.filed_date).toLocaleDateString() : ''}</span>
+        <div class="sec-header-left">
+          <span class="sec-type-badge">${escHtml(f.filing_type)}</span>
+          ${typeDesc ? `<span class="sec-type-desc">${escHtml(typeLabel)} &mdash; ${escHtml(typeDesc)}</span>` : ''}
+        </div>
+        <div class="sec-header-right">
+          ${riskBadge}
+          <span class="sec-date">${f.filed_date ? new Date(f.filed_date).toLocaleDateString() : ''}</span>
+        </div>
       </div>
       <div class="sec-company">${escHtml(f.company_name)}</div>
-      ${f.description ? `<div class="sec-desc">${escHtml(f.description).substring(0, 200)}</div>` : ''}
-      ${keywordPills ? `<div class="keyword-pills">${keywordPills}</div>` : ''}
+      ${details.length > 0 ? `<div class="sec-details-row">${details.join('')}</div>` : ''}
+      ${f.description ? `<div class="sec-desc">${escHtml(f.description).substring(0, 300)}</div>` : ''}
+      ${keywordHtml ? `<div class="sec-keywords-section">${keywordHtml}</div>` : ''}
       <div class="sec-footer">
         <a href="${escHtml(f.document_url)}" target="_blank" rel="noopener" class="read-more">View on SEC EDGAR &#8594;</a>
         ${f.entity_names && f.entity_names.length > 0 ? `<span class="sec-entities">${f.entity_names.map(n => escHtml(n)).join(', ')}</span>` : ''}
@@ -599,11 +682,7 @@ function renderSecFilings(filings) {
 }
 
 function getKeywordClass(word) {
-  const w = word.toLowerCase();
-  if (['enforcement', 'penalty', 'violation', 'sanction'].includes(w)) return 'kw-danger';
-  if (['risk', 'deficiency', 'material weakness', 'investigation'].includes(w)) return 'kw-warning';
-  if (['fiduciary', 'compliance', 'audit'].includes(w)) return 'kw-info';
-  return 'kw-default';
+  return `kw-${KEYWORD_SEVERITY[word.toLowerCase()] || 'monitor'}`;
 }
 
 async function triggerSecScan() {

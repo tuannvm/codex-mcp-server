@@ -1,5 +1,5 @@
 import type { SecFiling } from '../config/competitors.js';
-import { ALL_ENTITIES, SEC_KEYWORDS } from '../config/competitors.js';
+import { ALL_ENTITIES, SEC_KEYWORD_CATEGORIES } from '../config/competitors.js';
 import { addSecFilings, logCrawl } from '../services/blobStore.js';
 
 const SEC_SEARCH_BASE = 'https://efts.sec.gov/LATEST/search-index/';
@@ -45,14 +45,31 @@ function buildDocUrl(hit: any): string {
 function countKeywords(text: string): Record<string, number> {
   const lower = text.toLowerCase();
   const hits: Record<string, number> = {};
-  for (const kw of SEC_KEYWORDS) {
-    const regex = new RegExp(kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-    const matches = lower.match(regex);
-    if (matches && matches.length > 0) {
-      hits[kw] = matches.length;
+  for (const cat of Object.values(SEC_KEYWORD_CATEGORIES)) {
+    for (const kw of cat.keywords) {
+      const regex = new RegExp(kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      const matches = lower.match(regex);
+      if (matches && matches.length > 0) {
+        hits[kw] = matches.length;
+      }
     }
   }
   return hits;
+}
+
+function computeRisk(keywordHits: Record<string, number>): { score: number; level: SecFiling['risk_level'] } {
+  let score = 0;
+  for (const [category, config] of Object.entries(SEC_KEYWORD_CATEGORIES)) {
+    for (const kw of config.keywords) {
+      const count = keywordHits[kw] || 0;
+      score += count * config.weight;
+    }
+  }
+  let level: SecFiling['risk_level'] = 'info';
+  if (score >= 10) level = 'critical';
+  else if (score >= 5) level = 'warning';
+  else if (score >= 1) level = 'monitor';
+  return { score, level };
 }
 
 export async function scanSec(customQuery?: string): Promise<number> {
@@ -77,7 +94,11 @@ export async function scanSec(customQuery?: string): Promise<number> {
       if (result.status !== 'fulfilled') continue;
       for (const hit of result.value) {
         const src = hit._source || {};
+        const id = hit._id || '';
         const text = `${src.file_description || ''} ${(src.display_names || []).join(' ')}`;
+        const keywordHits = countKeywords(text);
+        const { score, level } = computeRisk(keywordHits);
+        const accessionParts = id.split(':');
         filings.push({
           id: makeId(),
           entity_names: src.display_names || [],
@@ -87,7 +108,13 @@ export async function scanSec(customQuery?: string): Promise<number> {
           file_number: (src.file_num || [])[0] || '',
           document_url: buildDocUrl(hit),
           description: (src.file_description || '').substring(0, 500),
-          keyword_hits: countKeywords(text),
+          keyword_hits: keywordHits,
+          risk_level: level,
+          risk_score: score,
+          period_ending: src.period_ending || '',
+          cik: (src.ciks || [])[0] || '',
+          accession_number: accessionParts[0] || '',
+          sic_code: (src.sics || [])[0] || '',
           created_at: new Date().toISOString(),
         });
       }

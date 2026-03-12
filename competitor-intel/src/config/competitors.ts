@@ -43,6 +43,12 @@ export interface SecFiling {
   document_url: string;
   description: string;
   keyword_hits: Record<string, number>;
+  risk_level: 'critical' | 'warning' | 'monitor' | 'info';
+  risk_score: number;
+  period_ending: string;
+  cik: string;
+  accession_number: string;
+  sic_code: string;
   created_at: string;
 }
 
@@ -189,12 +195,79 @@ export const PRIORITY_KEYWORDS: string[] = [
   'fed meeting', 'rate hold', 'quantitative tightening',
 ];
 
-export const SEC_KEYWORDS: string[] = [
-  'risk', 'enforcement', 'penalty', 'audit', 'violation',
-  'fiduciary', 'compliance', 'settlement', 'arbitration',
-  'investigation', 'sanction', 'deficiency', 'material weakness',
-  'conflict of interest', 'insider trading',
-];
+// Severity-weighted keywords for SEC filing analysis
+// Weight: critical=3, warning=2, monitor=1
+export const SEC_KEYWORD_CATEGORIES: Record<string, { keywords: string[]; weight: number }> = {
+  critical: {
+    weight: 3,
+    keywords: [
+      'enforcement', 'fraud', 'penalty', 'sanction', 'cease and desist',
+      'disgorgement', 'insider trading', 'violation', 'criminal',
+      'whistleblower', 'revocation', 'barred', 'suspension',
+    ],
+  },
+  warning: {
+    weight: 2,
+    keywords: [
+      'investigation', 'material weakness', 'deficiency', 'settlement',
+      'arbitration', 'conflict of interest', 'breach', 'restatement',
+      'adverse', 'litigation', 'class action', 'subpoena',
+      'regulatory action', 'consent order',
+    ],
+  },
+  monitor: {
+    weight: 1,
+    keywords: [
+      'risk', 'fiduciary', 'compliance', 'audit', 'custody',
+      'best execution', 'advisory fee', 'proxy', 'material change',
+      'governance', 'disclosure', 'amendment', 'corrective action',
+      'remediation', 'oversight',
+    ],
+  },
+};
+
+// Flat list for backward compat
+export const SEC_KEYWORDS: string[] = Object.values(SEC_KEYWORD_CATEGORIES)
+  .flatMap(c => c.keywords);
+
+// Filing type explanations relevant to institutional consulting
+export const FILING_TYPE_INFO: Record<string, { label: string; description: string }> = {
+  'ADV': { label: 'Adviser Registration', description: 'Investment adviser registration — shows AUM, fees, conflicts, disciplinary history' },
+  'ADV-W': { label: 'Adviser Withdrawal', description: 'Investment adviser deregistration' },
+  '10-K': { label: 'Annual Report', description: 'Comprehensive annual financial report with audited statements' },
+  '10-Q': { label: 'Quarterly Report', description: 'Quarterly financial update with unaudited financials' },
+  '8-K': { label: 'Current Report', description: 'Major event disclosure — leadership changes, M&A, material agreements' },
+  '13F': { label: 'Holdings Report', description: 'Quarterly institutional holdings disclosure ($100M+ managers)' },
+  'S-1': { label: 'IPO Registration', description: 'Initial public offering registration statement' },
+  'DEF 14A': { label: 'Proxy Statement', description: 'Annual meeting proxy — exec compensation, board info, proposals' },
+  'N-CSR': { label: 'Fund Annual Report', description: 'Certified shareholder report for registered investment companies' },
+  '4': { label: 'Insider Trade', description: 'Changes in beneficial ownership by insiders' },
+  'SC 13D': { label: 'Beneficial Ownership', description: 'Ownership above 5% with activist intent' },
+  'SC 13G': { label: 'Passive Ownership', description: 'Passive ownership above 5%' },
+};
+
+// SIC code descriptions for common financial industry codes
+export const SIC_DESCRIPTIONS: Record<string, string> = {
+  '6020': 'Commercial Banking',
+  '6021': 'National Commercial Banks',
+  '6022': 'State Commercial Banks',
+  '6035': 'Savings Institutions',
+  '6099': 'Financial Services',
+  '6141': 'Personal Credit',
+  '6153': 'Short-Term Business Credit',
+  '6159': 'Federal Loan Agencies',
+  '6162': 'Mortgage Bankers',
+  '6199': 'Finance Services',
+  '6200': 'Security & Commodity Brokers',
+  '6211': 'Security Brokers & Dealers',
+  '6282': 'Investment Advice',
+  '6311': 'Fire, Marine & Casualty Insurance',
+  '6321': 'Health Insurance',
+  '6399': 'Insurance',
+  '6500': 'Real Estate',
+  '6726': 'Investment Offices',
+  '6770': 'Blank Checks',
+};
 
 export const PREDICTION_KEYWORDS: string[] = [
   'Federal Reserve', 'interest rate', 'SEC', 'oil price',
