@@ -253,12 +253,33 @@ export async function getSecFilings(filters?: {
   return all.slice(offset, offset + limit);
 }
 
-export async function addSecFilings(newFilings: SecFiling[]): Promise<number> {
+export async function addSecFilings(newFilings: SecFiling[], refreshKeywords = false): Promise<number> {
   const store = secStore();
   const existing: SecFiling[] = ((await store.get('all', { type: 'json' })) as SecFiling[]) || [];
   const existingUrls = new Set(existing.map(f => f.document_url));
 
   const unique = newFilings.filter(f => !existingUrls.has(f.document_url));
+
+  // Update keywords on existing filings that now have doc-extracted words
+  if (refreshKeywords) {
+    const newByUrl = new Map(newFilings.map(f => [f.document_url, f]));
+    let updated = 0;
+    for (const ef of existing) {
+      const nf = newByUrl.get(ef.document_url);
+      if (nf?.top_words?.length && !ef.top_words?.length) {
+        ef.top_words = nf.top_words;
+        updated++;
+      }
+    }
+    if (updated > 0 || unique.length > 0) {
+      const merged = [...unique, ...existing]
+        .sort((a, b) => new Date(b.filed_date).getTime() - new Date(a.filed_date).getTime())
+        .slice(0, 1000);
+      await store.setJSON('all', merged);
+      return unique.length;
+    }
+  }
+
   if (unique.length === 0) return 0;
 
   const merged = [...unique, ...existing]

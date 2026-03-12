@@ -2,7 +2,7 @@ import type { SecFiling } from '../config/competitors.js';
 import { ALL_ENTITIES, SEC_KEYWORD_CATEGORIES } from '../config/competitors.js';
 import { addSecFilings, logCrawl, getAllEntitiesWithCustom } from '../services/blobStore.js';
 
-const SEC_SEARCH_BASE = 'https://efts.sec.gov/LATEST/search-index/';
+const SEC_SEARCH_BASE = 'https://efts.sec.gov/LATEST/search-index';
 const USER_AGENT = 'The Dobbs Group Competitor Intel alerts@dobbsgroup.com';
 
 function makeId(): string {
@@ -38,6 +38,44 @@ function buildDocUrl(hit: any): string {
   return `https://www.sec.gov/Archives/edgar/data/${cik}/${cleanAccession}/${filename}`;
 }
 
+/** Fetch first ~20KB of a filing document and extract top words from actual content */
+async function fetchDocTopWords(docUrl: string): Promise<string[]> {
+  if (!docUrl) return [];
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(docUrl, {
+      headers: { 'User-Agent': USER_AGENT, 'Range': 'bytes=0-20000' },
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok && res.status !== 206) return [];
+    const raw = await res.text();
+
+    // Strip HTML/XML tags, entities, and non-alpha chars
+    const text = raw
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&[a-z]+;/gi, ' ')
+      .replace(/[^a-zA-Z\s]/g, ' ')
+      .toLowerCase();
+
+    // Count word frequencies
+    const words = text.split(/\s+/);
+    const freq: Record<string, number> = {};
+    for (const w of words) {
+      if (w.length < 4 || STOP_WORDS.has(w) || DOC_STOP_WORDS.has(w)) continue;
+      freq[w] = (freq[w] || 0) + 1;
+    }
+
+    return Object.entries(freq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([word]) => word);
+  } catch {
+    return [];
+  }
+}
+
 function countKeywords(text: string): Record<string, number> {
   const lower = text.toLowerCase();
   const hits: Record<string, number> = {};
@@ -64,6 +102,20 @@ const STOP_WORDS = new Set([
   'also','very','just','about','above','after','before','between','into','through',
   'during','under','over','out','up','down','off','re','s','t','d','ll','ve',
   'inc','llc','corp','co','et','al','sec','filed','form','file','report',
+]);
+
+// Extra stop words for SEC document content (common boilerplate)
+const DOC_STOP_WORDS = new Set([
+  'document','section','item','page','date','table','contents','part','total',
+  'following','period','ended','year','years','number','pursuant','herein',
+  'thereof','therein','hereto','thereto','upon','such','each','been','made',
+  'shall','will','would','could','should','must','other','certain','respect',
+  'applicable','including','without','unless','subject','accordance','provided',
+  'whether','described','related','general','information','commission','exchange',
+  'securities','registrant','states','united','state','federal','registered',
+  'none','true','false','type','text','name','value','amount','percent',
+  'class','style','font','color','width','align','span','border','xmlns',
+  'html','body','head','title','meta','content','http','https','www',
 ]);
 
 function extractTopWords(keywordHits: Record<string, number>, description: string): string[] {
@@ -129,6 +181,9 @@ export async function scanSec(customQuery?: string): Promise<number> {
     );
 
     const filings: SecFiling[] = [];
+    // Build filings from hits, track which need doc keywords
+    const needsDocKeywords: Array<{ filing: SecFiling; docUrl: string }> = [];
+
     for (const result of results) {
       if (result.status !== 'fulfilled') continue;
       for (const hit of result.value) {
@@ -140,14 +195,16 @@ export async function scanSec(customQuery?: string): Promise<number> {
         const descText = (src.file_description || '').substring(0, 500);
         const topWords = extractTopWords(keywordHits, descText);
         const accessionParts = id.split(':');
-        filings.push({
+        const docUrl = buildDocUrl(hit);
+
+        const filing: SecFiling = {
           id: makeId(),
           entity_names: src.display_names || [],
           filing_type: src.root_form || src.form || 'Unknown',
           filed_date: src.file_date || endDate,
           company_name: (src.display_names || ['Unknown'])[0],
           file_number: (src.file_num || [])[0] || '',
-          document_url: buildDocUrl(hit),
+          document_url: docUrl,
           description: descText,
           keyword_hits: keywordHits,
           risk_level: level,
@@ -158,11 +215,30 @@ export async function scanSec(customQuery?: string): Promise<number> {
           sic_code: (src.sics || [])[0] || '',
           top_words: topWords.length > 0 ? topWords : undefined,
           created_at: new Date().toISOString(),
-        });
+        };
+        filings.push(filing);
+
+        // Queue for doc keyword extraction if no metadata keywords found
+        if (topWords.length === 0 && docUrl) {
+          needsDocKeywords.push({ filing, docUrl });
+        }
       }
     }
 
-    const newCount = await addSecFilings(filings);
+    // Fetch document keywords for filings missing them (cap at 15 to stay within timeout)
+    const toFetch = needsDocKeywords.slice(0, 15);
+    if (toFetch.length > 0) {
+      const docResults = await Promise.all(
+        toFetch.map(({ docUrl }) => fetchDocTopWords(docUrl))
+      );
+      for (let k = 0; k < toFetch.length; k++) {
+        if (docResults[k].length > 0) {
+          toFetch[k].filing.top_words = docResults[k];
+        }
+      }
+    }
+
+    const newCount = await addSecFilings(filings, true);
     totalNew += newCount;
 
     if (i + 3 < queries.length) {
