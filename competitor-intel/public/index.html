@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Competitor Intelligence | The Dobbs Group</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <h1>Competitor Intelligence</h1>
+        <span class="subtitle">The Dobbs Group | Graystone Consulting</span>
+      </div>
+      <div class="header-actions">
+        <span id="lastCrawl" class="last-crawl"></span>
+        <button id="btnCrawlAll" class="btn btn-primary" onclick="triggerCrawl()">Crawl Now</button>
+        <button id="btnCrawlGov" class="btn btn-secondary" onclick="triggerGovCrawl()">Update Calendar</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="news" onclick="switchTab('news')">News Feed</button>
+    <button class="tab" data-tab="stats" onclick="switchTab('stats')">Overview</button>
+    <button class="tab" data-tab="calendar" onclick="switchTab('calendar')">Gov Calendar</button>
+    <button class="tab" data-tab="log" onclick="switchTab('log')">Crawl Log</button>
+  </nav>
+
+  <!-- ── News Feed Tab ─────────────────────────── -->
+  <section id="tab-news" class="tab-content active">
+    <div class="filters">
+      <div class="filter-group">
+        <label>Company</label>
+        <select id="filterEntity" onchange="loadArticles()">
+          <option value="all">All Companies</option>
+          <option value="dobbs-group">The Dobbs Group (Self)</option>
+          <optgroup label="Tier 1 Competitors" id="tier1Options"></optgroup>
+          <optgroup label="Tier 2 Competitors" id="tier2Options"></optgroup>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Sentiment</label>
+        <select id="filterSentiment" onchange="loadArticles()">
+          <option value="all">All</option>
+          <option value="positive">Positive</option>
+          <option value="neutral">Neutral</option>
+          <option value="negative">Negative</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Search</label>
+        <input type="text" id="filterSearch" placeholder="Search articles..." oninput="debounceSearch()">
+      </div>
+    </div>
+    <div id="articlesList" class="articles-list">
+      <div class="loading">Loading articles...</div>
+    </div>
+    <div class="load-more">
+      <button id="btnLoadMore" class="btn btn-secondary" onclick="loadMore()" style="display:none;">Load More</button>
+    </div>
+  </section>
+
+  <!-- ── Overview / Stats Tab ──────────────────── -->
+  <section id="tab-stats" class="tab-content">
+    <div id="statsGrid" class="stats-grid">
+      <div class="loading">Loading stats...</div>
+    </div>
+  </section>
+
+  <!-- ── Government Calendar Tab ───────────────── -->
+  <section id="tab-calendar" class="tab-content">
+    <div class="filters">
+      <div class="filter-group">
+        <label>Category</label>
+        <select id="filterEventCat" onchange="loadEvents()">
+          <option value="all">All Categories</option>
+          <option value="FOMC / Monetary Policy">FOMC / Monetary Policy</option>
+          <option value="Federal Reserve">Federal Reserve</option>
+          <option value="SEC">SEC</option>
+          <option value="SEC Enforcement">SEC Enforcement</option>
+          <option value="Treasury">Treasury</option>
+          <option value="Dept of Labor">Dept of Labor</option>
+          <option value="Economic Data (BLS)">Economic Data (BLS)</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Date Range</label>
+        <input type="date" id="filterStartDate" onchange="loadEvents()">
+        <input type="date" id="filterEndDate" onchange="loadEvents()">
+      </div>
+    </div>
+    <div id="calendarView" class="calendar-view">
+      <div class="loading">Loading events...</div>
+    </div>
+  </section>
+
+  <!-- ── Crawl Log Tab ─────────────────────────── -->
+  <section id="tab-log" class="tab-content">
+    <div id="crawlLogList" class="crawl-log">
+      <div class="loading">Loading crawl log...</div>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
