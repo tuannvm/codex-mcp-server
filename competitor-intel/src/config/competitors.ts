@@ -23,6 +23,44 @@ export interface Article {
   search_query: string;
 }
 
+export interface FinancialArticle {
+  id: string;
+  title: string;
+  link: string;
+  source_name: string;
+  source_domain: string;
+  pub_date: string;
+  snippet: string;
+  sentiment_score: number;
+  sentiment_label: 'positive' | 'neutral' | 'negative';
+  created_at: string;
+  search_query: string;
+}
+
+export interface FinancialNewsSource {
+  name: string;
+  domain: string;
+  searchTerms: string[];
+}
+
+export const FINANCIAL_NEWS_SOURCES: FinancialNewsSource[] = [
+  { name: 'Bloomberg', domain: 'bloomberg.com', searchTerms: ['finance', 'markets'] },
+  { name: 'Reuters', domain: 'reuters.com', searchTerms: ['finance', 'markets', 'economy'] },
+  { name: 'CNBC', domain: 'cnbc.com', searchTerms: ['finance', 'markets', 'economy'] },
+  { name: 'Yahoo Finance', domain: 'finance.yahoo.com', searchTerms: ['finance', 'markets'] },
+  { name: 'MarketWatch', domain: 'marketwatch.com', searchTerms: ['markets', 'economy'] },
+  { name: 'Wall Street Journal', domain: 'wsj.com', searchTerms: ['finance', 'markets'] },
+  { name: 'Financial Times', domain: 'ft.com', searchTerms: ['finance', 'markets'] },
+  { name: 'Seeking Alpha', domain: 'seekingalpha.com', searchTerms: ['investing', 'markets'] },
+  { name: "Barron's", domain: 'barrons.com', searchTerms: ['markets', 'investing'] },
+  { name: 'Forbes', domain: 'forbes.com', searchTerms: ['finance', 'investing'] },
+  { name: 'Investopedia', domain: 'investopedia.com', searchTerms: ['markets', 'economy'] },
+  { name: 'Benzinga', domain: 'benzinga.com', searchTerms: ['markets', 'trading'] },
+  { name: 'Business Insider', domain: 'businessinsider.com', searchTerms: ['finance', 'markets'] },
+  { name: 'Motley Fool', domain: 'fool.com', searchTerms: ['investing', 'stocks'] },
+  { name: 'The Economist', domain: 'economist.com', searchTerms: ['economy', 'finance'] },
+];
+
 export interface AumEntry {
   entity_id: string;
   entity_name: string;

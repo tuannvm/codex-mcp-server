@@ -22,9 +22,10 @@
   </header>
 
   <nav class="tabs">
-    <button class="tab active" data-tab="news" onclick="switchTab('news')">News Feed</button>
-    <button class="tab" data-tab="brief" onclick="switchTab('brief')">Daily Brief</button>
-    <button class="tab" data-tab="stats" onclick="switchTab('stats')">Overview</button>
+    <button class="tab active" data-tab="brief" onclick="switchTab('brief')">Daily Brief</button>
+    <button class="tab" data-tab="news" onclick="switchTab('news')">Competitor News</button>
+    <button class="tab" data-tab="fin-news" onclick="switchTab('fin-news')">Financial News</button>
+    <button class="tab" data-tab="stats" onclick="switchTab('stats')">Competitor Intelligence</button>
     <button class="tab" data-tab="aum" onclick="switchTab('aum')">AUM</button>
     <button class="tab" data-tab="sec" onclick="switchTab('sec')">SEC Filings</button>
     <button class="tab" data-tab="predictions" onclick="switchTab('predictions')">Predictions</button>
@@ -32,8 +33,8 @@
     <button class="tab" data-tab="log" onclick="switchTab('log')">Crawl Log</button>
   </nav>
 
-  <!-- ── News Feed Tab ─────────────────────────── -->
-  <section id="tab-news" class="tab-content active">
+  <!-- ── Competitor News Tab ───────────────────── -->
+  <section id="tab-news" class="tab-content">
     <div id="prioritySection" class="priority-section" style="display:none;">
       <div class="priority-header">
         <span class="priority-icon">&#9733;</span>
@@ -74,7 +75,7 @@
   </section>
 
   <!-- ── Daily Brief Tab ────────────────────────── -->
-  <section id="tab-brief" class="tab-content">
+  <section id="tab-brief" class="tab-content active">
     <div class="tab-title-bar">
       <h2>Daily Intelligence Brief</h2>
       <div class="tab-actions">
@@ -87,7 +88,59 @@
     </div>
   </section>
 
-  <!-- ── Overview / Stats Tab ──────────────────── -->
+  <!-- ── Financial News Tab ────────────────────── -->
+  <section id="tab-fin-news" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>Financial News</h2>
+      <div class="tab-actions">
+        <button id="btnCrawlFinNews" class="btn btn-primary" onclick="triggerFinNewsCrawl()">Crawl Financial News</button>
+      </div>
+    </div>
+    <div class="filters">
+      <div class="filter-group">
+        <label>Source</label>
+        <select id="filterFinSource" onchange="loadFinArticles()">
+          <option value="all">All Sources</option>
+          <option value="Bloomberg">Bloomberg</option>
+          <option value="Reuters">Reuters</option>
+          <option value="CNBC">CNBC</option>
+          <option value="Yahoo Finance">Yahoo Finance</option>
+          <option value="MarketWatch">MarketWatch</option>
+          <option value="Wall Street Journal">Wall Street Journal</option>
+          <option value="Financial Times">Financial Times</option>
+          <option value="Seeking Alpha">Seeking Alpha</option>
+          <option value="Barron's">Barron's</option>
+          <option value="Forbes">Forbes</option>
+          <option value="Investopedia">Investopedia</option>
+          <option value="Benzinga">Benzinga</option>
+          <option value="Business Insider">Business Insider</option>
+          <option value="Motley Fool">Motley Fool</option>
+          <option value="The Economist">The Economist</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Sentiment</label>
+        <select id="filterFinSentiment" onchange="loadFinArticles()">
+          <option value="all">All</option>
+          <option value="positive">Positive</option>
+          <option value="neutral">Neutral</option>
+          <option value="negative">Negative</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Search</label>
+        <input type="text" id="filterFinSearch" placeholder="Search financial news..." oninput="debounceFinSearch()">
+      </div>
+    </div>
+    <div id="finArticlesList" class="articles-list">
+      <div class="empty">Click "Crawl Financial News" to fetch articles from top financial sources.</div>
+    </div>
+    <div class="load-more">
+      <button id="btnFinLoadMore" class="btn btn-secondary" onclick="loadFinMore()" style="display:none;">Load More</button>
+    </div>
+  </section>
+
+  <!-- ── Competitor Intelligence Tab ──────────── -->
   <section id="tab-stats" class="tab-content">
     <div id="statsGrid" class="stats-grid">
       <div class="loading">Loading stats...</div>

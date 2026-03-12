@@ -7,10 +7,7 @@ let searchTimer = null;
 // ── Init ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   await loadEntities();
-  loadArticles();
-  loadPriorityArticles();
-  loadStats();
-  loadCustomEntities();
+  loadBrief(); // Daily Brief is now the default tab
 
   // Default calendar date range: today - 7 days to today + 90 days
   const now = new Date();
@@ -360,6 +357,8 @@ function switchTab(tabName) {
 
   // Lazy load tab data
   if (tabName === 'brief') loadBrief();
+  if (tabName === 'news') { loadArticles(); loadPriorityArticles(); }
+  if (tabName === 'fin-news') loadFinArticles();
   if (tabName === 'stats') { loadStats(); loadCustomEntities(); }
   if (tabName === 'aum') loadAum();
   if (tabName === 'sec') loadSecFilings();
@@ -732,6 +731,99 @@ async function enrichSecKeywords() {
   } catch (err) {
     btn.textContent = 'Error';
     setTimeout(() => { btn.textContent = 'Enrich Keywords'; btn.disabled = false; }, 3000);
+  }
+}
+
+// ── Financial News ──────────────────────────────────────
+let finArticleOffset = 0;
+const FIN_ARTICLE_LIMIT = 50;
+let finSearchTimer = null;
+
+async function loadFinArticles(append) {
+  if (!append) finArticleOffset = 0;
+  const source = document.getElementById('filterFinSource').value;
+  const sentiment = document.getElementById('filterFinSentiment').value;
+  const search = document.getElementById('filterFinSearch').value;
+
+  const params = new URLSearchParams();
+  if (source !== 'all') params.set('source', source);
+  if (sentiment !== 'all') params.set('sentiment', sentiment);
+  if (search) params.set('search', search);
+  params.set('limit', FIN_ARTICLE_LIMIT);
+  params.set('offset', finArticleOffset);
+
+  try {
+    const res = await fetch(`/api/fin-articles?${params}`);
+    const articles = await res.json();
+    const container = document.getElementById('finArticlesList');
+    if (!append) container.innerHTML = '';
+
+    if (articles.length === 0 && !append) {
+      container.innerHTML = '<div class="empty">No financial news found. Click "Crawl Financial News" to get started.</div>';
+      document.getElementById('btnFinLoadMore').style.display = 'none';
+      return;
+    }
+
+    for (const a of articles) {
+      container.appendChild(renderFinArticle(a));
+    }
+
+    document.getElementById('btnFinLoadMore').style.display =
+      articles.length === FIN_ARTICLE_LIMIT ? 'inline-block' : 'none';
+  } catch (err) {
+    console.error('Failed to load financial news:', err);
+  }
+}
+
+function renderFinArticle(a) {
+  const div = document.createElement('div');
+  div.className = 'article-card';
+  const pubDate = a.pub_date ? new Date(a.pub_date) : null;
+  const dateStr = pubDate ? pubDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  const timeAgo = pubDate ? getTimeAgo(pubDate) : '';
+
+  div.innerHTML = `
+    <div class="article-header">
+      <a href="${escHtml(a.link)}" target="_blank" rel="noopener" class="article-title">${escHtml(a.title)}</a>
+      <div class="article-badges">
+        <span class="sentiment-badge sentiment-${a.sentiment_label}">${a.sentiment_label.toUpperCase()}</span>
+      </div>
+    </div>
+    <div class="article-meta">
+      <span class="entity-tag">${escHtml(a.source_name)}</span>
+      <span class="article-date" title="${dateStr}">${timeAgo || dateStr}</span>
+    </div>
+    ${a.snippet ? `<div class="article-snippet">${escHtml(a.snippet).substring(0, 300)}${a.snippet.length > 300 ? '...' : ''}</div>` : ''}
+    <div class="article-footer">
+      <a href="${escHtml(a.link)}" target="_blank" rel="noopener" class="read-more">Read full article &#8594;</a>
+    </div>
+  `;
+  return div;
+}
+
+function loadFinMore() {
+  finArticleOffset += FIN_ARTICLE_LIMIT;
+  loadFinArticles(true);
+}
+
+function debounceFinSearch() {
+  clearTimeout(finSearchTimer);
+  finSearchTimer = setTimeout(() => loadFinArticles(), 400);
+}
+
+async function triggerFinNewsCrawl() {
+  const btn = document.getElementById('btnCrawlFinNews');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Crawling...';
+  try {
+    const res = await fetch('/api/fin-crawl', { method: 'POST' });
+    const data = await res.json();
+    btn.textContent = `Done! (${data.newArticles} new)`;
+    setTimeout(() => { btn.textContent = 'Crawl Financial News'; btn.disabled = false; }, 3000);
+    loadFinArticles();
+  } catch (err) {
+    btn.textContent = 'Error';
+    setTimeout(() => { btn.textContent = 'Crawl Financial News'; btn.disabled = false; }, 3000);
   }
 }
 

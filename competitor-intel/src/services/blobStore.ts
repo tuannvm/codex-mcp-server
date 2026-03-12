@@ -1,5 +1,5 @@
 import { getStore } from '@netlify/blobs';
-import type { Article, GovEvent, CrawlLogEntry, AumEntry, SecFiling, PredictionMarket, CustomEntity, Entity, DailyBrief } from '../config/competitors.js';
+import type { Article, GovEvent, CrawlLogEntry, AumEntry, SecFiling, PredictionMarket, CustomEntity, Entity, DailyBrief, FinancialArticle } from '../config/competitors.js';
 import { ALL_ENTITIES, SEED_AUM_DATA } from '../config/competitors.js';
 
 function articleStore() {
@@ -128,6 +128,58 @@ export async function markAlerted(entityId: string, articleIds: string[]): Promi
     if (idSet.has(a.id)) a.alerted = true;
   }
   await saveArticlesForEntity(entityId, articles);
+}
+
+// ── Financial Articles ───────────────────────────────────
+
+function finArticleStore() {
+  return getStore({ name: 'fin-articles', consistency: 'strong' });
+}
+
+export async function getFinArticles(filters?: {
+  source?: string;
+  sentiment?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<FinancialArticle[]> {
+  const store = finArticleStore();
+  const { source, sentiment, search, limit = 100, offset = 0 } = filters || {};
+
+  let all: FinancialArticle[] = (await store.get('all', { type: 'json' })) || [];
+
+  if (source && source !== 'all') {
+    all = all.filter(a => a.source_name === source);
+  }
+  if (sentiment && sentiment !== 'all') {
+    all = all.filter(a => a.sentiment_label === sentiment);
+  }
+  if (search) {
+    const q = search.toLowerCase();
+    all = all.filter(a =>
+      a.title.toLowerCase().includes(q) ||
+      (a.snippet && a.snippet.toLowerCase().includes(q))
+    );
+  }
+
+  all.sort((a, b) => new Date(b.pub_date).getTime() - new Date(a.pub_date).getTime());
+  return all.slice(offset, offset + limit);
+}
+
+export async function addFinArticles(newArticles: FinancialArticle[]): Promise<number> {
+  const store = finArticleStore();
+  const existing: FinancialArticle[] = (await store.get('all', { type: 'json' })) || [];
+  const existingLinks = new Set(existing.map(a => a.link));
+
+  const unique = newArticles.filter(a => !existingLinks.has(a.link));
+  if (unique.length === 0) return 0;
+
+  const merged = [...unique, ...existing]
+    .sort((a, b) => new Date(b.pub_date).getTime() - new Date(a.pub_date).getTime())
+    .slice(0, 1000);
+
+  await store.setJSON('all', merged);
+  return unique.length;
 }
 
 // ── Government Events ───────────────────────────────────
