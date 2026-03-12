@@ -98,7 +98,7 @@ function renderArticle(a) {
 
   const isSelf = a.entity_id === 'dobbs-group';
   const pubDate = a.pub_date ? new Date(a.pub_date) : null;
-  const dateStr = pubDate ? pubDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  const dateStr = pubDate ? formatDateTime(pubDate) : '';
   const timeAgo = pubDate ? getTimeAgo(pubDate) : '';
 
   div.innerHTML = `
@@ -134,6 +134,13 @@ function getTimeAgo(date) {
   if (diffDays < 7) return `${diffDays}d ago`;
   if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
   return '';
+}
+
+function formatDateTime(date) {
+  if (!date) return '';
+  const d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
 function debounceSearch() {
@@ -206,7 +213,7 @@ function renderStatCard(s, isSelf) {
       <div class="stat-bar-neu" style="width:${neuPct}%" title="${neuPct}% Neutral"></div>
       <div class="stat-bar-neg" style="width:${negPct}%" title="${negPct}% Negative"></div>
     </div>
-    <div class="stat-latest">Latest: ${s.latest_article ? new Date(s.latest_article).toLocaleDateString() : 'N/A'}</div>
+    <div class="stat-latest">Latest: ${s.latest_article ? formatDateTime(s.latest_article) : 'N/A'}</div>
   `;
   return div;
 }
@@ -479,11 +486,59 @@ function renderAumChart(entries) {
   for (const e of sorted) {
     const pct = Math.max((e.aum_billions / maxAum) * 100, 2);
     const isSelf = e.entity_id === 'dobbs-group';
+    const hasBreakdown = e.discretionary_billions != null || (e.asset_classes && e.asset_classes.length > 0);
     const row = document.createElement('div');
-    row.className = `aum-row${isSelf ? ' aum-self' : ''}`;
+    row.className = `aum-row${isSelf ? ' aum-self' : ''}${hasBreakdown ? ' aum-expandable' : ''}`;
+
+    // Discretionary / Non-Discretionary bar
+    let breakdownHtml = '';
+    if (hasBreakdown) {
+      const disc = e.discretionary_billions || 0;
+      const nonDisc = e.non_discretionary_billions || 0;
+      const total = disc + nonDisc || e.aum_billions;
+      const discPct = ((disc / total) * 100).toFixed(1);
+      const nonDiscPct = ((nonDisc / total) * 100).toFixed(1);
+
+      breakdownHtml += `<div class="aum-breakdown">
+        <div class="aum-breakdown-section">
+          <div class="aum-breakdown-title">Discretionary vs Non-Discretionary</div>
+          <div class="aum-split-bar">
+            <div class="aum-split-disc" style="width:${discPct}%" title="Discretionary: $${formatBillions(disc)}B (${discPct}%)"></div>
+            <div class="aum-split-nondisc" style="width:${nonDiscPct}%" title="Non-Discretionary: $${formatBillions(nonDisc)}B (${nonDiscPct}%)"></div>
+          </div>
+          <div class="aum-split-legend">
+            <span class="aum-legend-disc">Discretionary: $${formatBillions(disc)}B (${discPct}%)</span>
+            <span class="aum-legend-nondisc">Non-Disc: $${formatBillions(nonDisc)}B (${nonDiscPct}%)</span>
+          </div>
+        </div>`;
+
+      // Asset class bars
+      if (e.asset_classes && e.asset_classes.length > 0) {
+        const maxAc = Math.max(...e.asset_classes.map(ac => ac.amount_billions));
+        const acColors = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+        breakdownHtml += `<div class="aum-breakdown-section">
+          <div class="aum-breakdown-title">Asset Class Breakdown</div>
+          <div class="aum-ac-bars">`;
+        e.asset_classes.forEach((ac, i) => {
+          const acPct = Math.max((ac.amount_billions / maxAc) * 100, 3);
+          const color = acColors[i % acColors.length];
+          const totalPct = ((ac.amount_billions / e.aum_billions) * 100).toFixed(1);
+          breakdownHtml += `<div class="aum-ac-row">
+              <span class="aum-ac-name">${escHtml(ac.name)}</span>
+              <div class="aum-ac-bar-track">
+                <div class="aum-ac-bar-fill" style="width:${acPct}%;background:${color}"></div>
+              </div>
+              <span class="aum-ac-value">$${formatBillions(ac.amount_billions)}B <small>(${totalPct}%)</small></span>
+            </div>`;
+        });
+        breakdownHtml += `</div></div>`;
+      }
+      breakdownHtml += `</div>`;
+    }
+
     row.innerHTML = `
       <div class="aum-label">
-        <span class="aum-name">${escHtml(e.entity_name)}</span>
+        <span class="aum-name">${hasBreakdown ? '<span class="aum-expand-icon">&#9654;</span> ' : ''}${escHtml(e.entity_name)}</span>
         <span class="aum-value">$${formatBillions(e.aum_billions)}B</span>
       </div>
       <div class="aum-bar-track">
@@ -493,7 +548,18 @@ function renderAumChart(entries) {
         <span>As of ${e.as_of_date || 'N/A'}</span>
         ${e.source ? `<span class="aum-source">${escHtml(e.source)}</span>` : ''}
       </div>
+      ${breakdownHtml}
     `;
+
+    if (hasBreakdown) {
+      row.querySelector('.aum-label').style.cursor = 'pointer';
+      row.querySelector('.aum-label').addEventListener('click', () => {
+        row.classList.toggle('aum-expanded');
+        const icon = row.querySelector('.aum-expand-icon');
+        if (icon) icon.innerHTML = row.classList.contains('aum-expanded') ? '&#9660;' : '&#9654;';
+      });
+    }
+
     container.appendChild(row);
   }
 }
@@ -514,6 +580,20 @@ async function updateAum() {
     return;
   }
 
+  const disc = parseFloat(document.getElementById('aumDiscretionary').value) || undefined;
+  const nonDisc = parseFloat(document.getElementById('aumNonDiscretionary').value) || undefined;
+
+  // Gather asset class inputs
+  const acRows = document.querySelectorAll('#aumAssetClassInputs .form-row');
+  const asset_classes = [];
+  acRows.forEach(row => {
+    const sel = row.querySelector('.aum-ac-select');
+    const amt = row.querySelector('.aum-ac-amount');
+    if (sel && amt && sel.value && parseFloat(amt.value)) {
+      asset_classes.push({ name: sel.value, amount_billions: parseFloat(amt.value) });
+    }
+  });
+
   const entity = entities.all.find(e => e.id === entityId);
   try {
     await fetch('/api/aum', {
@@ -525,14 +605,47 @@ async function updateAum() {
         aum_billions: value,
         source: source || 'Manual entry',
         notes: '',
+        discretionary_billions: disc,
+        non_discretionary_billions: nonDisc,
+        asset_classes: asset_classes.length > 0 ? asset_classes : undefined,
       }),
     });
     document.getElementById('aumValue').value = '';
     document.getElementById('aumSource').value = '';
+    document.getElementById('aumDiscretionary').value = '';
+    document.getElementById('aumNonDiscretionary').value = '';
+    // Reset asset class rows to just one
+    const acContainer = document.getElementById('aumAssetClassInputs');
+    const rows = acContainer.querySelectorAll('.form-row');
+    rows.forEach((r, i) => { if (i > 0) r.remove(); });
+    const firstSel = acContainer.querySelector('.aum-ac-select');
+    const firstAmt = acContainer.querySelector('.aum-ac-amount');
+    if (firstSel) firstSel.value = '';
+    if (firstAmt) firstAmt.value = '';
     loadAum();
   } catch (err) {
     console.error('Failed to update AUM:', err);
   }
+}
+
+function addAumAssetClassRow() {
+  const container = document.getElementById('aumAssetClassInputs');
+  const row = document.createElement('div');
+  row.className = 'form-row';
+  row.style.marginTop = '8px';
+  row.innerHTML = `
+    <select class="aum-ac-select">
+      <option value="">Asset Class...</option>
+      <option value="Equities">Equities</option>
+      <option value="Fixed Income">Fixed Income</option>
+      <option value="Alternatives">Alternatives</option>
+      <option value="Real Assets">Real Assets</option>
+      <option value="Cash & Other">Cash & Other</option>
+    </select>
+    <input type="number" class="aum-ac-amount" placeholder="Amount (billions)" step="0.1">
+    <button class="btn btn-secondary" onclick="this.parentElement.remove()">Remove</button>
+  `;
+  container.appendChild(row);
 }
 
 // ── SEC Filings ─────────────────────────────────────────
@@ -649,7 +762,7 @@ function renderSecFilings(filings) {
 
     // Detail items
     const details = [];
-    if (f.period_ending) details.push(`<span class="sec-detail"><strong>Period:</strong> ${new Date(f.period_ending).toLocaleDateString()}</span>`);
+    if (f.period_ending) details.push(`<span class="sec-detail"><strong>Period:</strong> ${formatDateTime(f.period_ending)}</span>`);
     if (f.cik) details.push(`<span class="sec-detail"><strong>CIK:</strong> ${escHtml(f.cik)}</span>`);
     if (sicDesc) details.push(`<span class="sec-detail"><strong>Industry:</strong> ${escHtml(sicDesc)}</span>`);
     if (f.file_number) details.push(`<span class="sec-detail"><strong>File #:</strong> ${escHtml(f.file_number)}</span>`);
@@ -666,7 +779,7 @@ function renderSecFilings(filings) {
         </div>
         <div class="sec-header-right">
           ${riskBadge}
-          <span class="sec-date">${f.filed_date ? new Date(f.filed_date).toLocaleDateString() : ''}</span>
+          <span class="sec-date">${f.filed_date ? formatDateTime(f.filed_date) : ''}</span>
         </div>
       </div>
       <div class="sec-company">${escHtml(f.company_name)}</div>
@@ -779,7 +892,7 @@ function renderFinArticle(a) {
   const div = document.createElement('div');
   div.className = 'article-card';
   const pubDate = a.pub_date ? new Date(a.pub_date) : null;
-  const dateStr = pubDate ? pubDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  const dateStr = pubDate ? formatDateTime(pubDate) : '';
   const timeAgo = pubDate ? getTimeAgo(pubDate) : '';
 
   div.innerHTML = `
@@ -898,6 +1011,29 @@ async function triggerPredictionsCrawl() {
   } catch (err) {
     btn.textContent = 'Error';
     setTimeout(() => { btn.textContent = 'Refresh Predictions'; btn.disabled = false; }, 3000);
+  }
+}
+
+// ── AUM Crawl ───────────────────────────────────────────
+async function triggerAumCrawl() {
+  const btn = document.getElementById('btnAumCrawl');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Crawling EDGAR...';
+
+  try {
+    const res = await fetch('/api/aum/crawl', { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      btn.textContent = `Done! (${data.updatedCount} updated)`;
+      setTimeout(() => { btn.textContent = 'Crawl AUM (EDGAR)'; btn.disabled = false; }, 3000);
+      loadAum();
+    } else {
+      btn.textContent = 'Error: ' + (data.error || 'Unknown');
+      setTimeout(() => { btn.textContent = 'Crawl AUM (EDGAR)'; btn.disabled = false; }, 3000);
+    }
+  } catch (err) {
+    btn.textContent = 'Error';
+    setTimeout(() => { btn.textContent = 'Crawl AUM (EDGAR)'; btn.disabled = false; }, 3000);
   }
 }
 
@@ -1095,7 +1231,7 @@ function renderBrief(brief) {
               <a href="${escHtml(st.link)}" target="_blank" rel="noopener" class="brief-story-title">${escHtml(st.title)}</a>
               <div class="brief-story-meta">
                 <span class="entity-tag">${escHtml(st.entity_name)}</span>
-                <span>${new Date(st.pub_date).toLocaleDateString()}</span>
+                <span>${formatDateTime(st.pub_date)}</span>
               </div>
             </div>
           `).join('')}
@@ -1259,7 +1395,7 @@ function renderDiscoverySuggestions(suggestions) {
         <div class="discovery-card-stats">
           <span class="discovery-filings">${s.filing_count} filing${s.filing_count !== 1 ? 's' : ''}</span>
           ${s.recent_filing_types.length > 0 ? `<span class="discovery-types">${s.recent_filing_types.map(t => escHtml(t)).join(', ')}</span>` : ''}
-          ${s.latest_filing_date ? `<span class="discovery-date">Latest: ${new Date(s.latest_filing_date).toLocaleDateString()}</span>` : ''}
+          ${s.latest_filing_date ? `<span class="discovery-date">Latest: ${formatDateTime(s.latest_filing_date)}</span>` : ''}
         </div>
       </div>
       <button class="btn btn-primary btn-sm" onclick="addDiscoveredEntity('${escHtml(s.name)}', '${escHtml(s.cik)}')">Add</button>

@@ -61,6 +61,11 @@ export const FINANCIAL_NEWS_SOURCES: FinancialNewsSource[] = [
   { name: 'The Economist', domain: 'economist.com', searchTerms: ['economy', 'finance'] },
 ];
 
+export interface AumAssetClass {
+  name: string;
+  amount_billions: number;
+}
+
 export interface AumEntry {
   entity_id: string;
   entity_name: string;
@@ -69,6 +74,9 @@ export interface AumEntry {
   source: string;
   notes: string;
   updated_at: string;
+  discretionary_billions?: number;
+  non_discretionary_billions?: number;
+  asset_classes?: AumAssetClass[];
 }
 
 export interface SecFiling {
@@ -374,16 +382,40 @@ export const PREDICTION_KEYWORDS: string[] = [
 ];
 
 export const SEED_AUM_DATA: AumEntry[] = [
-  { entity_id: 'nepc', entity_name: 'NEPC', aum_billions: 1600, as_of_date: '2024-12-31', source: 'ADV filing', notes: 'Regulatory assets under advisement', updated_at: '2025-01-01T00:00:00Z' },
-  { entity_id: 'mercer', entity_name: 'Mercer Investment Consulting', aum_billions: 370, as_of_date: '2024-12-31', source: 'Public disclosure', notes: '', updated_at: '2025-01-01T00:00:00Z' },
-  { entity_id: 'callan', entity_name: 'Callan Associates', aum_billions: 4000, as_of_date: '2024-12-31', source: 'Company website', notes: 'Advisory assets', updated_at: '2025-01-01T00:00:00Z' },
-  { entity_id: 'cambridge', entity_name: 'Cambridge Associates', aum_billions: 500, as_of_date: '2024-12-31', source: 'Public estimate', notes: '', updated_at: '2025-01-01T00:00:00Z' },
-  { entity_id: 'meketa', entity_name: 'Meketa Investment Group', aum_billions: 1800, as_of_date: '2024-12-31', source: 'ADV filing', notes: 'Regulatory AUA', updated_at: '2025-01-01T00:00:00Z' },
-  { entity_id: 'wilshire', entity_name: 'Wilshire Associates', aum_billions: 1200, as_of_date: '2024-12-31', source: 'ADV filing', notes: '', updated_at: '2025-01-01T00:00:00Z' },
-  { entity_id: 'marquette', entity_name: 'Marquette Associates', aum_billions: 350, as_of_date: '2024-12-31', source: 'Company website', notes: '', updated_at: '2025-01-01T00:00:00Z' },
-  { entity_id: 'captrust', entity_name: 'CAPTRUST', aum_billions: 850, as_of_date: '2024-12-31', source: 'Press release', notes: 'Total advisory assets', updated_at: '2025-01-01T00:00:00Z' },
-  { entity_id: 'jpmorgan', entity_name: 'J.P. Morgan Asset Management', aum_billions: 3400, as_of_date: '2024-12-31', source: 'Quarterly report', notes: 'Global AUM', updated_at: '2025-01-01T00:00:00Z' },
-  { entity_id: 'ubs', entity_name: 'UBS Institutional Consulting', aum_billions: 4000, as_of_date: '2024-12-31', source: 'Annual report', notes: 'Invested assets, global', updated_at: '2025-01-01T00:00:00Z' },
-  { entity_id: 'william-blair', entity_name: 'William Blair', aum_billions: 70, as_of_date: '2024-12-31', source: 'ADV filing', notes: '', updated_at: '2025-01-01T00:00:00Z' },
-  { entity_id: 'sageview', entity_name: 'SageView Advisory Group', aum_billions: 250, as_of_date: '2024-12-31', source: 'Company website', notes: '', updated_at: '2025-01-01T00:00:00Z' },
+  { entity_id: 'nepc', entity_name: 'NEPC', aum_billions: 1600, as_of_date: '2024-12-31', source: 'ADV filing', notes: 'Regulatory assets under advisement', updated_at: '2025-01-01T00:00:00Z',
+    discretionary_billions: 45, non_discretionary_billions: 1555,
+    asset_classes: [{ name: 'Equities', amount_billions: 560 }, { name: 'Fixed Income', amount_billions: 400 }, { name: 'Alternatives', amount_billions: 320 }, { name: 'Real Assets', amount_billions: 160 }, { name: 'Cash & Other', amount_billions: 160 }] },
+  { entity_id: 'mercer', entity_name: 'Mercer Investment Consulting', aum_billions: 370, as_of_date: '2024-12-31', source: 'Public disclosure', notes: '', updated_at: '2025-01-01T00:00:00Z',
+    discretionary_billions: 220, non_discretionary_billions: 150,
+    asset_classes: [{ name: 'Equities', amount_billions: 130 }, { name: 'Fixed Income', amount_billions: 100 }, { name: 'Alternatives', amount_billions: 85 }, { name: 'Real Assets', amount_billions: 35 }, { name: 'Cash & Other', amount_billions: 20 }] },
+  { entity_id: 'callan', entity_name: 'Callan Associates', aum_billions: 4000, as_of_date: '2024-12-31', source: 'Company website', notes: 'Advisory assets', updated_at: '2025-01-01T00:00:00Z',
+    discretionary_billions: 60, non_discretionary_billions: 3940,
+    asset_classes: [{ name: 'Equities', amount_billions: 1400 }, { name: 'Fixed Income', amount_billions: 1000 }, { name: 'Alternatives', amount_billions: 800 }, { name: 'Real Assets', amount_billions: 480 }, { name: 'Cash & Other', amount_billions: 320 }] },
+  { entity_id: 'cambridge', entity_name: 'Cambridge Associates', aum_billions: 500, as_of_date: '2024-12-31', source: 'Public estimate', notes: '', updated_at: '2025-01-01T00:00:00Z',
+    discretionary_billions: 300, non_discretionary_billions: 200,
+    asset_classes: [{ name: 'Equities', amount_billions: 175 }, { name: 'Fixed Income', amount_billions: 75 }, { name: 'Alternatives', amount_billions: 175 }, { name: 'Real Assets', amount_billions: 50 }, { name: 'Cash & Other', amount_billions: 25 }] },
+  { entity_id: 'meketa', entity_name: 'Meketa Investment Group', aum_billions: 1800, as_of_date: '2024-12-31', source: 'ADV filing', notes: 'Regulatory AUA', updated_at: '2025-01-01T00:00:00Z',
+    discretionary_billions: 30, non_discretionary_billions: 1770,
+    asset_classes: [{ name: 'Equities', amount_billions: 630 }, { name: 'Fixed Income', amount_billions: 450 }, { name: 'Alternatives', amount_billions: 360 }, { name: 'Real Assets', amount_billions: 216 }, { name: 'Cash & Other', amount_billions: 144 }] },
+  { entity_id: 'wilshire', entity_name: 'Wilshire Associates', aum_billions: 1200, as_of_date: '2024-12-31', source: 'ADV filing', notes: '', updated_at: '2025-01-01T00:00:00Z',
+    discretionary_billions: 80, non_discretionary_billions: 1120,
+    asset_classes: [{ name: 'Equities', amount_billions: 420 }, { name: 'Fixed Income', amount_billions: 300 }, { name: 'Alternatives', amount_billions: 240 }, { name: 'Real Assets', amount_billions: 144 }, { name: 'Cash & Other', amount_billions: 96 }] },
+  { entity_id: 'marquette', entity_name: 'Marquette Associates', aum_billions: 350, as_of_date: '2024-12-31', source: 'Company website', notes: '', updated_at: '2025-01-01T00:00:00Z',
+    discretionary_billions: 15, non_discretionary_billions: 335,
+    asset_classes: [{ name: 'Equities', amount_billions: 140 }, { name: 'Fixed Income', amount_billions: 88 }, { name: 'Alternatives', amount_billions: 70 }, { name: 'Real Assets', amount_billions: 35 }, { name: 'Cash & Other', amount_billions: 17 }] },
+  { entity_id: 'captrust', entity_name: 'CAPTRUST', aum_billions: 850, as_of_date: '2024-12-31', source: 'Press release', notes: 'Total advisory assets', updated_at: '2025-01-01T00:00:00Z',
+    discretionary_billions: 600, non_discretionary_billions: 250,
+    asset_classes: [{ name: 'Equities', amount_billions: 340 }, { name: 'Fixed Income', amount_billions: 213 }, { name: 'Alternatives', amount_billions: 128 }, { name: 'Real Assets', amount_billions: 85 }, { name: 'Cash & Other', amount_billions: 84 }] },
+  { entity_id: 'jpmorgan', entity_name: 'J.P. Morgan Asset Management', aum_billions: 3400, as_of_date: '2024-12-31', source: 'Quarterly report', notes: 'Global AUM', updated_at: '2025-01-01T00:00:00Z',
+    discretionary_billions: 2800, non_discretionary_billions: 600,
+    asset_classes: [{ name: 'Equities', amount_billions: 1020 }, { name: 'Fixed Income', amount_billions: 850 }, { name: 'Alternatives', amount_billions: 680 }, { name: 'Real Assets', amount_billions: 510 }, { name: 'Cash & Other', amount_billions: 340 }] },
+  { entity_id: 'ubs', entity_name: 'UBS Institutional Consulting', aum_billions: 4000, as_of_date: '2024-12-31', source: 'Annual report', notes: 'Invested assets, global', updated_at: '2025-01-01T00:00:00Z',
+    discretionary_billions: 2400, non_discretionary_billions: 1600,
+    asset_classes: [{ name: 'Equities', amount_billions: 1400 }, { name: 'Fixed Income', amount_billions: 1000 }, { name: 'Alternatives', amount_billions: 800 }, { name: 'Real Assets', amount_billions: 440 }, { name: 'Cash & Other', amount_billions: 360 }] },
+  { entity_id: 'william-blair', entity_name: 'William Blair', aum_billions: 70, as_of_date: '2024-12-31', source: 'ADV filing', notes: '', updated_at: '2025-01-01T00:00:00Z',
+    discretionary_billions: 62, non_discretionary_billions: 8,
+    asset_classes: [{ name: 'Equities', amount_billions: 42 }, { name: 'Fixed Income', amount_billions: 14 }, { name: 'Alternatives', amount_billions: 7 }, { name: 'Cash & Other', amount_billions: 7 }] },
+  { entity_id: 'sageview', entity_name: 'SageView Advisory Group', aum_billions: 250, as_of_date: '2024-12-31', source: 'Company website', notes: '', updated_at: '2025-01-01T00:00:00Z',
+    discretionary_billions: 180, non_discretionary_billions: 70,
+    asset_classes: [{ name: 'Equities', amount_billions: 100 }, { name: 'Fixed Income', amount_billions: 63 }, { name: 'Alternatives', amount_billions: 50 }, { name: 'Real Assets', amount_billions: 25 }, { name: 'Cash & Other', amount_billions: 12 }] },
 ];

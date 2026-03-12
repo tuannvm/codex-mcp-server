@@ -629,6 +629,102 @@ header {
   color: var(--text-muted);
 }
 .aum-source { font-style: italic; }
+
+/* AUM Expandable Breakdown */
+.aum-expandable .aum-label { cursor: pointer; }
+.aum-expand-icon {
+  display: inline-block;
+  font-size: 10px;
+  transition: transform 0.2s;
+  margin-right: 4px;
+}
+.aum-breakdown {
+  display: none;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.aum-expanded .aum-breakdown { display: block; }
+.aum-breakdown-section { margin-bottom: 14px; }
+.aum-breakdown-section:last-child { margin-bottom: 0; }
+.aum-breakdown-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.aum-split-bar {
+  display: flex;
+  height: 14px;
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--surface2);
+}
+.aum-split-disc {
+  background: linear-gradient(90deg, #6366f1, #818cf8);
+  transition: width 0.4s;
+}
+.aum-split-nondisc {
+  background: linear-gradient(90deg, #475569, #64748b);
+  transition: width 0.4s;
+}
+.aum-split-legend {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  margin-top: 4px;
+  color: var(--text-muted);
+}
+.aum-legend-disc::before {
+  content: '';
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  background: #6366f1;
+  margin-right: 4px;
+}
+.aum-legend-nondisc::before {
+  content: '';
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  background: #475569;
+  margin-right: 4px;
+}
+.aum-ac-bars { display: flex; flex-direction: column; gap: 5px; }
+.aum-ac-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 110px;
+  align-items: center;
+  gap: 8px;
+}
+.aum-ac-name {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: right;
+}
+.aum-ac-bar-track {
+  height: 8px;
+  background: var(--surface2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.aum-ac-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s;
+}
+.aum-ac-value {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.aum-ac-value small {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
 .aum-update-form {
   margin-top: 24px;
   background: var(--surface);

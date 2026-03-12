@@ -199,7 +199,10 @@
   <section id="tab-aum" class="tab-content">
     <div class="tab-title-bar">
       <h2>Assets Under Management</h2>
-      <span class="tab-subtitle">Approximate AUA/AUM from public filings and disclosures (in billions)</span>
+      <div class="tab-actions">
+        <span class="tab-subtitle">Approximate AUA/AUM from public filings and disclosures (in billions)</span>
+        <button id="btnAumCrawl" class="btn btn-primary" onclick="triggerAumCrawl()">Crawl AUM (EDGAR)</button>
+      </div>
     </div>
     <div id="aumChart" class="aum-chart">
       <div class="loading">Loading AUM data...</div>
@@ -208,9 +211,27 @@
       <h3>Update AUM Entry</h3>
       <div class="form-row">
         <select id="aumEntity"></select>
-        <input type="number" id="aumValue" placeholder="AUM in billions" step="0.1">
+        <input type="number" id="aumValue" placeholder="Total AUM (billions)" step="0.1">
         <input type="text" id="aumSource" placeholder="Source (e.g., ADV filing)">
         <button class="btn btn-primary" onclick="updateAum()">Update</button>
+      </div>
+      <div class="form-row" style="margin-top:8px;">
+        <input type="number" id="aumDiscretionary" placeholder="Discretionary (billions)" step="0.1">
+        <input type="number" id="aumNonDiscretionary" placeholder="Non-Discretionary (billions)" step="0.1">
+      </div>
+      <div id="aumAssetClassInputs" class="aum-ac-inputs">
+        <div class="form-row" style="margin-top:8px;">
+          <select class="aum-ac-select">
+            <option value="">Asset Class...</option>
+            <option value="Equities">Equities</option>
+            <option value="Fixed Income">Fixed Income</option>
+            <option value="Alternatives">Alternatives</option>
+            <option value="Real Assets">Real Assets</option>
+            <option value="Cash & Other">Cash & Other</option>
+          </select>
+          <input type="number" class="aum-ac-amount" placeholder="Amount (billions)" step="0.1">
+          <button class="btn btn-secondary" onclick="addAumAssetClassRow()">+ Class</button>
+        </div>
       </div>
     </div>
   </section>
