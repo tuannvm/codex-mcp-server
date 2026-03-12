@@ -57,6 +57,48 @@ function countKeywords(text: string): Record<string, number> {
   return hits;
 }
 
+const STOP_WORDS = new Set([
+  'the','a','an','and','or','but','in','on','at','to','for','of','with','by',
+  'from','as','is','was','are','were','be','been','being','have','has','had',
+  'do','does','did','will','would','shall','should','may','might','can','could',
+  'not','no','nor','so','if','then','than','that','this','these','those','it',
+  'its','he','she','they','we','you','i','me','my','our','your','his','her',
+  'their','which','who','whom','what','where','when','how','all','each','every',
+  'both','few','more','most','other','some','such','any','only','own','same',
+  'also','very','just','about','above','after','before','between','into','through',
+  'during','under','over','out','up','down','off','re','s','t','d','ll','ve',
+  'inc','llc','corp','co','et','al','sec','filed','form','file','report',
+]);
+
+function extractTopWords(keywordHits: Record<string, number>, description: string): string[] {
+  // Start with keyword_hits sorted by count desc
+  const sorted = Object.entries(keywordHits)
+    .filter(([, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1]);
+
+  const topWords: string[] = sorted.slice(0, 5).map(([word]) => word);
+
+  // If fewer than 5, supplement from description word frequency
+  if (topWords.length < 5 && description) {
+    const existing = new Set(topWords.map(w => w.toLowerCase()));
+    const words = description.toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/);
+    const freq: Record<string, number> = {};
+    for (const w of words) {
+      if (w.length < 3 || STOP_WORDS.has(w) || existing.has(w)) continue;
+      freq[w] = (freq[w] || 0) + 1;
+    }
+    const descWords = Object.entries(freq)
+      .sort((a, b) => b[1] - a[1])
+      .map(([word]) => word);
+    for (const w of descWords) {
+      if (topWords.length >= 5) break;
+      topWords.push(w);
+    }
+  }
+
+  return topWords;
+}
+
 function computeRisk(keywordHits: Record<string, number>): { score: number; level: SecFiling['risk_level'] } {
   let score = 0;
   for (const [category, config] of Object.entries(SEC_KEYWORD_CATEGORIES)) {
@@ -98,6 +140,8 @@ export async function scanSec(customQuery?: string): Promise<number> {
         const text = `${src.file_description || ''} ${(src.display_names || []).join(' ')}`;
         const keywordHits = countKeywords(text);
         const { score, level } = computeRisk(keywordHits);
+        const descText = (src.file_description || '').substring(0, 500);
+        const topWords = extractTopWords(keywordHits, descText);
         const accessionParts = id.split(':');
         filings.push({
           id: makeId(),
@@ -107,7 +151,7 @@ export async function scanSec(customQuery?: string): Promise<number> {
           company_name: (src.display_names || ['Unknown'])[0],
           file_number: (src.file_num || [])[0] || '',
           document_url: buildDocUrl(hit),
-          description: (src.file_description || '').substring(0, 500),
+          description: descText,
           keyword_hits: keywordHits,
           risk_level: level,
           risk_score: score,
@@ -115,6 +159,7 @@ export async function scanSec(customQuery?: string): Promise<number> {
           cik: (src.ciks || [])[0] || '',
           accession_number: accessionParts[0] || '',
           sic_code: (src.sics || [])[0] || '',
+          top_words: topWords.length > 0 ? topWords : undefined,
           created_at: new Date().toISOString(),
         });
       }

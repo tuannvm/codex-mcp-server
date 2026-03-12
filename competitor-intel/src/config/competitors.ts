@@ -49,6 +49,7 @@ export interface SecFiling {
   cik: string;
   accession_number: string;
   sic_code: string;
+  top_words?: string[];
   created_at: string;
 }
 

@@ -671,6 +671,12 @@ function renderSecFilings(filings) {
       <div class="sec-company">${escHtml(f.company_name)}</div>
       ${details.length > 0 ? `<div class="sec-details-row">${details.join('')}</div>` : ''}
       ${f.description ? `<div class="sec-desc">${escHtml(f.description).substring(0, 300)}</div>` : ''}
+      ${f.top_words && f.top_words.length > 0 ? `
+        <div class="sec-top-words">
+          <span class="sec-top-words-label">TOP KEYWORDS</span>
+          ${f.top_words.map(w => `<span class="top-word-pill">${escHtml(w)}</span>`).join('')}
+        </div>
+      ` : ''}
       ${keywordHtml ? `<div class="sec-keywords-section">${keywordHtml}</div>` : ''}
       <div class="sec-footer">
         <a href="${escHtml(f.document_url)}" target="_blank" rel="noopener" class="read-more">View on SEC EDGAR &#8594;</a>
