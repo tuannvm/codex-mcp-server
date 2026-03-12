@@ -30,22 +30,24 @@ function buildDocUrl(hit: any): string {
   const src = hit._source || {};
   const parts = id.split(':');
   if (parts.length < 2) return '';
-  const accession = parts[0];
   const filename = parts[1];
+  // Use adsh field for reliable accession number, fall back to _id parsing
+  const accession = src.adsh || parts[0];
   const cleanAccession = accession.replace(/-/g, '');
   const cik = (src.ciks || [])[0] || '';
   if (!cik) return '';
   return `https://www.sec.gov/Archives/edgar/data/${cik}/${cleanAccession}/${filename}`;
 }
 
-/** Fetch first ~20KB of a filing document and extract top words from actual content */
+/** Fetch first ~40KB of a filing document and extract top words from actual content */
 async function fetchDocTopWords(docUrl: string): Promise<string[]> {
   if (!docUrl) return [];
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
+    const timer = setTimeout(() => controller.abort(), 3000);
     const res = await fetch(docUrl, {
-      headers: { 'User-Agent': USER_AGENT, 'Range': 'bytes=0-20000' },
+      headers: { 'User-Agent': USER_AGENT, 'Range': 'bytes=0-40000' },
+      redirect: 'follow',
       signal: controller.signal,
     });
     clearTimeout(timer);
@@ -218,15 +220,15 @@ export async function scanSec(customQuery?: string): Promise<number> {
         };
         filings.push(filing);
 
-        // Queue for doc keyword extraction if no metadata keywords found
-        if (topWords.length === 0 && docUrl) {
+        // Queue for doc keyword extraction (always try to get real doc keywords)
+        if (docUrl) {
           needsDocKeywords.push({ filing, docUrl });
         }
       }
     }
 
-    // Fetch document keywords for filings missing them (cap at 15 to stay within timeout)
-    const toFetch = needsDocKeywords.slice(0, 15);
+    // Fetch document keywords (cap at 8 per batch to stay within timeout)
+    const toFetch = needsDocKeywords.slice(0, 8);
     if (toFetch.length > 0) {
       const docResults = await Promise.all(
         toFetch.map(({ docUrl }) => fetchDocTopWords(docUrl))

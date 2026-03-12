@@ -230,6 +230,11 @@ function secStore() {
   return getStore({ name: 'sec-filings', consistency: 'strong' });
 }
 
+export async function clearSecFilings(): Promise<void> {
+  const store = secStore();
+  await store.setJSON('all', []);
+}
+
 export async function getSecFilings(filters?: {
   entityName?: string;
   filingType?: string;
