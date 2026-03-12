@@ -159,40 +159,46 @@ header {
 .articles-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 .article-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 16px;
-  transition: border-color 0.15s;
+  border-radius: 10px;
+  padding: 20px;
+  transition: all 0.2s ease;
 }
-.article-card:hover { border-color: var(--primary); }
-.article-card.self { border-left: 3px solid var(--self); }
+.article-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 2px 12px rgba(74, 108, 247, 0.08);
+}
+.article-card.self {
+  border-left: 3px solid var(--self);
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(139, 92, 246, 0.04) 100%);
+}
 .article-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 .article-title {
   font-size: 15px;
   font-weight: 600;
   color: var(--text);
   text-decoration: none;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 .article-title:hover { color: var(--primary); }
 .sentiment-badge {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
   white-space: nowrap;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
 }
 .sentiment-positive { background: var(--positive-bg); color: var(--positive); }
 .sentiment-neutral { background: var(--neutral-bg); color: var(--neutral); }
@@ -201,25 +207,56 @@ header {
   font-size: 12px;
   color: var(--text-muted);
   display: flex;
+  align-items: center;
   gap: 12px;
   flex-wrap: wrap;
 }
 .article-meta .entity-tag {
   background: var(--surface2);
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 4px;
   font-weight: 600;
+  font-size: 11px;
 }
 .article-meta .entity-tag.self-tag {
   background: var(--self-bg);
   color: var(--self);
 }
+.article-source {
+  color: var(--text-muted);
+}
+.article-source::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  margin-right: 8px;
+  vertical-align: middle;
+}
+.article-date {
+  color: var(--text-muted);
+}
 .article-snippet {
   font-size: 13px;
   color: var(--text-muted);
-  margin-top: 8px;
-  line-height: 1.5;
+  margin-top: 10px;
+  line-height: 1.6;
 }
+.article-footer {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.read-more {
+  font-size: 12px;
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s;
+}
+.read-more:hover { color: var(--primary-hover); text-decoration: underline; }
 
 /* ── Stats Grid ───────────────────────────── */
 .stats-grid {
@@ -232,18 +269,40 @@ header {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 20px;
+  transition: all 0.2s ease;
+}
+.stat-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(74, 108, 247, 0.15);
 }
 .stat-card.self-card {
   border: 2px solid var(--self);
   grid-column: 1 / -1;
 }
+.stat-card.self-card:hover {
+  border-color: var(--self);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.2);
+}
+.stat-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
 .stat-card h3 {
   font-size: 16px;
-  margin-bottom: 12px;
   display: flex;
   align-items: center;
   gap: 8px;
 }
+.stat-arrow {
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+.stat-card:hover .stat-arrow { color: var(--primary); }
 .stat-card .tier-badge {
   font-size: 10px;
   padding: 2px 6px;
@@ -272,8 +331,19 @@ header {
 .stat-num.neu .num { color: var(--neutral); }
 .stat-num.neg .num { color: var(--negative); }
 .stat-num.total .num { color: var(--primary); }
+.stat-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 14px;
+  background: var(--surface2);
+}
+.stat-bar-pos { background: var(--positive); transition: width 0.4s ease; }
+.stat-bar-neu { background: var(--neutral); transition: width 0.4s ease; }
+.stat-bar-neg { background: var(--negative); transition: width 0.4s ease; }
 .stat-latest {
-  margin-top: 12px;
+  margin-top: 10px;
   font-size: 12px;
   color: var(--text-muted);
 }
