@@ -3,18 +3,19 @@ import { createToken } from '../../src/services/auth.js';
 
 export default async (req: Request) => {
   try {
-    const { password } = await req.json().catch(() => ({ password: '' }));
-    const expected = process.env.DASHBOARD_PASSWORD;
+    const { username, password } = await req.json().catch(() => ({ username: '', password: '' }));
+    const expectedPassword = process.env.DASHBOARD_PASSWORD;
+    const expectedUsername = process.env.DASHBOARD_USERNAME;
 
-    if (!expected) {
+    if (!expectedPassword) {
       return new Response(JSON.stringify({ error: 'DASHBOARD_PASSWORD not configured' }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    if (password !== expected) {
-      return new Response(JSON.stringify({ error: 'Invalid password' }), {
+    if ((expectedUsername && username !== expectedUsername) || password !== expectedPassword) {
+      return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
       });

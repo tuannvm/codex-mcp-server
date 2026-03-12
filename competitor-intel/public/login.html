@@ -18,6 +18,7 @@
     }
     .login-card h1 { font-size: 22px; margin: 0 0 4px; }
     .login-card .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 28px; display: block; }
+    .login-card input[type="text"],
     .login-card input[type="password"] {
       width: 100%;
       padding: 12px 14px;
@@ -39,7 +40,8 @@
     <h1>Competitor Intelligence</h1>
     <span class="subtitle">The Dobbs Group | Graystone Consulting</span>
     <form id="loginForm" onsubmit="handleLogin(event)">
-      <input type="password" id="password" placeholder="Enter dashboard password" autofocus required>
+      <input type="text" id="username" placeholder="Username" autofocus required autocomplete="username">
+      <input type="password" id="password" placeholder="Password" required autocomplete="current-password">
       <button type="submit" class="btn btn-primary" id="loginBtn">Sign In</button>
     </form>
     <div id="loginError" class="login-error"></div>
@@ -58,6 +60,7 @@
       e.preventDefault();
       const btn = document.getElementById('loginBtn');
       const errEl = document.getElementById('loginError');
+      const user = document.getElementById('username').value;
       const pw = document.getElementById('password').value;
       errEl.textContent = '';
       btn.disabled = true;
@@ -67,7 +70,7 @@
         const res = await fetch('/api/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: pw }),
+          body: JSON.stringify({ username: user, password: pw }),
         });
         const data = await res.json();
         if (res.ok && data.token) {
