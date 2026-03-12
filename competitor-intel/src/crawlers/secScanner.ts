@@ -2,7 +2,7 @@ import type { SecFiling } from '../config/competitors.js';
 import { ALL_ENTITIES, SEC_KEYWORDS } from '../config/competitors.js';
 import { addSecFilings, logCrawl } from '../services/blobStore.js';
 
-const SEC_SEARCH_BASE = 'https://efts.sec.gov/LATEST/search-index';
+const SEC_SEARCH_BASE = 'https://efts.sec.gov/LATEST/search-index/';
 const USER_AGENT = 'The Dobbs Group Competitor Intel alerts@dobbsgroup.com';
 
 function makeId(): string {
@@ -10,19 +10,36 @@ function makeId(): string {
 }
 
 async function searchEdgar(query: string, startDate: string, endDate: string): Promise<any[]> {
-  const url = new URL(SEC_SEARCH_BASE);
-  url.searchParams.set('q', `"${query}"`);
-  url.searchParams.set('dateRange', 'custom');
-  url.searchParams.set('startdt', startDate);
-  url.searchParams.set('enddt', endDate);
-
-  const res = await fetch(url.toString(), {
-    headers: { 'User-Agent': USER_AGENT },
+  const res = await fetch(SEC_SEARCH_BASE, {
+    method: 'POST',
+    headers: {
+      'User-Agent': USER_AGENT,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      q: `"${query}"`,
+      dateRange: 'custom',
+      startdt: startDate,
+      enddt: endDate,
+    }),
   });
 
   if (!res.ok) throw new Error(`EDGAR API error: ${res.status}`);
   const data = await res.json();
   return data.hits?.hits || [];
+}
+
+function buildDocUrl(hit: any): string {
+  const id = hit._id || '';
+  const src = hit._source || {};
+  const parts = id.split(':');
+  if (parts.length < 2) return '';
+  const accession = parts[0];
+  const filename = parts[1];
+  const cleanAccession = accession.replace(/-/g, '');
+  const cik = (src.ciks || [])[0] || '';
+  if (!cik) return '';
+  return `https://www.sec.gov/Archives/edgar/data/${cik}/${cleanAccession}/${filename}`;
 }
 
 function countKeywords(text: string): Record<string, number> {
@@ -64,13 +81,11 @@ export async function scanSec(customQuery?: string): Promise<number> {
         filings.push({
           id: makeId(),
           entity_names: src.display_names || [],
-          filing_type: src.file_type || src.form_type || 'Unknown',
+          filing_type: src.root_form || src.form || 'Unknown',
           filed_date: src.file_date || endDate,
           company_name: (src.display_names || ['Unknown'])[0],
-          file_number: src.file_num || '',
-          document_url: src.file_name
-            ? `https://www.sec.gov/Archives/${src.file_name}`
-            : '',
+          file_number: (src.file_num || [])[0] || '',
+          document_url: buildDocUrl(hit),
           description: (src.file_description || '').substring(0, 500),
           keyword_hits: countKeywords(text),
           created_at: new Date().toISOString(),
