@@ -1,12 +1,12 @@
 import type { Config } from '@netlify/functions';
-import { crawlGovEvents } from '../../src/crawlers/govCalendar.js';
+import { crawlMarketIndicators } from '../../src/crawlers/fredCrawler.js';
 import { verifyAuth, unauthorizedResponse } from '../../src/services/auth.js';
 
 export default async (req: Request) => {
   if (!(await verifyAuth(req))) return unauthorizedResponse();
   try {
-    const newEvents = await crawlGovEvents();
-    return new Response(JSON.stringify({ success: true, newEvents }), {
+    const count = await crawlMarketIndicators();
+    return new Response(JSON.stringify({ success: true, updated: count }), {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err: any) {
@@ -17,7 +17,4 @@ export default async (req: Request) => {
   }
 };
 
-export const config: Config = {
-  path: '/api/crawl/gov',
-  method: 'POST',
-};
+export const config: Config = { path: '/api/market-indicators/crawl', method: 'POST' };

@@ -1,3 +1,25 @@
+// ── Auth ─────────────────────────────────────────────────
+function getAuthToken() { return localStorage.getItem('auth_token'); }
+
+async function apiFetch(url, opts = {}) {
+  const token = getAuthToken();
+  if (token) {
+    opts.headers = { ...opts.headers, 'Authorization': 'Bearer ' + token };
+  }
+  const res = await fetch(url, opts);
+  if (res.status === 401) {
+    localStorage.removeItem('auth_token');
+    window.location.href = '/login.html';
+    throw new Error('Unauthorized');
+  }
+  return res;
+}
+
+function logout() {
+  localStorage.removeItem('auth_token');
+  window.location.href = '/login.html';
+}
+
 // ── State ────────────────────────────────────────────────
 let entities = { self: null, competitors: [], all: [] };
 let articleOffset = 0;
@@ -6,6 +28,8 @@ let searchTimer = null;
 
 // ── Init ─────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
+  // Auth check — redirect to login if no token
+  if (!getAuthToken()) { window.location.href = '/login.html'; return; }
   await loadEntities();
   loadBrief(); // Daily Brief is now the default tab
 
@@ -26,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ── Entities ─────────────────────────────────────────────
 async function loadEntities() {
   try {
-    const res = await fetch('/api/entities');
+    const res = await apiFetch('/api/entities');
     entities = await res.json();
     populateEntityFilters();
   } catch (err) {
@@ -64,7 +88,7 @@ async function loadArticles(append = false) {
   });
 
   try {
-    const res = await fetch(`/api/articles?${params}`);
+    const res = await apiFetch(`/api/articles?${params}`);
     const articles = await res.json();
 
     const container = document.getElementById('articlesList');
@@ -151,7 +175,7 @@ function debounceSearch() {
 // ── Stats ────────────────────────────────────────────────
 async function loadStats() {
   try {
-    const res = await fetch('/api/stats');
+    const res = await apiFetch('/api/stats');
     const stats = await res.json();
     renderStats(stats);
   } catch (err) {
@@ -238,7 +262,7 @@ async function loadEvents() {
   if (end) params.set('end', end);
 
   try {
-    const res = await fetch(`/api/events?${params}`);
+    const res = await apiFetch(`/api/events?${params}`);
     const events = await res.json();
     renderCalendar(events);
   } catch (err) {
@@ -313,7 +337,7 @@ function getCatClass(category) {
 // ── Crawl Log ────────────────────────────────────────────
 async function loadCrawlLog() {
   try {
-    const res = await fetch('/api/crawl-log');
+    const res = await apiFetch('/api/crawl-log');
     const logs = await res.json();
     renderCrawlLog(logs);
   } catch (err) {
@@ -368,7 +392,9 @@ function switchTab(tabName) {
   if (tabName === 'fin-news') loadFinArticles();
   if (tabName === 'stats') { loadStats(); loadCustomEntities(); }
   if (tabName === 'aum') loadAum();
-  if (tabName === 'sec') loadSecFilings();
+  if (tabName === 'market') loadMarketIndicators();
+  if (tabName === 'holdings') loadHoldingsEntities();
+  if (tabName === 'sec') { loadSecFilings(); loadFinraAlerts(); }
   if (tabName === 'predictions') loadPredictions();
   if (tabName === 'calendar') loadEvents();
   if (tabName === 'log') loadCrawlLog();
@@ -381,7 +407,7 @@ async function triggerCrawl() {
   btn.innerHTML = '<span class="spinner"></span> Crawling...';
 
   try {
-    const res = await fetch('/api/crawl', { method: 'POST' });
+    const res = await apiFetch('/api/crawl', { method: 'POST' });
     const data = await res.json();
     btn.textContent = `Done! (${data.newArticles} new)`;
     setTimeout(() => { btn.textContent = 'Crawl Now'; btn.disabled = false; }, 3000);
@@ -399,7 +425,7 @@ async function triggerGovCrawl() {
   btn.innerHTML = '<span class="spinner"></span> Updating...';
 
   try {
-    const res = await fetch('/api/crawl/gov', { method: 'POST' });
+    const res = await apiFetch('/api/crawl/gov', { method: 'POST' });
     const data = await res.json();
     btn.textContent = `Done! (${data.newEvents} new)`;
     setTimeout(() => { btn.textContent = 'Update Calendar'; btn.disabled = false; }, 3000);
@@ -415,7 +441,7 @@ async function triggerGovCrawl() {
 // ── Priority Articles ────────────────────────────────────
 async function loadPriorityArticles() {
   try {
-    const res = await fetch('/api/articles?priority=true&limit=10');
+    const res = await apiFetch('/api/articles?priority=true&limit=10');
     const articles = await res.json();
 
     const section = document.getElementById('prioritySection');
@@ -464,7 +490,7 @@ function populateAumEntitySelect() {
 
 async function loadAum() {
   try {
-    const res = await fetch('/api/aum');
+    const res = await apiFetch('/api/aum');
     const data = await res.json();
     renderAumChart(data);
   } catch (err) {
@@ -596,7 +622,7 @@ async function updateAum() {
 
   const entity = entities.all.find(e => e.id === entityId);
   try {
-    await fetch('/api/aum', {
+    await apiFetch('/api/aum', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -669,7 +695,7 @@ async function loadSecFilings() {
   params.set('limit', '50');
 
   try {
-    const res = await fetch(`/api/sec?${params}`);
+    const res = await apiFetch(`/api/sec?${params}`);
     const filings = await res.json();
     renderSecFilings(filings);
   } catch (err) {
@@ -815,7 +841,7 @@ async function triggerSecScan() {
 
   try {
     const body = query ? { query } : {};
-    const res = await fetch('/api/sec/scan', {
+    const res = await apiFetch('/api/sec/scan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -836,7 +862,7 @@ async function enrichSecKeywords() {
   btn.innerHTML = '<span class="spinner"></span> Enriching...';
 
   try {
-    const res = await fetch('/api/sec/enrich', { method: 'POST' });
+    const res = await apiFetch('/api/sec/enrich', { method: 'POST' });
     const data = await res.json();
     btn.textContent = `Done! (${data.enriched} enriched)`;
     setTimeout(() => { btn.textContent = 'Enrich Keywords'; btn.disabled = false; }, 3000);
@@ -866,7 +892,7 @@ async function loadFinArticles(append) {
   params.set('offset', finArticleOffset);
 
   try {
-    const res = await fetch(`/api/fin-articles?${params}`);
+    const res = await apiFetch(`/api/fin-articles?${params}`);
     const articles = await res.json();
     const container = document.getElementById('finArticlesList');
     if (!append) container.innerHTML = '';
@@ -929,7 +955,7 @@ async function triggerFinNewsCrawl() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Crawling...';
   try {
-    const res = await fetch('/api/fin-crawl', { method: 'POST' });
+    const res = await apiFetch('/api/fin-crawl', { method: 'POST' });
     const data = await res.json();
     btn.textContent = `Done! (${data.newArticles} new)`;
     setTimeout(() => { btn.textContent = 'Crawl Financial News'; btn.disabled = false; }, 3000);
@@ -947,7 +973,7 @@ async function loadPredictions() {
   if (category !== 'all') params.set('category', category);
 
   try {
-    const res = await fetch(`/api/predictions?${params}`);
+    const res = await apiFetch(`/api/predictions?${params}`);
     const markets = await res.json();
     renderPredictions(markets);
   } catch (err) {
@@ -1003,7 +1029,7 @@ async function triggerPredictionsCrawl() {
   btn.innerHTML = '<span class="spinner"></span> Loading...';
 
   try {
-    const res = await fetch('/api/predictions/crawl', { method: 'POST' });
+    const res = await apiFetch('/api/predictions/crawl', { method: 'POST' });
     const data = await res.json();
     btn.textContent = `Done! (${data.newMarkets} new)`;
     setTimeout(() => { btn.textContent = 'Refresh Predictions'; btn.disabled = false; }, 3000);
@@ -1021,7 +1047,7 @@ async function triggerAumCrawl() {
   btn.innerHTML = '<span class="spinner"></span> Crawling EDGAR...';
 
   try {
-    const res = await fetch('/api/aum/crawl', { method: 'POST' });
+    const res = await apiFetch('/api/aum/crawl', { method: 'POST' });
     const data = await res.json();
     if (data.success) {
       btn.textContent = `Done! (${data.updatedCount} updated)`;
@@ -1050,7 +1076,7 @@ async function addCustomEntity() {
   }
 
   try {
-    const res = await fetch('/api/entities/custom', {
+    const res = await apiFetch('/api/entities/custom', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, website }),
@@ -1074,7 +1100,7 @@ async function addCustomEntity() {
 async function removeCustomEntity(entityId) {
   if (!confirm('Remove this competitor from tracking?')) return;
   try {
-    await fetch(`/api/entities/custom?id=${encodeURIComponent(entityId)}`, { method: 'DELETE' });
+    await apiFetch(`/api/entities/custom?id=${encodeURIComponent(entityId)}`, { method: 'DELETE' });
     await loadEntities();
     loadCustomEntities();
     populateAumEntitySelect();
@@ -1107,7 +1133,7 @@ async function loadCustomEntities() {
 // ── Daily Brief ─────────────────────────────────────────
 async function loadBrief() {
   try {
-    const res = await fetch('/api/brief');
+    const res = await apiFetch('/api/brief');
     if (res.status === 404) {
       document.getElementById('briefContent').innerHTML =
         '<div class="empty">No brief generated yet. Click "Generate Brief" to create one.</div>';
@@ -1128,7 +1154,7 @@ async function refreshBrief() {
     '<div class="loading">Analyzing data across all sources...</div>';
 
   try {
-    const res = await fetch('/api/brief', { method: 'POST' });
+    const res = await apiFetch('/api/brief', { method: 'POST' });
     const brief = await res.json();
     btn.textContent = 'Generate Brief';
     btn.disabled = false;
@@ -1362,7 +1388,7 @@ async function discoverCompetitors() {
   container.innerHTML = '<div class="loading">Searching SEC EDGAR for investment advisory firms...</div>';
 
   try {
-    const res = await fetch('/api/entities/discover', { method: 'POST' });
+    const res = await apiFetch('/api/entities/discover', { method: 'POST' });
     const data = await res.json();
     btn.textContent = `Found ${data.count} suggestions`;
     setTimeout(() => { btn.textContent = 'Scan EDGAR'; btn.disabled = false; }, 3000);
@@ -1406,7 +1432,7 @@ function renderDiscoverySuggestions(suggestions) {
 
 async function addDiscoveredEntity(name, cik) {
   try {
-    const res = await fetch('/api/entities/custom', {
+    const res = await apiFetch('/api/entities/custom', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, website: `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${cik}` }),
@@ -1437,4 +1463,263 @@ function escHtml(str) {
 
 function isoDate(d) {
   return d.toISOString().split('T')[0];
+}
+
+// ── Market Indicators ────────────────────────────────────
+
+async function loadMarketIndicators() {
+  try {
+    const [mktRes, sentRes] = await Promise.all([
+      apiFetch('/api/market-indicators'),
+      apiFetch('/api/sentiment'),
+    ]);
+    const mkt = await mktRes.json();
+    const sent = await sentRes.json();
+    renderMarketIndicators(mkt, sent);
+  } catch (err) {
+    console.error('Failed to load market indicators:', err);
+  }
+}
+
+function renderMarketIndicators(mkt, sent) {
+  // Fear & Greed gauge
+  const fgEl = document.getElementById('fearGreedSection');
+  if (mkt.fear_greed) {
+    const fg = mkt.fear_greed;
+    const color = fg.score <= 25 ? '#ef4444' : fg.score <= 45 ? '#f97316' : fg.score <= 55 ? '#eab308' : fg.score <= 75 ? '#22c55e' : '#16a34a';
+    fgEl.innerHTML = `
+      <div class="fg-card">
+        <div class="fg-gauge">
+          <svg viewBox="0 0 200 120" width="200" height="120">
+            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="var(--border)" stroke-width="12" stroke-linecap="round"/>
+            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round"
+              stroke-dasharray="${(fg.score / 100) * 251.2} 251.2"/>
+            <text x="100" y="85" text-anchor="middle" fill="${color}" font-size="28" font-weight="700">${fg.score}</text>
+            <text x="100" y="105" text-anchor="middle" fill="var(--muted)" font-size="11">${fg.rating}</text>
+          </svg>
+        </div>
+        <div class="fg-meta">
+          <h3>Fear &amp; Greed Index</h3>
+          <div class="fg-comparisons">
+            <span>Prev Close: <strong>${fg.previous_close}</strong></span>
+            <span>1 Week: <strong>${fg.one_week_ago}</strong></span>
+            <span>1 Month: <strong>${fg.one_month_ago}</strong></span>
+            <span>1 Year: <strong>${fg.one_year_ago}</strong></span>
+          </div>
+        </div>
+      </div>
+      ${mkt.yield_spread !== null ? `<div class="yield-spread-card"><span class="yield-label">Yield Curve Spread (10Y-2Y)</span><span class="yield-value ${mkt.yield_spread < 0 ? 'inverted' : ''}">${mkt.yield_spread > 0 ? '+' : ''}${mkt.yield_spread}%</span></div>` : ''}
+    `;
+  } else {
+    fgEl.innerHTML = '<div class="empty">No Fear &amp; Greed data yet. Click "Refresh Data" to fetch.</div>';
+  }
+
+  // FRED series cards
+  const fredEl = document.getElementById('fredCardsGrid');
+  if (mkt.fred_series && mkt.fred_series.length > 0) {
+    fredEl.innerHTML = mkt.fred_series.map(s => {
+      const pts = s.data_points || [];
+      const sparkline = renderSparklineSvg(pts.map(p => p.value));
+      return `<div class="fred-card">
+        <div class="fred-header"><span class="fred-label">${escHtml(s.label)}</span><span class="fred-value">${s.latest_value.toFixed(2)}${s.unit === '%' ? '%' : ''}</span></div>
+        <div class="fred-sparkline">${sparkline}</div>
+        <div class="fred-date">${s.latest_date}</div>
+      </div>`;
+    }).join('');
+  } else {
+    fredEl.innerHTML = '<div class="empty">No FRED data. Set FRED_API_KEY and click "Refresh Data".</div>';
+  }
+
+  // Sentiment section
+  const sentEl = document.getElementById('sentimentSection');
+  if (sent && sent.topics && sent.topics.length > 0) {
+    const sentColor = sent.composite_score < -0.15 ? '#ef4444' : sent.composite_score > 0.15 ? '#22c55e' : '#eab308';
+    sentEl.innerHTML = `
+      <h3 style="margin-top:24px;">Alpha Vantage Sentiment</h3>
+      <div class="sent-composite">
+        <span class="sent-score" style="color:${sentColor}">${sent.composite_label}</span>
+        <span class="sent-value">(${sent.composite_score.toFixed(3)})</span>
+      </div>
+      <div class="sent-topics">${sent.topics.map(t => `
+        <div class="sent-topic-card">
+          <div class="sent-topic-name">${escHtml(t.topic.replace(/_/g, ' '))}</div>
+          <div class="sent-topic-score">${t.label} (${t.score.toFixed(3)})</div>
+          <div class="sent-topic-count">${t.article_count} articles</div>
+        </div>
+      `).join('')}</div>
+    `;
+  } else {
+    sentEl.innerHTML = '';
+  }
+
+  // Timestamp
+  const ts = document.getElementById('marketTimestamp');
+  if (mkt.updated_at) ts.textContent = `Updated ${formatDateTime(mkt.updated_at)}`;
+}
+
+function renderSparklineSvg(values) {
+  if (!values || values.length < 2) return '';
+  const w = 120, h = 32, pad = 2;
+  const min = Math.min(...values), max = Math.max(...values);
+  const range = max - min || 1;
+  const pts = values.map((v, i) => {
+    const x = pad + (i / (values.length - 1)) * (w - 2 * pad);
+    const y = pad + (1 - (v - min) / range) * (h - 2 * pad);
+    return `${x},${y}`;
+  }).join(' ');
+  const color = values[values.length - 1] >= values[0] ? '#22c55e' : '#ef4444';
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5"/></svg>`;
+}
+
+async function triggerMarketCrawl() {
+  try {
+    await apiFetch('/api/market-indicators/crawl', { method: 'POST' });
+    await apiFetch('/api/sentiment/crawl', { method: 'POST' });
+    loadMarketIndicators();
+  } catch (err) {
+    console.error('Market crawl failed:', err);
+  }
+}
+
+// ── 13F Holdings ─────────────────────────────────────────
+
+async function loadHoldingsEntities() {
+  try {
+    const res = await apiFetch('/api/13f');
+    const data = await res.json();
+    const sel = document.getElementById('holdingsEntity');
+    sel.innerHTML = '<option value="">Select Entity...</option>';
+    for (const e of data.entities || []) {
+      const opt = document.createElement('option');
+      opt.value = e.cik;
+      opt.textContent = e.name;
+      sel.appendChild(opt);
+    }
+    // Populate periods if available
+    if (data.periods) {
+      window._holdingsPeriods = data.periods;
+    }
+  } catch (err) {
+    console.error('Failed to load 13F entities:', err);
+  }
+}
+
+async function loadHoldings() {
+  const cik = document.getElementById('holdingsEntity').value;
+  if (!cik) return;
+
+  // Populate period dropdown
+  const periodSel = document.getElementById('holdingsPeriod');
+  const periods = (window._holdingsPeriods || {})[cik] || [];
+  if (periods.length > 0 && periodSel.options.length <= 1) {
+    periodSel.innerHTML = periods.map((p, i) => `<option value="${p}" ${i === 0 ? 'selected' : ''}>${p}</option>`).join('');
+  }
+
+  const period = periodSel.value || undefined;
+  try {
+    const res = await apiFetch(`/api/13f?cik=${encodeURIComponent(cik)}${period ? '&period=' + period : ''}`);
+    const data = await res.json();
+    renderHoldings(data);
+  } catch (err) {
+    console.error('Failed to load holdings:', err);
+  }
+}
+
+function renderHoldings(data) {
+  const summaryEl = document.getElementById('holdingsSummary');
+  const tableEl = document.getElementById('holdingsTable');
+
+  if (!data.filing || !data.filing.holdings || data.filing.holdings.length === 0) {
+    summaryEl.innerHTML = '';
+    tableEl.innerHTML = '<div class="empty">No holdings data for this entity/period. Run "Crawl 13F Filings" first.</div>';
+    return;
+  }
+
+  const f = data.filing;
+  const totalVal = f.total_value_thousands / 1000; // Convert to millions
+  summaryEl.innerHTML = `
+    <div class="holdings-stats">
+      <div class="holdings-stat"><span class="stat-label">Total Value</span><span class="stat-value">$${totalVal >= 1000 ? (totalVal / 1000).toFixed(1) + 'B' : totalVal.toFixed(0) + 'M'}</span></div>
+      <div class="holdings-stat"><span class="stat-label">Holdings</span><span class="stat-value">${f.holdings.length}</span></div>
+      <div class="holdings-stat"><span class="stat-label">Period</span><span class="stat-value">${f.period}</span></div>
+      <div class="holdings-stat"><span class="stat-label">Filed</span><span class="stat-value">${f.filed_date}</span></div>
+    </div>
+  `;
+
+  // Top 50 holdings table
+  const top = f.holdings.slice(0, 50);
+  tableEl.innerHTML = `
+    <table class="data-table">
+      <thead><tr><th>#</th><th>Issuer</th><th>CUSIP</th><th>Value ($K)</th><th>Shares</th><th>% of Portfolio</th></tr></thead>
+      <tbody>${top.map((h, i) => {
+        const pct = ((h.value_thousands / f.total_value_thousands) * 100).toFixed(2);
+        return `<tr>
+          <td>${i + 1}</td>
+          <td>${escHtml(h.issuer)}</td>
+          <td class="mono">${h.cusip}</td>
+          <td class="num">${h.value_thousands.toLocaleString()}</td>
+          <td class="num">${h.shares.toLocaleString()}</td>
+          <td class="num">${pct}%</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>
+    ${f.holdings.length > 50 ? `<p class="table-note">Showing top 50 of ${f.holdings.length} holdings</p>` : ''}
+  `;
+}
+
+async function trigger13FCrawl() {
+  try {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = 'Crawling...';
+    await apiFetch('/api/13f/crawl', { method: 'POST' });
+    await loadHoldingsEntities();
+    loadHoldings();
+    btn.disabled = false;
+    btn.textContent = 'Crawl 13F Filings';
+  } catch (err) {
+    console.error('13F crawl failed:', err);
+  }
+}
+
+// ── FINRA Alerts ─────────────────────────────────────────
+
+async function loadFinraAlerts() {
+  try {
+    const res = await apiFetch('/api/finra');
+    const alerts = await res.json();
+    renderFinraAlerts(alerts);
+  } catch (err) {
+    console.error('Failed to load FINRA alerts:', err);
+  }
+}
+
+function renderFinraAlerts(alerts) {
+  const el = document.getElementById('finraAlertsList');
+  if (!alerts || alerts.length === 0) {
+    el.innerHTML = '<div class="empty">No FINRA alerts found. Click "Scan FINRA" to check.</div>';
+    return;
+  }
+
+  el.innerHTML = alerts.slice(0, 50).map(a => `
+    <div class="finra-alert finra-${a.severity}">
+      <div class="finra-alert-header">
+        <span class="finra-badge badge-${a.severity}">${a.severity.toUpperCase()}</span>
+        <span class="finra-firm">${escHtml(a.firm_name)}</span>
+        <span class="finra-date">${a.date}</span>
+      </div>
+      <div class="finra-type">${escHtml(a.action_type)}</div>
+      <div class="finra-summary">${escHtml(a.summary).substring(0, 200)}${a.summary.length > 200 ? '...' : ''}</div>
+      <a href="${a.source_url}" target="_blank" class="finra-link">View on BrokerCheck</a>
+    </div>
+  `).join('');
+}
+
+async function triggerFinraCrawl() {
+  try {
+    await apiFetch('/api/finra/crawl', { method: 'POST' });
+    loadFinraAlerts();
+  } catch (err) {
+    console.error('FINRA crawl failed:', err);
+  }
 }

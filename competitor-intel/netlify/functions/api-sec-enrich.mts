@@ -1,7 +1,9 @@
 import type { Config } from '@netlify/functions';
 import { enrichFilingKeywords } from '../../src/crawlers/secScanner.js';
+import { verifyAuth, unauthorizedResponse } from '../../src/services/auth.js';
 
-export default async () => {
+export default async (req: Request) => {
+  if (!(await verifyAuth(req))) return unauthorizedResponse();
   try {
     const enriched = await enrichFilingKeywords();
     return new Response(JSON.stringify({ success: true, enriched }), {

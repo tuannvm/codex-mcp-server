@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Competitor Intelligence</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 40px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+    }
+    .login-card h1 { font-size: 22px; margin: 0 0 4px; }
+    .login-card .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 28px; display: block; }
+    .login-card input[type="password"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      margin-bottom: 16px;
+      box-sizing: border-box;
+    }
+    .login-card input:focus { outline: none; border-color: var(--primary); }
+    .login-card .btn { width: 100%; padding: 12px; font-size: 15px; }
+    .login-error { color: #ef4444; font-size: 13px; margin-top: 12px; min-height: 20px; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <h1>Competitor Intelligence</h1>
+    <span class="subtitle">The Dobbs Group | Graystone Consulting</span>
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <input type="password" id="password" placeholder="Enter dashboard password" autofocus required>
+      <button type="submit" class="btn btn-primary" id="loginBtn">Sign In</button>
+    </form>
+    <div id="loginError" class="login-error"></div>
+  </div>
+  <script>
+    // If already authenticated, redirect to dashboard
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      // Quick verify — try an API call
+      fetch('/api/articles?limit=1', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(r => { if (r.ok) window.location.href = '/'; })
+        .catch(() => {});
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('loginBtn');
+      const errEl = document.getElementById('loginError');
+      const pw = document.getElementById('password').value;
+      errEl.textContent = '';
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+
+      try {
+        const res = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pw }),
+        });
+        const data = await res.json();
+        if (res.ok && data.token) {
+          localStorage.setItem('auth_token', data.token);
+          window.location.href = '/';
+        } else {
+          errEl.textContent = data.error || 'Invalid password';
+        }
+      } catch (err) {
+        errEl.textContent = 'Connection error. Please try again.';
+      }
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  </script>
+</body>
+</html>

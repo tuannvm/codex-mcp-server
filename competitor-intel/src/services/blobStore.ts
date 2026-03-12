@@ -1,5 +1,5 @@
 import { getStore } from '@netlify/blobs';
-import type { Article, GovEvent, CrawlLogEntry, AumEntry, SecFiling, PredictionMarket, CustomEntity, Entity, DailyBrief, FinancialArticle } from '../config/competitors.js';
+import type { Article, GovEvent, CrawlLogEntry, AumEntry, SecFiling, PredictionMarket, CustomEntity, Entity, DailyBrief, FinancialArticle, MarketIndicators, AggregatedSentiment, Filing13F, FinraAlert } from '../config/competitors.js';
 import { ALL_ENTITIES, SEED_AUM_DATA } from '../config/competitors.js';
 
 function articleStore() {
@@ -444,4 +444,94 @@ export async function saveBrief(brief: DailyBrief): Promise<void> {
 export async function getLatestBrief(): Promise<DailyBrief | null> {
   const store = briefStore();
   return ((await store.get('latest', { type: 'json' })) as DailyBrief) || null;
+}
+
+// ── Market Indicators ────────────────────────────────────
+
+function marketStore() {
+  return getStore({ name: 'market-indicators', consistency: 'strong' });
+}
+
+export async function getMarketIndicators(): Promise<MarketIndicators | null> {
+  const store = marketStore();
+  return ((await store.get('latest', { type: 'json' })) as MarketIndicators) || null;
+}
+
+export async function saveMarketIndicators(data: MarketIndicators): Promise<void> {
+  const store = marketStore();
+  await store.setJSON('latest', data);
+}
+
+// ── Sentiment Data ───────────────────────────────────────
+
+function sentimentStore() {
+  return getStore({ name: 'av-sentiment', consistency: 'strong' });
+}
+
+export async function getSentimentData(): Promise<AggregatedSentiment | null> {
+  const store = sentimentStore();
+  return ((await store.get('latest', { type: 'json' })) as AggregatedSentiment) || null;
+}
+
+export async function saveSentimentData(data: AggregatedSentiment): Promise<void> {
+  const store = sentimentStore();
+  await store.setJSON('latest', data);
+}
+
+// ── 13F Holdings ─────────────────────────────────────────
+
+function holdings13fStore() {
+  return getStore({ name: '13f-holdings', consistency: 'strong' });
+}
+
+export async function get13FHoldings(entityCik: string, period?: string): Promise<Filing13F | null> {
+  const store = holdings13fStore();
+  if (period) {
+    return ((await store.get(`${entityCik}:${period}`, { type: 'json' })) as Filing13F) || null;
+  }
+  // Get latest
+  const periods = await getAll13FPeriods(entityCik);
+  if (periods.length === 0) return null;
+  return ((await store.get(`${entityCik}:${periods[0]}`, { type: 'json' })) as Filing13F) || null;
+}
+
+export async function save13FHoldings(entityCik: string, filing: Filing13F): Promise<void> {
+  const store = holdings13fStore();
+  await store.setJSON(`${entityCik}:${filing.period}`, filing);
+  // Update period index
+  const periods = await getAll13FPeriods(entityCik);
+  if (!periods.includes(filing.period)) {
+    periods.push(filing.period);
+    periods.sort().reverse();
+    await store.setJSON(`${entityCik}:periods`, periods);
+  }
+}
+
+export async function getAll13FPeriods(entityCik: string): Promise<string[]> {
+  const store = holdings13fStore();
+  return ((await store.get(`${entityCik}:periods`, { type: 'json' })) as string[]) || [];
+}
+
+// ── FINRA Alerts ─────────────────────────────────────────
+
+function finraStore() {
+  return getStore({ name: 'finra-alerts', consistency: 'strong' });
+}
+
+export async function getFinraAlerts(): Promise<FinraAlert[]> {
+  const store = finraStore();
+  return ((await store.get('all', { type: 'json' })) as FinraAlert[]) || [];
+}
+
+export async function addFinraAlerts(newAlerts: FinraAlert[]): Promise<number> {
+  const store = finraStore();
+  const existing = await getFinraAlerts();
+  const existingIds = new Set(existing.map(a => a.id));
+  const unique = newAlerts.filter(a => !existingIds.has(a.id));
+  if (unique.length === 0) return 0;
+  const merged = [...unique, ...existing]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 500);
+  await store.setJSON('all', merged);
+  return unique.length;
 }

@@ -17,6 +17,7 @@
         <span id="lastCrawl" class="last-crawl"></span>
         <button id="btnCrawlAll" class="btn btn-primary" onclick="triggerCrawl()">Crawl Now</button>
         <button id="btnCrawlGov" class="btn btn-secondary" onclick="triggerGovCrawl()">Update Calendar</button>
+        <button class="btn btn-ghost" onclick="logout()" title="Sign out">Logout</button>
       </div>
     </div>
   </header>
@@ -26,8 +27,10 @@
     <button class="tab" data-tab="news" onclick="switchTab('news')">Competitor News</button>
     <button class="tab" data-tab="fin-news" onclick="switchTab('fin-news')">Financial News</button>
     <button class="tab" data-tab="stats" onclick="switchTab('stats')">Competitor Intelligence</button>
+    <button class="tab" data-tab="market" onclick="switchTab('market')">Market Indicators</button>
     <button class="tab" data-tab="aum" onclick="switchTab('aum')">AUM</button>
-    <button class="tab" data-tab="sec" onclick="switchTab('sec')">SEC Filings</button>
+    <button class="tab" data-tab="holdings" onclick="switchTab('holdings')">13F Holdings</button>
+    <button class="tab" data-tab="sec" onclick="switchTab('sec')">Regulatory</button>
     <button class="tab" data-tab="predictions" onclick="switchTab('predictions')">Predictions</button>
     <button class="tab" data-tab="calendar" onclick="switchTab('calendar')">Gov Calendar</button>
     <button class="tab" data-tab="log" onclick="switchTab('log')">Crawl Log</button>
@@ -195,6 +198,20 @@
     </div>
   </section>
 
+  <!-- ── Market Indicators Tab ──────────────── -->
+  <section id="tab-market" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>Market Indicators</h2>
+      <div class="tab-actions">
+        <span id="marketTimestamp" class="brief-timestamp"></span>
+        <button class="btn btn-primary" onclick="triggerMarketCrawl()">Refresh Data</button>
+      </div>
+    </div>
+    <div id="fearGreedSection" class="fear-greed-section"></div>
+    <div id="fredCardsGrid" class="fred-cards-grid"></div>
+    <div id="sentimentSection" class="sentiment-section"></div>
+  </section>
+
   <!-- ── AUM Tab ──────────────────────────────── -->
   <section id="tab-aum" class="tab-content">
     <div class="tab-title-bar">
@@ -236,7 +253,23 @@
     </div>
   </section>
 
-  <!-- ── SEC Filings Tab ─────────────────────── -->
+  <!-- ── 13F Holdings Tab ─────────────────────── -->
+  <section id="tab-holdings" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>13F Holdings Analysis</h2>
+      <div class="tab-actions">
+        <select id="holdingsEntity" onchange="loadHoldings()"></select>
+        <select id="holdingsPeriod" onchange="loadHoldings()"></select>
+        <button class="btn btn-primary" onclick="trigger13FCrawl()">Crawl 13F Filings</button>
+      </div>
+    </div>
+    <div id="holdingsSummary" class="holdings-summary"></div>
+    <div id="holdingsTable" class="holdings-table-wrap">
+      <div class="empty">Select an entity and click "Crawl 13F Filings" to load holdings data from SEC EDGAR.</div>
+    </div>
+  </section>
+
+  <!-- ── SEC Filings / Regulatory Tab ────────── -->
   <section id="tab-sec" class="tab-content">
     <div class="tab-title-bar">
       <h2>SEC Filings Scanner</h2>
@@ -268,6 +301,19 @@
     </div>
     <div id="secFilingsList" class="sec-filings-list">
       <div class="empty">Click "Scan SEC EDGAR" to search for filings.</div>
+    </div>
+
+    <!-- FINRA BrokerCheck Section -->
+    <div class="finra-section">
+      <div class="tab-title-bar" style="margin-top: 32px;">
+        <h2>FINRA BrokerCheck Alerts</h2>
+        <div class="tab-actions">
+          <button class="btn btn-secondary" onclick="triggerFinraCrawl()">Scan FINRA</button>
+        </div>
+      </div>
+      <div id="finraAlertsList" class="finra-alerts-list">
+        <div class="empty">Click "Scan FINRA" to check for disciplinary actions.</div>
+      </div>
     </div>
   </section>
 

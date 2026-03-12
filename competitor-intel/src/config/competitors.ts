@@ -419,3 +419,108 @@ export const SEED_AUM_DATA: AumEntry[] = [
     discretionary_billions: 180, non_discretionary_billions: 70,
     asset_classes: [{ name: 'Equities', amount_billions: 100 }, { name: 'Fixed Income', amount_billions: 63 }, { name: 'Alternatives', amount_billions: 50 }, { name: 'Real Assets', amount_billions: 25 }, { name: 'Cash & Other', amount_billions: 12 }] },
 ];
+
+// ── Market Indicators (FRED + Fear & Greed) ────────────────
+
+export interface FredSeriesPoint {
+  date: string;
+  value: number;
+}
+
+export interface FredSeries {
+  series_id: string;
+  label: string;
+  unit: string;
+  latest_value: number;
+  latest_date: string;
+  data_points: FredSeriesPoint[];
+}
+
+export interface FearGreedData {
+  score: number;
+  rating: string; // 'Extreme Fear' | 'Fear' | 'Neutral' | 'Greed' | 'Extreme Greed'
+  previous_close: number;
+  one_week_ago: number;
+  one_month_ago: number;
+  one_year_ago: number;
+  updated_at: string;
+}
+
+export interface MarketIndicators {
+  fred_series: FredSeries[];
+  fear_greed: FearGreedData | null;
+  yield_spread: number | null; // 10Y - 2Y
+  updated_at: string;
+}
+
+// ── Alpha Vantage Sentiment ─────────────────────────────────
+
+export interface SentimentSnapshot {
+  topic: string;
+  score: number; // -1 to 1
+  label: string; // Bearish, Somewhat-Bearish, Neutral, Somewhat-Bullish, Bullish
+  article_count: number;
+  top_headlines: Array<{ title: string; url: string; sentiment: number }>;
+  fetched_at: string;
+}
+
+export interface AggregatedSentiment {
+  composite_score: number;
+  composite_label: string;
+  topics: SentimentSnapshot[];
+  updated_at: string;
+}
+
+// ── 13F Holdings ───────────────────────────────────────────
+
+export interface Holding13F {
+  issuer: string;
+  cusip: string;
+  value_thousands: number;
+  shares: number;
+  share_type: string; // SH, PRN, etc
+}
+
+export interface Filing13F {
+  entity_name: string;
+  cik: string;
+  period: string; // e.g., '2024-12-31'
+  filed_date: string;
+  accession_number: string;
+  holdings: Holding13F[];
+  total_value_thousands: number;
+}
+
+export interface HoldingChange {
+  issuer: string;
+  cusip: string;
+  current_value: number;
+  previous_value: number;
+  change_pct: number;
+  change_type: 'new' | 'increased' | 'decreased' | 'sold' | 'unchanged';
+  current_shares: number;
+  previous_shares: number;
+}
+
+export interface HoldingsComparison {
+  entity_name: string;
+  current_period: string;
+  previous_period: string;
+  changes: HoldingChange[];
+  total_current: number;
+  total_previous: number;
+}
+
+// ── FINRA BrokerCheck ──────────────────────────────────────
+
+export interface FinraAlert {
+  id: string;
+  firm_name: string;
+  crd_number: string;
+  action_type: string; // 'disciplinary' | 'arbitration' | 'regulatory'
+  severity: 'critical' | 'warning' | 'info';
+  summary: string;
+  date: string;
+  source_url: string;
+  created_at: string;
+}

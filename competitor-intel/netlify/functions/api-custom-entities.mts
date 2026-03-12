@@ -1,8 +1,10 @@
 import type { Config } from '@netlify/functions';
 import type { CustomEntity } from '../../src/config/competitors.js';
 import { getCustomEntities, addCustomEntity, removeCustomEntity } from '../../src/services/blobStore.js';
+import { verifyAuth, unauthorizedResponse } from '../../src/services/auth.js';
 
 export default async (req: Request) => {
+  if (!(await verifyAuth(req))) return unauthorizedResponse();
   const headers = { 'Content-Type': 'application/json' };
 
   if (req.method === 'GET') {

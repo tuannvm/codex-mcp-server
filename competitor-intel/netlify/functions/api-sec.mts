@@ -1,7 +1,9 @@
 import type { Config } from '@netlify/functions';
 import { getSecFilings } from '../../src/services/blobStore.js';
+import { verifyAuth, unauthorizedResponse } from '../../src/services/auth.js';
 
 export default async (req: Request) => {
+  if (!(await verifyAuth(req))) return unauthorizedResponse();
   const url = new URL(req.url);
   const entityName = url.searchParams.get('entity') || undefined;
   const filingType = url.searchParams.get('type') || undefined;

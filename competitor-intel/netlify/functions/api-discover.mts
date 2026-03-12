@@ -1,7 +1,9 @@
 import type { Config } from '@netlify/functions';
 import { discoverCompetitors } from '../../src/crawlers/discoverer.js';
+import { verifyAuth, unauthorizedResponse } from '../../src/services/auth.js';
 
 export default async (req: Request) => {
+  if (!(await verifyAuth(req))) return unauthorizedResponse();
   const headers = { 'Content-Type': 'application/json' };
 
   if (req.method !== 'POST') {

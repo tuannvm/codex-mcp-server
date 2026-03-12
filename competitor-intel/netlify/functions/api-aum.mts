@@ -1,7 +1,9 @@
 import type { Config } from '@netlify/functions';
 import { getAumData, seedAumIfEmpty, upsertAumEntry } from '../../src/services/blobStore.js';
+import { verifyAuth, unauthorizedResponse } from '../../src/services/auth.js';
 
 export default async (req: Request) => {
+  if (!(await verifyAuth(req))) return unauthorizedResponse();
   if (req.method === 'POST') {
     try {
       const entry = await req.json();

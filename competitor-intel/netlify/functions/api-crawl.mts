@@ -1,8 +1,10 @@
 import type { Config } from '@netlify/functions';
 import { crawlAll, crawlSingle } from '../../src/crawlers/newsCrawler.js';
 import { checkAndAlertNegativeArticles } from '../../src/services/emailAlert.js';
+import { verifyAuth, unauthorizedResponse } from '../../src/services/auth.js';
 
 export default async (req: Request) => {
+  if (!(await verifyAuth(req))) return unauthorizedResponse();
   try {
     const body = await req.json().catch(() => ({}));
     const { entityId } = body as { entityId?: string };

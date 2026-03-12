@@ -1,7 +1,9 @@
 import type { Config } from '@netlify/functions';
 import { getFinArticles } from '../../src/services/blobStore.js';
+import { verifyAuth, unauthorizedResponse } from '../../src/services/auth.js';
 
 export default async (req: Request) => {
+  if (!(await verifyAuth(req))) return unauthorizedResponse();
   try {
     const url = new URL(req.url);
     const source = url.searchParams.get('source') || undefined;

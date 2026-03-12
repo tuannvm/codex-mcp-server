@@ -83,6 +83,14 @@ header {
   border: 1px solid var(--border);
 }
 .btn-secondary:hover { background: var(--border); }
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid transparent;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+.btn-ghost:hover { color: var(--text); border-color: var(--border); }
 
 /* ── Tabs ─────────────────────────────────── */
 .tabs {
@@ -1512,6 +1520,176 @@ header {
 }
 .pred-meta a:hover { text-decoration: underline; }
 
+/* ── Market Indicators (Fear & Greed + FRED) ── */
+.fear-greed-section { margin-bottom: 24px; }
+.fg-card {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+}
+.fg-gauge { flex-shrink: 0; }
+.fg-meta h3 { margin: 0 0 8px 0; font-size: 16px; color: var(--text); }
+.fg-comparisons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.fg-comparisons strong { color: var(--text); }
+
+.yield-spread-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 20px;
+}
+.yield-label { font-size: 13px; color: var(--muted); }
+.yield-value { font-size: 18px; font-weight: 700; color: #22c55e; }
+.yield-value.inverted { color: #ef4444; }
+
+.fred-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+.fred-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+.fred-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.fred-label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.fred-value { font-size: 18px; font-weight: 700; color: var(--text); }
+.fred-sparkline { margin: 8px 0 4px 0; }
+.fred-sparkline svg { display: block; width: 100%; height: 32px; }
+.fred-date { font-size: 11px; color: var(--text-muted); }
+
+/* ── Sentiment Section ─────────────────────── */
+.sentiment-section { margin-top: 24px; }
+.sent-composite {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.sent-score { font-size: 20px; font-weight: 700; }
+.sent-value { font-size: 14px; color: var(--muted); }
+.sent-topics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+.sent-topic-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+}
+.sent-topic-name { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: capitalize; margin-bottom: 4px; }
+.sent-topic-score { font-size: 15px; font-weight: 600; color: var(--text); }
+.sent-topic-count { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* ── 13F Holdings ──────────────────────────── */
+.holdings-summary { margin-bottom: 20px; }
+.holdings-stats {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.holdings-stat {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 20px;
+  text-align: center;
+}
+.holdings-stat .stat-label { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+.holdings-stat .stat-value { display: block; font-size: 20px; font-weight: 700; color: var(--text); }
+
+.holdings-table-wrap { overflow-x: auto; }
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table th {
+  text-align: left;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-bottom: 2px solid var(--border);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+.data-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.data-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+.data-table .mono { font-family: 'SF Mono', 'Menlo', monospace; font-size: 12px; color: var(--muted); }
+.data-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.table-note { font-size: 12px; color: var(--muted); margin-top: 8px; text-align: center; }
+
+/* ── FINRA Alerts ──────────────────────────── */
+.finra-section { margin-top: 32px; }
+.finra-alerts-list { display: flex; flex-direction: column; gap: 12px; }
+.finra-alert {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  border-left: 4px solid var(--border);
+}
+.finra-alert.finra-critical { border-left-color: #ef4444; }
+.finra-alert.finra-warning { border-left-color: #f97316; }
+.finra-alert.finra-info { border-left-color: #3b82f6; }
+.finra-alert-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.finra-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.badge-critical { background: rgba(239,68,68,0.15); color: #ef4444; }
+.badge-warning { background: rgba(249,115,22,0.15); color: #f97316; }
+.badge-info { background: rgba(59,130,246,0.15); color: #3b82f6; }
+.finra-firm { font-weight: 600; color: var(--text); font-size: 14px; }
+.finra-date { font-size: 12px; color: var(--muted); margin-left: auto; }
+.finra-type { font-size: 12px; color: var(--primary); font-weight: 600; margin-bottom: 6px; }
+.finra-summary { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 8px; }
+.finra-link { font-size: 12px; color: var(--primary); text-decoration: none; font-weight: 600; }
+.finra-link:hover { text-decoration: underline; }
+
 /* ── Responsive ───────────────────────────── */
 @media (max-width: 768px) {
   .header-inner { flex-direction: column; align-items: flex-start; }
@@ -1520,6 +1698,10 @@ header {
   .stats-grid { grid-template-columns: 1fr; }
   .stat-card.self-card { grid-column: 1; }
   .predictions-grid { grid-template-columns: 1fr; }
+  .fg-card { flex-direction: column; text-align: center; }
+  .fred-cards-grid { grid-template-columns: 1fr 1fr; }
+  .sent-topics { grid-template-columns: 1fr; }
+  .holdings-stats { flex-direction: column; }
   .tab-title-bar { flex-direction: column; align-items: flex-start; }
   .tab-actions { width: 100%; }
   .tab-actions input { min-width: 0; flex: 1; }

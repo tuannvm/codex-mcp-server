@@ -1,8 +1,10 @@
 import type { Config } from '@netlify/functions';
 import { scanSec } from '../../src/crawlers/secScanner.js';
 import { clearSecFilings } from '../../src/services/blobStore.js';
+import { verifyAuth, unauthorizedResponse } from '../../src/services/auth.js';
 
 export default async (req: Request) => {
+  if (!(await verifyAuth(req))) return unauthorizedResponse();
   try {
     const body = await req.json().catch(() => ({}));
     const { query, refresh } = body as { query?: string; refresh?: boolean };

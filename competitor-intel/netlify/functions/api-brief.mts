@@ -1,8 +1,10 @@
 import type { Config } from '@netlify/functions';
 import { getLatestBrief, saveBrief } from '../../src/services/blobStore.js';
 import { generateBrief } from '../../src/services/briefGenerator.js';
+import { verifyAuth, unauthorizedResponse } from '../../src/services/auth.js';
 
 export default async (req: Request) => {
+  if (!(await verifyAuth(req))) return unauthorizedResponse();
   const headers = { 'Content-Type': 'application/json' };
 
   if (req.method === 'GET') {

@@ -1,13 +1,13 @@
 import type { Config } from '@netlify/functions';
-import { getArticleStats } from '../../src/services/blobStore.js';
+import { getSentimentData } from '../../src/services/blobStore.js';
 import { verifyAuth, unauthorizedResponse } from '../../src/services/auth.js';
 
 export default async (req: Request) => {
   if (!(await verifyAuth(req))) return unauthorizedResponse();
-  const stats = await getArticleStats();
-  return new Response(JSON.stringify(stats), {
+  const data = await getSentimentData();
+  return new Response(JSON.stringify(data || { composite_score: 0, composite_label: 'Neutral', topics: [], updated_at: null }), {
     headers: { 'Content-Type': 'application/json' },
   });
 };
 
-export const config: Config = { path: '/api/stats' };
+export const config: Config = { path: '/api/sentiment' };
