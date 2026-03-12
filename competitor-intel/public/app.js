@@ -94,7 +94,9 @@ function renderArticle(a) {
   div.className = `article-card${a.entity_id === 'dobbs-group' ? ' self' : ''}`;
 
   const isSelf = a.entity_id === 'dobbs-group';
-  const date = a.pub_date ? new Date(a.pub_date).toLocaleDateString() : '';
+  const pubDate = a.pub_date ? new Date(a.pub_date) : null;
+  const dateStr = pubDate ? pubDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  const timeAgo = pubDate ? getTimeAgo(pubDate) : '';
 
   div.innerHTML = `
     <div class="article-header">
@@ -103,12 +105,29 @@ function renderArticle(a) {
     </div>
     <div class="article-meta">
       <span class="entity-tag${isSelf ? ' self-tag' : ''}">${escHtml(a.entity_name)}</span>
-      <span>${escHtml(a.source || '')}</span>
-      <span>${date}</span>
+      ${a.source ? `<span class="article-source">${escHtml(a.source)}</span>` : ''}
+      <span class="article-date" title="${dateStr}">${timeAgo || dateStr}</span>
     </div>
-    ${a.snippet ? `<div class="article-snippet">${escHtml(a.snippet).substring(0, 250)}${a.snippet.length > 250 ? '...' : ''}</div>` : ''}
+    ${a.snippet ? `<div class="article-snippet">${escHtml(a.snippet).substring(0, 300)}${a.snippet.length > 300 ? '...' : ''}</div>` : ''}
+    <div class="article-footer">
+      <a href="${escHtml(a.link)}" target="_blank" rel="noopener" class="read-more">Read full article &#8594;</a>
+    </div>
   `;
   return div;
+}
+
+function getTimeAgo(date) {
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHrs = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHrs < 24) return `${diffHrs}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  return '';
 }
 
 function debounceSearch() {
@@ -153,22 +172,45 @@ function renderStatCard(s, isSelf) {
   const entity = entities.all.find(e => e.id === s.entity_id);
   const tier = entity ? (entity.tier === 'self' ? 'Self' : `Tier ${entity.tier}`) : '';
 
+  const total = s.total || 1;
+  const posPct = Math.round((s.positive / total) * 100);
+  const neuPct = Math.round((s.neutral / total) * 100);
+  const negPct = 100 - posPct - neuPct;
+
   const div = document.createElement('div');
   div.className = `stat-card${isSelf ? ' self-card' : ''}`;
+  div.style.cursor = 'pointer';
+  div.onclick = () => navigateToEntity(s.entity_id);
   div.innerHTML = `
-    <h3>
-      ${escHtml(s.entity_name)}
-      <span class="tier-badge">${tier}</span>
-    </h3>
+    <div class="stat-card-header">
+      <h3>
+        ${escHtml(s.entity_name)}
+        <span class="tier-badge">${tier}</span>
+      </h3>
+      <span class="stat-arrow">View Articles &#8594;</span>
+    </div>
     <div class="stat-numbers">
       <div class="stat-num total"><div class="num">${s.total}</div><div class="lbl">Total</div></div>
       <div class="stat-num pos"><div class="num">${s.positive}</div><div class="lbl">Positive</div></div>
       <div class="stat-num neu"><div class="num">${s.neutral}</div><div class="lbl">Neutral</div></div>
       <div class="stat-num neg"><div class="num">${s.negative}</div><div class="lbl">Negative</div></div>
     </div>
+    <div class="stat-bar">
+      <div class="stat-bar-pos" style="width:${posPct}%" title="${posPct}% Positive"></div>
+      <div class="stat-bar-neu" style="width:${neuPct}%" title="${neuPct}% Neutral"></div>
+      <div class="stat-bar-neg" style="width:${negPct}%" title="${negPct}% Negative"></div>
+    </div>
     <div class="stat-latest">Latest: ${s.latest_article ? new Date(s.latest_article).toLocaleDateString() : 'N/A'}</div>
   `;
   return div;
+}
+
+function navigateToEntity(entityId) {
+  document.getElementById('filterEntity').value = entityId;
+  document.getElementById('filterSentiment').value = 'all';
+  document.getElementById('filterSearch').value = '';
+  switchTab('news');
+  loadArticles();
 }
 
 // ── Calendar ─────────────────────────────────────────────
