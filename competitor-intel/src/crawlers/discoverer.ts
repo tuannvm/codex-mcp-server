@@ -1,11 +1,15 @@
 import { SIC_DESCRIPTIONS } from '../config/competitors.js';
 import { getAllEntitiesWithCustom, logCrawl } from '../services/blobStore.js';
 
-const EFTS_BASE = 'https://efts.sec.gov/LATEST/search-index/';
+const EFTS_BASE = 'https://efts.sec.gov/LATEST/search-index';
 const USER_AGENT = 'The Dobbs Group Competitor Intel alerts@dobbsgroup.com';
 
-// Target SIC codes for investment advisory / consulting firms
-const DISCOVERY_SIC_CODES = ['6282', '6726', '6211'];
+// Industry search queries mapped to SIC codes for discovery
+const DISCOVERY_QUERIES: Array<{ query: string; sic: string; label: string }> = [
+  { query: '"registered investment adviser" OR "investment advisory"', sic: '6282', label: 'Investment Advice' },
+  { query: '"wealth management" OR "asset management"', sic: '6726', label: 'Investment Offices' },
+  { query: '"broker dealer" OR "securities broker"', sic: '6211', label: 'Security Brokers & Dealers' },
+];
 
 interface EdgarHit {
   _id: string;
@@ -30,34 +34,24 @@ export interface DiscoverySuggestion {
   latest_filing_date: string;
 }
 
-async function searchBySic(sicCode: string, startDate: string, endDate: string): Promise<EdgarHit[]> {
-  // Use EDGAR full-text search for filings by SIC code
-  const url = `https://efts.sec.gov/LATEST/search-index?q=%22${sicCode}%22&dateRange=custom&startdt=${startDate}&enddt=${endDate}&forms=ADV,10-K,13F`;
-  const res = await fetch(url, {
+async function searchByIndustry(query: string, startDate: string, endDate: string): Promise<EdgarHit[]> {
+  const params = new URLSearchParams({
+    q: query,
+    dateRange: 'custom',
+    startdt: startDate,
+    enddt: endDate,
+  });
+  const res = await fetch(`${EFTS_BASE}?${params}`, {
     headers: { 'User-Agent': USER_AGENT },
   });
 
   if (!res.ok) {
-    // Fallback: try the company search endpoint
-    const fallbackUrl = `https://efts.sec.gov/LATEST/search-index?q=*&dateRange=custom&startdt=${startDate}&enddt=${endDate}`;
-    const fallbackRes = await fetch(fallbackUrl, {
-      headers: { 'User-Agent': USER_AGENT },
-    });
-    if (!fallbackRes.ok) return [];
-    const data = await fallbackRes.json();
-    return (data.hits?.hits || []).filter((h: EdgarHit) => {
-      const sics = h._source?.sics || [];
-      return sics.includes(sicCode);
-    });
+    console.error(`[DISCOVER] EDGAR API error: ${res.status}`);
+    return [];
   }
 
   const data = await res.json();
-  const hits: EdgarHit[] = data.hits?.hits || [];
-  // Filter to only hits with matching SIC
-  return hits.filter(h => {
-    const sics = h._source?.sics || [];
-    return sics.includes(sicCode);
-  });
+  return data.hits?.hits || [];
 }
 
 export async function discoverCompetitors(): Promise<DiscoverySuggestion[]> {
@@ -68,7 +62,7 @@ export async function discoverCompetitors(): Promise<DiscoverySuggestion[]> {
   const tracked = await getAllEntitiesWithCustom();
   const trackedNames = new Set(tracked.map(e => e.name.toLowerCase()));
 
-  // Collect all hits across SIC codes
+  // Collect all hits across industry queries
   const companyMap = new Map<string, {
     name: string;
     cik: string;
@@ -78,9 +72,9 @@ export async function discoverCompetitors(): Promise<DiscoverySuggestion[]> {
     latestDate: string;
   }>();
 
-  for (const sic of DISCOVERY_SIC_CODES) {
+  for (const dq of DISCOVERY_QUERIES) {
     try {
-      const hits = await searchBySic(sic, startDate, endDate);
+      const hits = await searchByIndustry(dq.query, startDate, endDate);
 
       for (const hit of hits) {
         const src = hit._source || {};
@@ -100,10 +94,12 @@ export async function discoverCompetitors(): Promise<DiscoverySuggestion[]> {
           if (filingType) entry.filingTypes.add(filingType);
           if (fileDate > entry.latestDate) entry.latestDate = fileDate;
         } else {
+          // Use SIC from EDGAR if available, otherwise use the query's mapped SIC
+          const sicFromEdgar = (src.sics || [])[0] || dq.sic;
           companyMap.set(key, {
             name: primaryName,
             cik,
-            sic_code: sic,
+            sic_code: sicFromEdgar,
             filingTypes: new Set(filingType ? [filingType] : []),
             filingCount: 1,
             latestDate: fileDate,
@@ -111,10 +107,10 @@ export async function discoverCompetitors(): Promise<DiscoverySuggestion[]> {
         }
       }
 
-      // Rate limit: wait between SIC code queries
+      // Rate limit: wait between queries
       await new Promise(r => setTimeout(r, 500));
     } catch (err) {
-      console.error(`[DISCOVER] Error searching SIC ${sic}:`, err);
+      console.error(`[DISCOVER] Error searching "${dq.label}":`, err);
     }
   }
 
