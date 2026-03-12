@@ -26,7 +26,7 @@ async function crawlSource(source: FinancialNewsSource): Promise<FinancialArticl
   const url = buildGoogleNewsUrl(source.domain, source.searchTerms);
   const feed = await parser.parseURL(url);
 
-  return (feed.items || []).map(item => {
+  return (feed.items || []).filter(item => item.link).map(item => {
     const title = cleanTitle(item.title || '');
     const snippet = (item.contentSnippet || item.content || '')
       .replace(/<[^>]*>/g, '').substring(0, 500).trim();
@@ -52,21 +52,21 @@ export async function crawlAllFinancialNews(): Promise<number> {
   console.log(`[${new Date().toISOString()}] Starting financial news crawl for ${FINANCIAL_NEWS_SOURCES.length} sources...`);
   let totalNew = 0;
 
+  const allArticles: FinancialArticle[] = [];
   const results = await Promise.allSettled(
     FINANCIAL_NEWS_SOURCES.map(async (source) => {
       try {
         const articles = await crawlSource(source);
-        const newCount = await addFinArticles(articles);
-        console.log(`  ${source.name}: ${newCount} new articles`);
+        console.log(`  ${source.name}: ${articles.length} fetched`);
         await logCrawl({
           crawl_type: 'financial-news',
           entity_id: source.domain,
-          articles_found: newCount,
+          articles_found: articles.length,
           status: 'success',
           error_message: null,
           finished_at: new Date().toISOString(),
         });
-        return newCount;
+        return articles;
       } catch (err: any) {
         console.error(`  ${source.name}: ERROR - ${err.message}`);
         await logCrawl({
@@ -77,14 +77,16 @@ export async function crawlAllFinancialNews(): Promise<number> {
           error_message: err.message,
           finished_at: new Date().toISOString(),
         });
-        return 0;
+        return [] as FinancialArticle[];
       }
     })
   );
 
-  totalNew = results
-    .filter((r): r is PromiseFulfilledResult<number> => r.status === 'fulfilled')
-    .reduce((sum, r) => sum + r.value, 0);
+  for (const r of results) {
+    if (r.status === 'fulfilled') allArticles.push(...r.value);
+  }
+
+  totalNew = allArticles.length > 0 ? await addFinArticles(allArticles) : 0;
 
   console.log(`[${new Date().toISOString()}] Financial news crawl complete. ${totalNew} new articles.`);
   return totalNew;
