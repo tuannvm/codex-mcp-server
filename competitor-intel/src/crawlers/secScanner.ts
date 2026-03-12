@@ -10,18 +10,14 @@ function makeId(): string {
 }
 
 async function searchEdgar(query: string, startDate: string, endDate: string): Promise<any[]> {
-  const res = await fetch(SEC_SEARCH_BASE, {
-    method: 'POST',
-    headers: {
-      'User-Agent': USER_AGENT,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      q: `"${query}"`,
-      dateRange: 'custom',
-      startdt: startDate,
-      enddt: endDate,
-    }),
+  const params = new URLSearchParams({
+    q: `"${query}"`,
+    dateRange: 'custom',
+    startdt: startDate,
+    enddt: endDate,
+  });
+  const res = await fetch(`${SEC_SEARCH_BASE}?${params}`, {
+    headers: { 'User-Agent': USER_AGENT },
   });
 
   if (!res.ok) throw new Error(`EDGAR API error: ${res.status}`);
