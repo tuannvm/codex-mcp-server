@@ -469,6 +469,349 @@ header {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ── Priority Section ─────────────────────── */
+.priority-section {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.03) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+.priority-header {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.priority-icon { font-size: 16px; }
+.priority-articles { display: flex; flex-direction: column; gap: 8px; }
+.priority-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  border-radius: 6px;
+  padding: 12px 16px;
+  transition: border-color 0.15s;
+}
+.priority-card:hover { border-color: var(--gold); }
+.priority-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  line-height: 1.4;
+}
+.priority-title:hover { color: var(--gold); }
+.priority-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+.priority-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+}
+.article-card.priority {
+  border-left: 3px solid var(--gold);
+}
+.article-badges {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ── Tab Title Bar ───────────────────────── */
+.tab-title-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.tab-title-bar h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.tab-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.tab-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tab-actions input {
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  min-width: 220px;
+}
+.tab-actions input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* ── AUM Chart ───────────────────────────── */
+.aum-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.aum-row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  transition: border-color 0.15s;
+}
+.aum-row:hover { border-color: var(--primary); }
+.aum-row.aum-self {
+  border: 2px solid var(--self);
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(139, 92, 246, 0.04) 100%);
+}
+.aum-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.aum-name {
+  font-size: 15px;
+  font-weight: 600;
+}
+.aum-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+}
+.aum-self .aum-value { color: var(--self); }
+.aum-bar-track {
+  height: 10px;
+  background: var(--surface2);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.aum-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), #6d8bfa);
+  border-radius: 5px;
+  transition: width 0.6s ease;
+}
+.aum-bar-fill.self-fill {
+  background: linear-gradient(90deg, var(--self), #a78bfa);
+}
+.aum-meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.aum-source { font-style: italic; }
+.aum-update-form {
+  margin-top: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+}
+.aum-update-form h3 {
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--text-muted);
+}
+.form-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.form-row select,
+.form-row input {
+  padding: 8px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+}
+.form-row select { min-width: 200px; }
+.form-row input[type="number"] { width: 140px; }
+.form-row input[type="text"] { min-width: 180px; }
+
+/* ── SEC Filings ─────────────────────────── */
+.sec-filings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sec-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+.sec-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.08);
+}
+.sec-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.sec-type-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.sec-date {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.sec-company {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.sec-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+.keyword-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.keyword-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.keyword-pill strong {
+  font-size: 11px;
+}
+.kw-danger { background: var(--negative-bg); color: var(--negative); }
+.kw-warning { background: rgba(245, 158, 11, 0.12); color: var(--gold); }
+.kw-info { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+.kw-default { background: var(--neutral-bg); color: var(--neutral); }
+.sec-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.sec-entities {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ── Predictions Grid ────────────────────── */
+.predictions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+.prediction-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+.prediction-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 2px 12px rgba(74, 108, 247, 0.08);
+}
+.pred-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.pred-category {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--surface2);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.pred-prob {
+  font-size: 22px;
+  font-weight: 800;
+}
+.pred-question {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+.pred-bar-track {
+  height: 8px;
+  background: var(--surface2);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.pred-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+.pred-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+.pred-meta a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+.pred-meta a:hover { text-decoration: underline; }
+
 /* ── Responsive ───────────────────────────── */
 @media (max-width: 768px) {
   .header-inner { flex-direction: column; align-items: flex-start; }
@@ -476,4 +819,12 @@ header {
   .filter-group select, .filter-group input { min-width: 100%; }
   .stats-grid { grid-template-columns: 1fr; }
   .stat-card.self-card { grid-column: 1; }
+  .predictions-grid { grid-template-columns: 1fr; }
+  .tab-title-bar { flex-direction: column; align-items: flex-start; }
+  .tab-actions { width: 100%; }
+  .tab-actions input { min-width: 0; flex: 1; }
+  .form-row { flex-direction: column; }
+  .form-row select, .form-row input { width: 100%; min-width: 0; }
+  .tabs { overflow-x: auto; flex-wrap: nowrap; }
+  .tab { white-space: nowrap; flex-shrink: 0; }
 }

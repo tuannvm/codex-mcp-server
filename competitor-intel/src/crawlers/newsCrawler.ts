@@ -1,5 +1,5 @@
 import RSSParser from 'rss-parser';
-import { ALL_ENTITIES, type Entity, type Article } from '../config/competitors.js';
+import { ALL_ENTITIES, PRIORITY_KEYWORDS, type Entity, type Article } from '../config/competitors.js';
 import { addArticles, logCrawl } from '../services/blobStore.js';
 import { analyzeSentiment } from '../services/sentiment.js';
 
@@ -27,6 +27,11 @@ function makeId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 }
 
+function isPriorityArticle(title: string, snippet: string): boolean {
+  const text = `${title} ${snippet}`.toLowerCase();
+  return PRIORITY_KEYWORDS.some(kw => text.includes(kw));
+}
+
 async function crawlEntityQueries(entity: Entity): Promise<Article[]> {
   // Fetch all queries for this entity in parallel
   const queryResults = await Promise.allSettled(
@@ -51,6 +56,7 @@ async function crawlEntityQueries(entity: Entity): Promise<Article[]> {
           sentiment_score: score,
           sentiment_label: label,
           alerted: false,
+          priority: isPriorityArticle(title, snippet),
           created_at: new Date().toISOString(),
           search_query: query,
         } as Article;

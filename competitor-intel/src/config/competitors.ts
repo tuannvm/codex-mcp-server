@@ -18,8 +18,44 @@ export interface Article {
   sentiment_score: number;
   sentiment_label: 'positive' | 'neutral' | 'negative';
   alerted: boolean;
+  priority: boolean;
   created_at: string;
   search_query: string;
+}
+
+export interface AumEntry {
+  entity_id: string;
+  entity_name: string;
+  aum_billions: number;
+  as_of_date: string;
+  source: string;
+  notes: string;
+  updated_at: string;
+}
+
+export interface SecFiling {
+  id: string;
+  entity_names: string[];
+  filing_type: string;
+  filed_date: string;
+  company_name: string;
+  file_number: string;
+  document_url: string;
+  description: string;
+  keyword_hits: Record<string, number>;
+  created_at: string;
+}
+
+export interface PredictionMarket {
+  id: string;
+  question: string;
+  probability: number;
+  volume: number;
+  end_date: string;
+  source: 'polymarket';
+  category: string;
+  url: string;
+  last_updated: string;
 }
 
 export interface GovEvent {
@@ -145,3 +181,38 @@ export const COMPETITORS: Entity[] = [
 ];
 
 export const ALL_ENTITIES: Entity[] = [SELF, ...COMPETITORS];
+
+export const PRIORITY_KEYWORDS: string[] = [
+  'interest rate', 'federal reserve', 'fed funds', 'rate cut',
+  'rate hike', 'rate increase', 'rate decrease', 'monetary policy',
+  'fomc', 'basis points', 'fed pivot', 'rate decision',
+  'fed meeting', 'rate hold', 'quantitative tightening',
+];
+
+export const SEC_KEYWORDS: string[] = [
+  'risk', 'enforcement', 'penalty', 'audit', 'violation',
+  'fiduciary', 'compliance', 'settlement', 'arbitration',
+  'investigation', 'sanction', 'deficiency', 'material weakness',
+  'conflict of interest', 'insider trading',
+];
+
+export const PREDICTION_KEYWORDS: string[] = [
+  'Federal Reserve', 'interest rate', 'SEC', 'oil price',
+  'inflation', 'GDP', 'unemployment', 'rate cut', 'rate hike',
+  'FOMC', 'recession', 'tariff',
+];
+
+export const SEED_AUM_DATA: AumEntry[] = [
+  { entity_id: 'nepc', entity_name: 'NEPC', aum_billions: 1600, as_of_date: '2024-12-31', source: 'ADV filing', notes: 'Regulatory assets under advisement', updated_at: '2025-01-01T00:00:00Z' },
+  { entity_id: 'mercer', entity_name: 'Mercer Investment Consulting', aum_billions: 370, as_of_date: '2024-12-31', source: 'Public disclosure', notes: '', updated_at: '2025-01-01T00:00:00Z' },
+  { entity_id: 'callan', entity_name: 'Callan Associates', aum_billions: 4000, as_of_date: '2024-12-31', source: 'Company website', notes: 'Advisory assets', updated_at: '2025-01-01T00:00:00Z' },
+  { entity_id: 'cambridge', entity_name: 'Cambridge Associates', aum_billions: 500, as_of_date: '2024-12-31', source: 'Public estimate', notes: '', updated_at: '2025-01-01T00:00:00Z' },
+  { entity_id: 'meketa', entity_name: 'Meketa Investment Group', aum_billions: 1800, as_of_date: '2024-12-31', source: 'ADV filing', notes: 'Regulatory AUA', updated_at: '2025-01-01T00:00:00Z' },
+  { entity_id: 'wilshire', entity_name: 'Wilshire Associates', aum_billions: 1200, as_of_date: '2024-12-31', source: 'ADV filing', notes: '', updated_at: '2025-01-01T00:00:00Z' },
+  { entity_id: 'marquette', entity_name: 'Marquette Associates', aum_billions: 350, as_of_date: '2024-12-31', source: 'Company website', notes: '', updated_at: '2025-01-01T00:00:00Z' },
+  { entity_id: 'captrust', entity_name: 'CAPTRUST', aum_billions: 850, as_of_date: '2024-12-31', source: 'Press release', notes: 'Total advisory assets', updated_at: '2025-01-01T00:00:00Z' },
+  { entity_id: 'jpmorgan', entity_name: 'J.P. Morgan Asset Management', aum_billions: 3400, as_of_date: '2024-12-31', source: 'Quarterly report', notes: 'Global AUM', updated_at: '2025-01-01T00:00:00Z' },
+  { entity_id: 'ubs', entity_name: 'UBS Institutional Consulting', aum_billions: 4000, as_of_date: '2024-12-31', source: 'Annual report', notes: 'Invested assets, global', updated_at: '2025-01-01T00:00:00Z' },
+  { entity_id: 'william-blair', entity_name: 'William Blair', aum_billions: 70, as_of_date: '2024-12-31', source: 'ADV filing', notes: '', updated_at: '2025-01-01T00:00:00Z' },
+  { entity_id: 'sageview', entity_name: 'SageView Advisory Group', aum_billions: 250, as_of_date: '2024-12-31', source: 'Company website', notes: '', updated_at: '2025-01-01T00:00:00Z' },
+];

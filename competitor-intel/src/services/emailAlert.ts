@@ -1,6 +1,17 @@
 import nodemailer from 'nodemailer';
-import { SELF, type Article } from '../config/competitors.js';
-import { getUnalertedNegativeArticles, markAlerted } from './blobStore.js';
+import { SELF, ALL_ENTITIES, type Article } from '../config/competitors.js';
+import { getUnalertedNegativeArticles, markAlerted, getArticlesForEntity } from './blobStore.js';
+
+async function markAlertedAll(articles: Article[]): Promise<void> {
+  const byEntity = new Map<string, string[]>();
+  for (const a of articles) {
+    if (!byEntity.has(a.entity_id)) byEntity.set(a.entity_id, []);
+    byEntity.get(a.entity_id)!.push(a.id);
+  }
+  for (const [entityId, ids] of byEntity) {
+    await markAlerted(entityId, ids);
+  }
+}
 
 function getSmtpConfig() {
   const host = Netlify.env.get('SMTP_HOST');
@@ -56,18 +67,30 @@ export async function checkAndAlertNegativeArticles(): Promise<{
   articles?: number;
   to?: string;
 }> {
-  const articles = await getUnalertedNegativeArticles(SELF.id);
+  // Gather negative articles about self + priority interest rate articles from all entities
+  const negativeArticles = await getUnalertedNegativeArticles(SELF.id);
 
-  if (articles.length === 0) {
-    return { sent: false, reason: 'No new negative articles' };
+  const priorityArticles: Article[] = [];
+  for (const entity of ALL_ENTITIES) {
+    const entityArticles = await getArticlesForEntity(entity.id);
+    const unalertedPriority = entityArticles.filter(a => a.priority === true && !a.alerted);
+    priorityArticles.push(...unalertedPriority);
   }
 
-  console.log(`[ALERT] Found ${articles.length} negative article(s) about ${SELF.name}`);
+  const articles = [...negativeArticles, ...priorityArticles.filter(
+    p => !negativeArticles.some(n => n.id === p.id)
+  )];
+
+  if (articles.length === 0) {
+    return { sent: false, reason: 'No new negative or priority articles' };
+  }
+
+  console.log(`[ALERT] Found ${negativeArticles.length} negative + ${priorityArticles.length} priority article(s)`);
 
   const smtp = getSmtpConfig();
   if (!smtp) {
     console.log('[ALERT] SMTP not configured - marking articles as alerted without sending');
-    await markAlerted(SELF.id, articles.map(a => a.id));
+    await markAlertedAll(articles);
     return { sent: false, reason: 'SMTP not configured', articles: articles.length };
   }
 
@@ -75,7 +98,7 @@ export async function checkAndAlertNegativeArticles(): Promise<{
   const alertFrom = Netlify.env.get('ALERT_FROM') || smtp.auth.user;
 
   if (!alertTo) {
-    await markAlerted(SELF.id, articles.map(a => a.id));
+    await markAlertedAll(articles);
     return { sent: false, reason: 'ALERT_TO not set', articles: articles.length };
   }
 
@@ -88,7 +111,7 @@ export async function checkAndAlertNegativeArticles(): Promise<{
       html: buildAlertHtml(articles),
     });
 
-    await markAlerted(SELF.id, articles.map(a => a.id));
+    await markAlertedAll(articles);
     console.log(`[ALERT] Email sent to ${alertTo} with ${articles.length} article(s)`);
     return { sent: true, to: alertTo, articles: articles.length };
   } catch (err: any) {
