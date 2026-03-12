@@ -503,12 +503,12 @@ function renderAumChart(entries) {
         <div class="aum-breakdown-section">
           <div class="aum-breakdown-title">Discretionary vs Non-Discretionary</div>
           <div class="aum-split-bar">
-            <div class="aum-split-disc" style="width:${discPct}%" title="Discretionary: $${formatBillions(disc)}B (${discPct}%)"></div>
-            <div class="aum-split-nondisc" style="width:${nonDiscPct}%" title="Non-Discretionary: $${formatBillions(nonDisc)}B (${nonDiscPct}%)"></div>
+            <div class="aum-split-disc" style="width:${discPct}%" title="Discretionary: $${formatBillions(disc)} (${discPct}%)"></div>
+            <div class="aum-split-nondisc" style="width:${nonDiscPct}%" title="Non-Discretionary: $${formatBillions(nonDisc)} (${nonDiscPct}%)"></div>
           </div>
           <div class="aum-split-legend">
-            <span class="aum-legend-disc">Discretionary: $${formatBillions(disc)}B (${discPct}%)</span>
-            <span class="aum-legend-nondisc">Non-Disc: $${formatBillions(nonDisc)}B (${nonDiscPct}%)</span>
+            <span class="aum-legend-disc">Discretionary: $${formatBillions(disc)} (${discPct}%)</span>
+            <span class="aum-legend-nondisc">Non-Disc: $${formatBillions(nonDisc)} (${nonDiscPct}%)</span>
           </div>
         </div>`;
 
@@ -528,7 +528,7 @@ function renderAumChart(entries) {
               <div class="aum-ac-bar-track">
                 <div class="aum-ac-bar-fill" style="width:${acPct}%;background:${color}"></div>
               </div>
-              <span class="aum-ac-value">$${formatBillions(ac.amount_billions)}B <small>(${totalPct}%)</small></span>
+              <span class="aum-ac-value">$${formatBillions(ac.amount_billions)} <small>(${totalPct}%)</small></span>
             </div>`;
         });
         breakdownHtml += `</div></div>`;
@@ -539,7 +539,7 @@ function renderAumChart(entries) {
     row.innerHTML = `
       <div class="aum-label">
         <span class="aum-name">${hasBreakdown ? '<span class="aum-expand-icon">&#9654;</span> ' : ''}${escHtml(e.entity_name)}</span>
-        <span class="aum-value">$${formatBillions(e.aum_billions)}B</span>
+        <span class="aum-value">$${formatBillions(e.aum_billions)}</span>
       </div>
       <div class="aum-bar-track">
         <div class="aum-bar-fill${isSelf ? ' self-fill' : ''}" style="width:${pct}%"></div>
@@ -566,7 +566,7 @@ function renderAumChart(entries) {
 
 function formatBillions(n) {
   if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'T';
-  if (n >= 1) return n.toFixed(1).replace(/\.0$/, '');
+  if (n >= 1) return n.toFixed(1).replace(/\.0$/, '') + 'B';
   return (n * 1000).toFixed(0) + 'M';
 }
 
