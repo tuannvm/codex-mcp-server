@@ -12,7 +12,7 @@ const UA = 'CompetitorIntelDashboard contact@example.com';
 
 // Entities with known CIKs for 13F filing lookup
 // Includes wirehouses, major asset managers, RIAs, pension consultants, and competitors
-const ENTITIES_WITH_CIK: Array<{ name: string; cik: string }> = [
+export const ENTITIES_WITH_CIK: Array<{ name: string; cik: string }> = [
   // ── Wirehouses & Large Banks ──
   { name: 'J.P. Morgan Asset Management', cik: '0000019617' },
   { name: 'Morgan Stanley', cik: '0000895421' },
