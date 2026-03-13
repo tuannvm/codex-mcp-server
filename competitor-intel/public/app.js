@@ -1467,6 +1467,8 @@ function isoDate(d) {
 
 // ── Market Indicators ────────────────────────────────────
 
+let _marketRefreshTimer = null;
+
 async function loadMarketIndicators() {
   try {
     const [mktRes, sentRes] = await Promise.all([
@@ -1476,6 +1478,36 @@ async function loadMarketIndicators() {
     const mkt = await mktRes.json();
     const sent = await sentRes.json();
     renderMarketIndicators(mkt, sent);
+
+    // Auto-crawl if data is stale (>1 hour old) or missing
+    const staleMs = 60 * 60 * 1000; // 1 hour
+    const isStale = !mkt.updated_at || (Date.now() - new Date(mkt.updated_at).getTime()) > staleMs;
+    if (isStale) {
+      console.log('[Market] Data is stale or missing — auto-refreshing...');
+      const ts = document.getElementById('marketTimestamp');
+      if (ts) ts.textContent = 'Auto-refreshing data...';
+      try {
+        await apiFetch('/api/market-indicators/crawl', { method: 'POST' });
+        // Reload after crawl
+        const freshRes = await apiFetch('/api/market-indicators');
+        const freshMkt = await freshRes.json();
+        renderMarketIndicators(freshMkt, sent);
+      } catch (crawlErr) {
+        console.warn('[Market] Auto-crawl failed:', crawlErr);
+      }
+    }
+
+    // Set up auto-refresh every 5 minutes while on this tab
+    clearInterval(_marketRefreshTimer);
+    _marketRefreshTimer = setInterval(async () => {
+      try {
+        const [r1, r2] = await Promise.all([
+          apiFetch('/api/market-indicators'),
+          apiFetch('/api/sentiment'),
+        ]);
+        renderMarketIndicators(await r1.json(), await r2.json());
+      } catch (e) { /* silent */ }
+    }, 5 * 60 * 1000);
   } catch (err) {
     console.error('Failed to load market indicators:', err);
   }
