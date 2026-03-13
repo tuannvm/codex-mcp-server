@@ -11,11 +11,74 @@ const EDGAR_ARCHIVES = 'https://www.sec.gov/Archives/edgar/data';
 const UA = 'CompetitorIntelDashboard contact@example.com';
 
 // Entities with known CIKs for 13F filing lookup
+// Includes wirehouses, major asset managers, RIAs, pension consultants, and competitors
 const ENTITIES_WITH_CIK: Array<{ name: string; cik: string }> = [
+  // ── Wirehouses & Large Banks ──
   { name: 'J.P. Morgan Asset Management', cik: '0000019617' },
+  { name: 'Morgan Stanley', cik: '0000895421' },
+  { name: 'Goldman Sachs', cik: '0000886982' },
+  { name: 'Bank of America / Merrill Lynch', cik: '0000070858' },
+  { name: 'Wells Fargo', cik: '0000072971' },
   { name: 'UBS', cik: '0001114446' },
+  { name: 'Citigroup', cik: '0000831001' },
+  { name: 'Deutsche Bank', cik: '0001159508' },
+  { name: 'Barclays', cik: '0000312070' },
+  { name: 'Credit Suisse (now UBS)', cik: '0001159510' },
+
+  // ── Major Asset Managers ──
+  { name: 'BlackRock', cik: '0001364742' },
+  { name: 'Vanguard Group', cik: '0000102909' },
+  { name: 'State Street Global Advisors', cik: '0000093751' },
+  { name: 'Fidelity (FMR LLC)', cik: '0000315066' },
+  { name: 'Capital Group', cik: '0000016988' },
+  { name: 'T. Rowe Price', cik: '0001018963' },
+  { name: 'Invesco', cik: '0000914208' },
+  { name: 'Franklin Templeton', cik: '0000038777' },
+  { name: 'PIMCO', cik: '0001040280' },
+  { name: 'Northern Trust', cik: '0000073124' },
+  { name: 'BNY Mellon', cik: '0000009626' },
+  { name: 'Charles Schwab', cik: '0000316709' },
+  { name: 'Nuveen (TIAA)', cik: '0000790652' },
+  { name: 'Dimensional Fund Advisors', cik: '0000354204' },
+  { name: 'Wellington Management', cik: '0001423053' },
+  { name: 'Geode Capital Management', cik: '0001214717' },
+
+  // ── Hedge Funds & Alternative Managers ──
+  { name: 'Bridgewater Associates', cik: '0001350694' },
+  { name: 'Citadel Advisors', cik: '0001423053' },
+  { name: 'Renaissance Technologies', cik: '0001037389' },
+  { name: 'Two Sigma Investments', cik: '0001179392' },
+  { name: 'D.E. Shaw', cik: '0001009207' },
+  { name: 'AQR Capital Management', cik: '0001167557' },
+  { name: 'Millennium Management', cik: '0001273087' },
+  { name: 'Point72 Asset Management', cik: '0001603466' },
+  { name: 'Baupost Group', cik: '0001061768' },
+  { name: 'Elliott Management', cik: '0001048445' },
+  { name: 'Pershing Square Capital', cik: '0001336528' },
+  { name: 'Third Point', cik: '0001040273' },
+  { name: 'Viking Global Investors', cik: '0001103804' },
+  { name: 'Tiger Global Management', cik: '0001167483' },
+
+  // ── Insurance & Institutional ──
+  { name: 'Berkshire Hathaway', cik: '0001067983' },
+  { name: 'MetLife Investment Management', cik: '0001099219' },
+  { name: 'Prudential Financial', cik: '0001137774' },
+  { name: 'Principal Financial Group', cik: '0001126328' },
+
+  // ── RIAs & Consultants (Competitors) ──
   { name: 'Cambridge Associates', cik: '0001048839' },
   { name: 'William Blair', cik: '0000837498' },
+  { name: 'CAPTRUST Financial Advisors', cik: '0001633949' },
+  { name: 'Baird (Robert W. Baird)', cik: '0000904495' },
+  { name: 'Raymond James Financial', cik: '0000720005' },
+  { name: 'LPL Financial', cik: '0001397187' },
+  { name: 'Stifel Financial', cik: '0000720005' },
+  { name: 'Ameriprise Financial', cik: '0000820027' },
+  { name: 'Edward Jones (parent: Jones Financial)', cik: '0000049196' },
+
+  // ── Endowment & Foundation Managers ──
+  { name: 'Yale University (Investments Office)', cik: '0001547734' },
+  { name: 'Harvard Management Company', cik: '0001082621' },
 ];
 
 async function search13FFilings(cik: string): Promise<Array<{ accession: string; filedDate: string }>> {
@@ -40,7 +103,7 @@ async function search13FFilings(cik: string): Promise<Array<{ accession: string;
     if (!recent) return [];
 
     const filings: Array<{ accession: string; filedDate: string }> = [];
-    for (let i = 0; i < recent.form.length && filings.length < 4; i++) {
+    for (let i = 0; i < recent.form.length && filings.length < 2; i++) {
       if (recent.form[i] === '13F-HR') {
         filings.push({
           accession: recent.accessionNumber[i].replace(/-/g, ''),
@@ -172,8 +235,8 @@ export async function crawl13FHoldings(): Promise<number> {
       totalFilings++;
       console.log(`[13F] Saved ${holdings.length} holdings for ${entity.name} (${period})`);
 
-      // Rate limit: EDGAR wants max 10 req/sec
-      await new Promise(r => setTimeout(r, 200));
+      // Rate limit: EDGAR wants max 10 req/sec — be conservative with many entities
+      await new Promise(r => setTimeout(r, 300));
     }
   }
 
