@@ -1668,18 +1668,37 @@ function renderHoldings(data) {
 }
 
 async function trigger13FCrawl() {
+  const btn = event.target;
+  btn.disabled = true;
+
   try {
-    const btn = event.target;
-    btn.disabled = true;
-    btn.textContent = 'Crawling...';
-    await apiFetch('/api/13f/crawl', { method: 'POST' });
+    // Get batch info first
+    const infoRes = await apiFetch('/api/13f/crawl', { method: 'POST' });
+    const info = await infoRes.json();
+    const totalBatches = info.totalBatches || 1;
+    let totalFilings = 0;
+
+    for (let batch = 0; batch < totalBatches; batch++) {
+      btn.textContent = `Crawling batch ${batch + 1}/${totalBatches}...`;
+      try {
+        const res = await apiFetch(`/api/13f/crawl?batch=${batch}`, { method: 'POST' });
+        const data = await res.json();
+        totalFilings += data.filings || 0;
+      } catch (batchErr) {
+        console.warn(`[13F] Batch ${batch} failed, continuing...`, batchErr);
+      }
+    }
+
+    btn.textContent = `Done! ${totalFilings} filings saved. Reloading...`;
     await loadHoldingsEntities();
     loadHoldings();
-    btn.disabled = false;
-    btn.textContent = 'Crawl 13F Filings';
   } catch (err) {
     console.error('13F crawl failed:', err);
+    btn.textContent = 'Crawl failed — try again';
   }
+
+  btn.disabled = false;
+  setTimeout(() => { btn.textContent = 'Crawl 13F Filings'; }, 3000);
 }
 
 // ── FINRA Alerts ─────────────────────────────────────────

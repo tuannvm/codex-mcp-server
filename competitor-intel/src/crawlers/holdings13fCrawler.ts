@@ -205,10 +205,11 @@ function extractPeriod(filedDate: string): string {
   return `${d.getFullYear()}-09-30`;
 }
 
-export async function crawl13FHoldings(): Promise<number> {
+/** Crawl a specific batch of entities (for use by the batched API endpoint) */
+export async function crawl13FBatch(entities: Array<{ name: string; cik: string }>): Promise<number> {
   let totalFilings = 0;
 
-  for (const entity of ENTITIES_WITH_CIK) {
+  for (const entity of entities) {
     console.log(`[13F] Searching filings for ${entity.name} (CIK: ${entity.cik})...`);
 
     const filings = await search13FFilings(entity.cik);
@@ -235,10 +236,15 @@ export async function crawl13FHoldings(): Promise<number> {
       totalFilings++;
       console.log(`[13F] Saved ${holdings.length} holdings for ${entity.name} (${period})`);
 
-      // Rate limit: EDGAR wants max 10 req/sec — be conservative with many entities
+      // Rate limit: EDGAR wants max 10 req/sec — be conservative
       await new Promise(r => setTimeout(r, 300));
     }
   }
 
   return totalFilings;
+}
+
+/** Crawl all entities (used by scheduled function) */
+export async function crawl13FHoldings(): Promise<number> {
+  return crawl13FBatch(ENTITIES_WITH_CIK);
 }
