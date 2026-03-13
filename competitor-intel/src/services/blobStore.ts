@@ -271,8 +271,13 @@ export async function upsertAumEntry(entry: AumEntry): Promise<void> {
 
 export async function seedAumIfEmpty(): Promise<boolean> {
   const existing = await getAumData();
-  if (existing.length > 0) return false;
-  await saveAumData(SEED_AUM_DATA);
+  // Re-seed if empty OR if seed data has more entries (new companies added)
+  if (existing.length >= SEED_AUM_DATA.length) return false;
+  // Merge: keep existing entries (may have user edits), add new seed entries
+  const existingIds = new Set(existing.map(e => e.entity_id));
+  const newEntries = SEED_AUM_DATA.filter(e => !existingIds.has(e.entity_id));
+  if (newEntries.length === 0) return false;
+  await saveAumData([...existing, ...newEntries]);
   return true;
 }
 
