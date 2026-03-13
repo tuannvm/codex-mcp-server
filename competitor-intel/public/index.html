@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Competitor Intelligence | The Dobbs Group</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <h1>Competitor Intelligence</h1>
+        <span class="subtitle">The Dobbs Group | Graystone Consulting</span>
+      </div>
+      <div class="header-actions">
+        <span id="lastCrawl" class="last-crawl"></span>
+        <button id="btnCrawlAll" class="btn btn-primary" onclick="triggerCrawl()">Crawl Now</button>
+        <button id="btnCrawlGov" class="btn btn-secondary" onclick="triggerGovCrawl()">Update Calendar</button>
+        <button class="btn btn-ghost" onclick="logout()" title="Sign out">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="brief" onclick="switchTab('brief')">Daily Brief</button>
+    <button class="tab" data-tab="news" onclick="switchTab('news')">Competitor News</button>
+    <button class="tab" data-tab="fin-news" onclick="switchTab('fin-news')">Financial News</button>
+    <button class="tab" data-tab="stats" onclick="switchTab('stats')">Competitor Intelligence</button>
+    <button class="tab" data-tab="market" onclick="switchTab('market')">Market Indicators</button>
+    <button class="tab" data-tab="aum" onclick="switchTab('aum')">AUM</button>
+    <button class="tab" data-tab="holdings" onclick="switchTab('holdings')">13F Holdings</button>
+    <button class="tab" data-tab="sec" onclick="switchTab('sec')">Regulatory</button>
+    <button class="tab" data-tab="adv" onclick="switchTab('adv')">Form ADV</button>
+    <button class="tab" data-tab="trends" onclick="switchTab('trends')">Trends</button>
+    <button class="tab" data-tab="personnel" onclick="switchTab('personnel')">Personnel</button>
+    <button class="tab" data-tab="mandates" onclick="switchTab('mandates')">Mandates</button>
+    <button class="tab" data-tab="jobs" onclick="switchTab('jobs')">Jobs</button>
+    <button class="tab" data-tab="predictions" onclick="switchTab('predictions')">Predictions</button>
+    <button class="tab" data-tab="calendar" onclick="switchTab('calendar')">Gov Calendar</button>
+    <button class="tab" data-tab="export" onclick="switchTab('export')">Export</button>
+    <button class="tab" data-tab="log" onclick="switchTab('log')">Crawl Log</button>
+  </nav>
+
+  <!-- ── Competitor News Tab ───────────────────── -->
+  <section id="tab-news" class="tab-content">
+    <div id="prioritySection" class="priority-section" style="display:none;">
+      <div class="priority-header">
+        <span class="priority-icon">&#9733;</span>
+        Priority: Interest Rate &amp; Monetary Policy
+      </div>
+      <div id="priorityArticles" class="priority-articles"></div>
+    </div>
+    <div class="filters">
+      <div class="filter-group">
+        <label>Company</label>
+        <select id="filterEntity" onchange="loadArticles()">
+          <option value="all">All Companies</option>
+          <option value="dobbs-group">The Dobbs Group (Self)</option>
+          <optgroup label="Tier 1 Competitors" id="tier1Options"></optgroup>
+          <optgroup label="Tier 2 Competitors" id="tier2Options"></optgroup>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Sentiment</label>
+        <select id="filterSentiment" onchange="loadArticles()">
+          <option value="all">All</option>
+          <option value="positive">Positive</option>
+          <option value="neutral">Neutral</option>
+          <option value="negative">Negative</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Search</label>
+        <input type="text" id="filterSearch" placeholder="Search articles..." oninput="debounceSearch()">
+      </div>
+    </div>
+    <div id="articlesList" class="articles-list">
+      <div class="loading">Loading articles...</div>
+    </div>
+    <div class="load-more">
+      <button id="btnLoadMore" class="btn btn-secondary" onclick="loadMore()" style="display:none;">Load More</button>
+    </div>
+  </section>
+
+  <!-- ── Daily Brief Tab ────────────────────────── -->
+  <section id="tab-brief" class="tab-content active">
+    <div class="tab-title-bar">
+      <h2>Daily Intelligence Brief</h2>
+      <div class="tab-actions">
+        <span id="briefTimestamp" class="brief-timestamp"></span>
+        <button id="btnRefreshBrief" class="btn btn-primary" onclick="refreshBrief()">Generate Brief</button>
+        <button id="btnEmailDigest" class="btn btn-secondary" onclick="sendEmailDigest()">Email Digest</button>
+      </div>
+    </div>
+    <div id="briefContent" class="brief-content">
+      <div class="empty">Click "Generate Brief" to create your daily intelligence summary.</div>
+    </div>
+  </section>
+
+  <!-- ── Financial News Tab ────────────────────── -->
+  <section id="tab-fin-news" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>Financial News</h2>
+      <div class="tab-actions">
+        <button id="btnCrawlFinNews" class="btn btn-primary" onclick="triggerFinNewsCrawl()">Crawl Financial News</button>
+      </div>
+    </div>
+    <div class="filters">
+      <div class="filter-group">
+        <label>Source</label>
+        <select id="filterFinSource" onchange="loadFinArticles()">
+          <option value="all">All Sources</option>
+          <option value="Bloomberg">Bloomberg</option>
+          <option value="Reuters">Reuters</option>
+          <option value="CNBC">CNBC</option>
+          <option value="Yahoo Finance">Yahoo Finance</option>
+          <option value="MarketWatch">MarketWatch</option>
+          <option value="Wall Street Journal">Wall Street Journal</option>
+          <option value="Financial Times">Financial Times</option>
+          <option value="Seeking Alpha">Seeking Alpha</option>
+          <option value="Barron's">Barron's</option>
+          <option value="Forbes">Forbes</option>
+          <option value="Investopedia">Investopedia</option>
+          <option value="Benzinga">Benzinga</option>
+          <option value="Business Insider">Business Insider</option>
+          <option value="Motley Fool">Motley Fool</option>
+          <option value="The Economist">The Economist</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Sentiment</label>
+        <select id="filterFinSentiment" onchange="loadFinArticles()">
+          <option value="all">All</option>
+          <option value="positive">Positive</option>
+          <option value="neutral">Neutral</option>
+          <option value="negative">Negative</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Search</label>
+        <input type="text" id="filterFinSearch" placeholder="Search financial news..." oninput="debounceFinSearch()">
+      </div>
+    </div>
+    <div id="finArticlesList" class="articles-list">
+      <div class="empty">Click "Crawl Financial News" to fetch articles from top financial sources.</div>
+    </div>
+    <div class="load-more">
+      <button id="btnFinLoadMore" class="btn btn-secondary" onclick="loadFinMore()" style="display:none;">Load More</button>
+    </div>
+  </section>
+
+  <!-- ── Competitor Intelligence Tab ──────────── -->
+  <section id="tab-stats" class="tab-content">
+    <div id="statsGrid" class="stats-grid">
+      <div class="loading">Loading stats...</div>
+    </div>
+
+    <!-- Competitor Discovery -->
+    <div class="discovery-section">
+      <div class="discovery-header">
+        <h3>Discover Competitors</h3>
+        <button id="btnDiscover" class="btn btn-secondary" onclick="discoverCompetitors()">Scan EDGAR</button>
+      </div>
+      <p class="discovery-desc">Search SEC EDGAR for investment advisory firms (SIC 6282, 6726, 6211) not yet tracked.</p>
+      <div id="discoverySuggestions" class="discovery-suggestions"></div>
+    </div>
+
+    <!-- Custom Entities Management -->
+    <div class="custom-entities-section">
+      <h3>Track a New Competitor</h3>
+      <div class="custom-entity-form">
+        <input type="text" id="customEntityName" placeholder="Company name (e.g., Merrill Lynch)">
+        <input type="text" id="customEntityWebsite" placeholder="Website (optional)">
+        <button class="btn btn-primary" onclick="addCustomEntity()">Add Competitor</button>
+      </div>
+      <div id="customEntitiesList" class="custom-entities-list"></div>
+    </div>
+  </section>
+
+  <!-- ── Government Calendar Tab ───────────────── -->
+  <section id="tab-calendar" class="tab-content">
+    <div class="filters">
+      <div class="filter-group">
+        <label>Category</label>
+        <select id="filterEventCat" onchange="loadEvents()">
+          <option value="all">All Categories</option>
+          <option value="FOMC / Monetary Policy">FOMC / Monetary Policy</option>
+          <option value="Federal Reserve">Federal Reserve</option>
+          <option value="SEC">SEC</option>
+          <option value="SEC Enforcement">SEC Enforcement</option>
+          <option value="Treasury">Treasury</option>
+          <option value="Dept of Labor">Dept of Labor</option>
+          <option value="Economic Data (BLS)">Economic Data (BLS)</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Date Range</label>
+        <input type="date" id="filterStartDate" onchange="loadEvents()">
+        <input type="date" id="filterEndDate" onchange="loadEvents()">
+      </div>
+    </div>
+    <div id="calendarView" class="calendar-view">
+      <div class="loading">Loading events...</div>
+    </div>
+  </section>
+
+  <!-- ── Market Indicators Tab ──────────────── -->
+  <section id="tab-market" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>Market Indicators</h2>
+      <div class="tab-actions">
+        <span id="marketTimestamp" class="brief-timestamp"></span>
+        <button class="btn btn-primary" onclick="triggerMarketCrawl()">Refresh Data</button>
+      </div>
+    </div>
+    <div id="fearGreedSection" class="fear-greed-section"></div>
+    <div id="fredCardsGrid" class="fred-cards-grid"></div>
+    <div id="sentimentSection" class="sentiment-section"></div>
+  </section>
+
+  <!-- ── AUM Tab ──────────────────────────────── -->
+  <section id="tab-aum" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>Assets Under Management</h2>
+      <div class="tab-actions">
+        <span class="tab-subtitle">Approximate AUA/AUM from public filings and disclosures (in billions)</span>
+        <button id="btnAumCrawl" class="btn btn-primary" onclick="triggerAumCrawl()">Crawl AUM (EDGAR)</button>
+      </div>
+    </div>
+    <div id="aumChart" class="aum-chart">
+      <div class="loading">Loading AUM data...</div>
+    </div>
+    <div class="aum-update-form">
+      <h3>Update AUM Entry</h3>
+      <div class="form-row">
+        <select id="aumEntity"></select>
+        <input type="number" id="aumValue" placeholder="Total AUM (billions)" step="0.1">
+        <input type="text" id="aumSource" placeholder="Source (e.g., ADV filing)">
+        <button class="btn btn-primary" onclick="updateAum()">Update</button>
+      </div>
+      <div class="form-row" style="margin-top:8px;">
+        <input type="number" id="aumDiscretionary" placeholder="Discretionary (billions)" step="0.1">
+        <input type="number" id="aumNonDiscretionary" placeholder="Non-Discretionary (billions)" step="0.1">
+      </div>
+      <div id="aumAssetClassInputs" class="aum-ac-inputs">
+        <div class="form-row" style="margin-top:8px;">
+          <select class="aum-ac-select">
+            <option value="">Asset Class...</option>
+            <option value="Equities">Equities</option>
+            <option value="Fixed Income">Fixed Income</option>
+            <option value="Alternatives">Alternatives</option>
+            <option value="Real Assets">Real Assets</option>
+            <option value="Cash & Other">Cash & Other</option>
+          </select>
+          <input type="number" class="aum-ac-amount" placeholder="Amount (billions)" step="0.1">
+          <button class="btn btn-secondary" onclick="addAumAssetClassRow()">+ Class</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 13F Holdings Tab ─────────────────────── -->
+  <section id="tab-holdings" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>13F Holdings Analysis</h2>
+      <div class="tab-actions">
+        <select id="holdingsEntity" onchange="loadHoldings()"></select>
+        <select id="holdingsPeriod" onchange="loadHoldings()"></select>
+        <button class="btn btn-primary" onclick="trigger13FCrawl()">Crawl 13F Filings</button>
+      </div>
+    </div>
+    <div id="holdingsSummary" class="holdings-summary"></div>
+    <div id="holdingsTable" class="holdings-table-wrap">
+      <div class="empty">Select an entity and click "Crawl 13F Filings" to load holdings data from SEC EDGAR.</div>
+    </div>
+  </section>
+
+  <!-- ── SEC Filings / Regulatory Tab ────────── -->
+  <section id="tab-sec" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>SEC Filings Scanner</h2>
+      <div class="tab-actions">
+        <input type="text" id="secQuery" placeholder="Custom search query (optional)">
+        <button id="btnSecScan" class="btn btn-primary" onclick="triggerSecScan()">Scan SEC EDGAR</button>
+        <button id="btnSecEnrich" class="btn btn-secondary" onclick="enrichSecKeywords()">Enrich Keywords</button>
+      </div>
+    </div>
+    <div class="filters">
+      <div class="filter-group">
+        <label>Entity</label>
+        <select id="filterSecEntity" onchange="loadSecFilings()">
+          <option value="">All</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Filing Type</label>
+        <select id="filterSecType" onchange="loadSecFilings()">
+          <option value="">All Types</option>
+          <option value="10-K">10-K</option>
+          <option value="10-Q">10-Q</option>
+          <option value="ADV">ADV</option>
+          <option value="8-K">8-K</option>
+          <option value="13F">13F</option>
+          <option value="S-1">S-1</option>
+        </select>
+      </div>
+    </div>
+    <div id="secFilingsList" class="sec-filings-list">
+      <div class="empty">Click "Scan SEC EDGAR" to search for filings.</div>
+    </div>
+
+    <!-- FINRA BrokerCheck Section -->
+    <div class="finra-section">
+      <div class="tab-title-bar" style="margin-top: 32px;">
+        <h2>FINRA BrokerCheck Alerts</h2>
+        <div class="tab-actions">
+          <button class="btn btn-secondary" onclick="triggerFinraCrawl()">Scan FINRA</button>
+        </div>
+      </div>
+      <div id="finraAlertsList" class="finra-alerts-list">
+        <div class="empty">Click "Scan FINRA" to check for disciplinary actions.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Predictions Tab ─────────────────────── -->
+  <section id="tab-predictions" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>Prediction Markets</h2>
+      <div class="tab-actions">
+        <button id="btnPredCrawl" class="btn btn-primary" onclick="triggerPredictionsCrawl()">Refresh Predictions</button>
+      </div>
+    </div>
+    <div class="filters">
+      <div class="filter-group">
+        <label>Category</label>
+        <select id="filterPredCat" onchange="loadPredictions()">
+          <option value="all">All Categories</option>
+          <option value="Federal Reserve">Federal Reserve</option>
+          <option value="Interest Rates">Interest Rates</option>
+          <option value="Inflation">Inflation</option>
+          <option value="Energy">Energy</option>
+          <option value="GDP/Growth">GDP/Growth</option>
+          <option value="Employment">Employment</option>
+          <option value="Regulation">Regulation</option>
+          <option value="Trade">Trade</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div id="predictionsList" class="predictions-grid">
+      <div class="empty">Click "Refresh Predictions" to load prediction markets.</div>
+    </div>
+  </section>
+
+  <!-- ── Form ADV Analysis Tab ────────────────── -->
+  <section id="tab-adv" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>Form ADV Deep Analysis</h2>
+      <div class="tab-actions">
+        <button id="btnAdvCrawl" class="btn btn-primary" onclick="triggerAdvCrawl()">Analyze ADV Filings</button>
+      </div>
+    </div>
+    <div id="advGrid" class="adv-grid">
+      <div class="empty">Click "Analyze ADV Filings" to parse Form ADV data from SEC EDGAR.</div>
+    </div>
+  </section>
+
+  <!-- ── Trends Tab ─────────────────────────────── -->
+  <section id="tab-trends" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>Historical Trends</h2>
+      <div class="tab-actions">
+        <select id="trendMetric" onchange="loadTrends()">
+          <option value="aum">AUM</option>
+          <option value="sentiment">Sentiment</option>
+          <option value="article_count">Article Count</option>
+        </select>
+        <select id="trendEntity" onchange="loadTrends()">
+          <option value="">All Entities</option>
+        </select>
+        <button id="btnTrendCapture" class="btn btn-primary" onclick="triggerTrendCapture()">Capture Snapshot</button>
+      </div>
+    </div>
+    <div id="trendsChart" class="trends-chart">
+      <div class="empty">Click "Capture Snapshot" to start building historical trend data.</div>
+    </div>
+    <div id="trendsTable" class="trends-table"></div>
+  </section>
+
+  <!-- ── Personnel Tab ──────────────────────────── -->
+  <section id="tab-personnel" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>Key Personnel Changes</h2>
+      <div class="tab-actions">
+        <button id="btnPersonnelCrawl" class="btn btn-primary" onclick="triggerPersonnelCrawl()">Scan for Changes</button>
+      </div>
+    </div>
+    <div class="filters">
+      <div class="filter-group">
+        <label>Type</label>
+        <select id="filterPersonnelType" onchange="loadPersonnel()">
+          <option value="all">All Types</option>
+          <option value="hire">Hires</option>
+          <option value="departure">Departures</option>
+          <option value="promotion">Promotions</option>
+          <option value="board_change">Board Changes</option>
+        </select>
+      </div>
+    </div>
+    <div id="personnelList" class="personnel-list">
+      <div class="empty">Click "Scan for Changes" to monitor leadership changes at competitors.</div>
+    </div>
+  </section>
+
+  <!-- ── Mandates Tab ───────────────────────────── -->
+  <section id="tab-mandates" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>RFP / Mandate Tracking</h2>
+      <div class="tab-actions">
+        <button class="btn btn-secondary" onclick="toggleMandateForm()">+ Add Event</button>
+      </div>
+    </div>
+    <div id="mandateForm" class="mandate-form" style="display:none;">
+      <div class="form-row">
+        <select id="mandateEntity">
+          <option value="">Select Entity...</option>
+        </select>
+        <input type="text" id="mandateClient" placeholder="Client name">
+        <select id="mandateClientType">
+          <option value="">Client type...</option>
+          <option value="pension">Pension</option>
+          <option value="endowment">Endowment</option>
+          <option value="foundation">Foundation</option>
+          <option value="sovereign">Sovereign Wealth</option>
+          <option value="corporate">Corporate</option>
+          <option value="insurance">Insurance</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <select id="mandateEventType">
+          <option value="win">Win</option>
+          <option value="loss">Loss</option>
+          <option value="rfp">RFP</option>
+          <option value="finalist">Finalist</option>
+        </select>
+        <input type="number" id="mandateSize" placeholder="Size ($B)" step="0.1">
+        <input type="text" id="mandateAssetClass" placeholder="Asset class">
+      </div>
+      <div class="form-row">
+        <input type="text" id="mandateSource" placeholder="Source URL">
+        <input type="text" id="mandateNotes" placeholder="Notes">
+        <button class="btn btn-primary" onclick="addMandateEvent()">Save</button>
+      </div>
+    </div>
+    <div id="mandatesList" class="mandates-list">
+      <div class="empty">Track RFP wins, losses, and mandate events across competitors.</div>
+    </div>
+  </section>
+
+  <!-- ── Jobs Tab ───────────────────────────────── -->
+  <section id="tab-jobs" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>Job Posting Analysis</h2>
+      <div class="tab-actions">
+        <button id="btnJobsCrawl" class="btn btn-primary" onclick="triggerJobsCrawl()">Scan Job Postings</button>
+      </div>
+    </div>
+    <div id="jobTrends" class="job-trends"></div>
+    <div id="jobPostings" class="job-postings">
+      <div class="empty">Click "Scan Job Postings" to analyze competitor hiring trends.</div>
+    </div>
+  </section>
+
+  <!-- ── Export Tab ──────────────────────────────── -->
+  <section id="tab-export" class="tab-content">
+    <div class="tab-title-bar">
+      <h2>Export Reports</h2>
+    </div>
+    <div class="export-grid">
+      <div class="export-card">
+        <h3>Daily Brief</h3>
+        <p>Latest intelligence brief with sentiment, stories, and risk alerts.</p>
+        <div class="export-actions">
+          <button class="btn btn-primary" onclick="downloadExport('brief', 'csv')">CSV</button>
+          <button class="btn btn-secondary" onclick="downloadExport('brief', 'json')">JSON</button>
+        </div>
+      </div>
+      <div class="export-card">
+        <h3>Competitor Articles</h3>
+        <p>All tracked news articles with sentiment analysis.</p>
+        <div class="export-actions">
+          <button class="btn btn-primary" onclick="downloadExport('articles', 'csv')">CSV</button>
+        </div>
+      </div>
+      <div class="export-card">
+        <h3>SEC Filings</h3>
+        <p>SEC EDGAR filings with risk scores and keyword analysis.</p>
+        <div class="export-actions">
+          <button class="btn btn-primary" onclick="downloadExport('sec', 'csv')">CSV</button>
+        </div>
+      </div>
+      <div class="export-card">
+        <h3>AUM Data</h3>
+        <p>Assets under management across all tracked entities.</p>
+        <div class="export-actions">
+          <button class="btn btn-primary" onclick="downloadExport('aum', 'csv')">CSV</button>
+        </div>
+      </div>
+      <div class="export-card">
+        <h3>Personnel Changes</h3>
+        <p>Key leadership and personnel changes at competitors.</p>
+        <div class="export-actions">
+          <button class="btn btn-primary" onclick="downloadExport('personnel', 'csv')">CSV</button>
+        </div>
+      </div>
+      <div class="export-card">
+        <h3>Mandate Events</h3>
+        <p>RFP wins, losses, and mandate tracking data.</p>
+        <div class="export-actions">
+          <button class="btn btn-primary" onclick="downloadExport('mandates', 'csv')">CSV</button>
+        </div>
+      </div>
+      <div class="export-card">
+        <h3>Form ADV Analysis</h3>
+        <p>Deep analysis of Form ADV filings with fees and client data.</p>
+        <div class="export-actions">
+          <button class="btn btn-primary" onclick="downloadExport('adv', 'csv')">CSV</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Crawl Log Tab ─────────────────────────── -->
+  <section id="tab-log" class="tab-content">
+    <div id="crawlLogList" class="crawl-log">
+      <div class="loading">Loading crawl log...</div>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "competitor-intel",
+  "version": "2.0.0",
+  "description": "Competitor Intelligence Dashboard for The Dobbs Group - Netlify Edition",
+  "type": "module",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'Static site - no build step needed'"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@netlify/blobs": "^8.1.0",
+    "@netlify/functions": "^3.0.0",
+    "nodemailer": "^6.9.0",
+    "resend": "^4.0.0",
+    "rss-parser": "^3.13.0"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.0",
+    "typescript": "^5.7.0"
+  }
+}
