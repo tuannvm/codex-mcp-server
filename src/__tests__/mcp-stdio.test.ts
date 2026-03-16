@@ -131,6 +131,7 @@ describe('MCP stdio integration', () => {
 
     const codexTool = listResponse.tools.find((tool) => tool.name === 'codex');
     expect(codexTool?.outputSchema?.properties).toEqual({
+      response: { type: 'string' },
       threadId: { type: 'string' },
     });
 
@@ -145,7 +146,7 @@ describe('MCP stdio integration', () => {
         text: string;
         _meta?: { threadId?: string };
       }>;
-      structuredContent?: { threadId?: string };
+      structuredContent?: { response?: string; threadId?: string };
       _meta?: { callbackUri?: string };
     };
 

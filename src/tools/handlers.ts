@@ -203,6 +203,7 @@ ${result.stdout || ''}`.trim();
       // - content[0]._meta: For Claude Code compatibility (avoids structuredContent bug)
       // - structuredContent: For other MCP clients that properly support it
       const metadata: Record<string, unknown> = {
+        response,
         ...(threadId && { threadId }),
         ...(selectedModel && { model: selectedModel }),
         ...(activeSessionId && { sessionId: activeSessionId }),
