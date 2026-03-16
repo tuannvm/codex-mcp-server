@@ -1,9 +1,13 @@
-import { mkdtempSync, rmSync, readFileSync, writeFileSync, mkdirSync, statSync } from 'fs';
+import { mkdtempSync, rmSync, readFileSync, writeFileSync, statSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { FileSessionStorage } from '../session/file-storage.js';
 
-function createTmpStorage(): { storage: FileSessionStorage; filePath: string; dir: string } {
+function createTmpStorage(): {
+  storage: FileSessionStorage;
+  filePath: string;
+  dir: string;
+} {
   const dir = mkdtempSync(join(tmpdir(), 'codex-mcp-test-'));
   const filePath = join(dir, 'sessions.json');
   const storage = new FileSessionStorage(filePath);
@@ -190,7 +194,11 @@ describe('FileSessionStorage', () => {
   });
 
   test('should reject unsupported future schema version', () => {
-    writeFileSync(filePath, JSON.stringify({ version: 999, sessions: [] }), 'utf-8');
+    writeFileSync(
+      filePath,
+      JSON.stringify({ version: 999, sessions: [] }),
+      'utf-8'
+    );
 
     // Should backup and start fresh (treated as corrupted)
     const futureStorage = new FileSessionStorage(filePath);
@@ -291,7 +299,9 @@ describe('FileSessionStorage', () => {
     // Verify file exists and has data
     const raw = readFileSync(filePath, 'utf-8');
     const data = JSON.parse(raw);
-    expect(data.sessions.find((s: { id: string }) => s.id === sessionId)).toBeDefined();
+    expect(
+      data.sessions.find((s: { id: string }) => s.id === sessionId)
+    ).toBeDefined();
   });
 
   // --- Schema ---
@@ -304,7 +314,13 @@ describe('FileSessionStorage', () => {
           id: 'test-session',
           createdAt: '2026-01-01T00:00:00.000Z',
           lastAccessedAt: '2026-01-01T00:00:00.000Z',
-          turns: [{ prompt: 'hi', response: 'hello', timestamp: '2026-01-01T00:00:00.000Z' }],
+          turns: [
+            {
+              prompt: 'hi',
+              response: 'hello',
+              timestamp: '2026-01-01T00:00:00.000Z',
+            },
+          ],
           codexConversationId: 'conv-v1',
         },
       ],

@@ -1,11 +1,21 @@
-import { readFileSync, mkdirSync, renameSync, unlinkSync, readdirSync } from 'fs';
-import { writeFile, rename, unlink } from 'fs/promises';
+import {
+  readFileSync,
+  mkdirSync,
+  renameSync,
+  unlinkSync,
+  readdirSync,
+} from 'fs';
+import { writeFile, rename } from 'fs/promises';
 import { dirname, join, basename } from 'path';
 import { homedir } from 'os';
 import { randomUUID } from 'crypto';
 import { TOOLS } from '../types.js';
 import { ValidationError } from '../errors.js';
-import type { SessionStorage, SessionData, ConversationTurn } from './storage.js';
+import type {
+  SessionStorage,
+  SessionData,
+  ConversationTurn,
+} from './storage.js';
 
 const SCHEMA_VERSION = 1;
 const DEFAULT_PATH = join(homedir(), '.codex-mcp', 'sessions.json');
@@ -29,6 +39,7 @@ export class FileSessionStorage implements SessionStorage {
   private readonly maxSessions = 100;
   private readonly sessionTtl = 24 * 60 * 60 * 1000; // 24 hours
   private readonly maxSessionIdLength = 256;
+  // eslint-disable-next-line no-control-regex
   private readonly sessionIdPattern = /^[^\x00-\x1f\x7f]+$/;
 
   private dirty = false;
@@ -194,7 +205,7 @@ export class FileSessionStorage implements SessionStorage {
         });
       }
     } catch (err: unknown) {
-      const error = err as NodeJS.ErrnoException;
+      const error = err as { code?: string };
       if (error.code === 'ENOENT') {
         // File doesn't exist yet — normal first run
         return;
@@ -208,7 +219,11 @@ export class FileSessionStorage implements SessionStorage {
   }
 
   private validateAndMigrate(data: StorageFile): void {
-    if (!data || typeof data.version !== 'number' || !Array.isArray(data.sessions)) {
+    if (
+      !data ||
+      typeof data.version !== 'number' ||
+      !Array.isArray(data.sessions)
+    ) {
       throw new Error('Invalid storage file format');
     }
     if (data.version > SCHEMA_VERSION) {
@@ -227,7 +242,9 @@ export class FileSessionStorage implements SessionStorage {
   }
 
   private serialize(): string {
-    const sessions: SerializedSession[] = Array.from(this.sessions.values()).map((s) => ({
+    const sessions: SerializedSession[] = Array.from(
+      this.sessions.values()
+    ).map((s) => ({
       id: s.id,
       createdAt: s.createdAt.toISOString(),
       lastAccessedAt: s.lastAccessedAt.toISOString(),
@@ -236,7 +253,9 @@ export class FileSessionStorage implements SessionStorage {
         response: t.response,
         timestamp: t.timestamp.toISOString(),
       })),
-      ...(s.codexConversationId && { codexConversationId: s.codexConversationId }),
+      ...(s.codexConversationId && {
+        codexConversationId: s.codexConversationId,
+      }),
     }));
 
     const file: StorageFile = { version: SCHEMA_VERSION, sessions };
