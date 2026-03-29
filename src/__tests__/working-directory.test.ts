@@ -114,5 +114,26 @@ describe('Working Directory (cwd) Support', () => {
         expect.objectContaining({ cwd: undefined })
       );
     });
+
+    test('should not apply cwd when resuming a session', async () => {
+      const sessionId = sessionStorage.createSession();
+      sessionStorage.setCodexConversationId(sessionId, 'conv-123');
+
+      await codexHandler.execute({
+        prompt: 'Continue task',
+        sessionId,
+        workingDirectory: '/path/to/worktree',
+      });
+
+      // Resume mode should omit cwd (Codex CLI limitation)
+      expect(mockedExecuteCommand).toHaveBeenCalledWith(
+        'codex',
+        expect.arrayContaining(['resume', 'conv-123', 'Continue task']),
+        expect.objectContaining({ cwd: undefined })
+      );
+      // -C should also be absent from resume args
+      const args = mockedExecuteCommand.mock.calls[0][1];
+      expect(args).not.toContain('-C');
+    });
   });
 });

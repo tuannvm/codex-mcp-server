@@ -161,7 +161,12 @@ export class CodexToolHandler {
 
       // Pass cwd to spawn so the child process starts in the correct directory.
       // This works around openai/codex#9084 where -C is ignored by some subcommands.
-      const cmdOptions = { cwd: resolvedWorkDir, envOverride };
+      // Skip cwd during resume: sandbox, fullAuto, and workingDirectory are not
+      // applied in resume mode (Codex CLI limitation).
+      const cmdOptions = {
+        cwd: useResume ? undefined : resolvedWorkDir,
+        envOverride,
+      };
 
       const result = useStreaming
         ? await executeCommandStreaming('codex', cmdArgs, {
