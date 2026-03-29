@@ -23,6 +23,7 @@ import {
 import { ToolExecutionError, ValidationError } from '../errors.js';
 import { executeCommand, executeCommandStreaming } from '../utils/command.js';
 import { ZodError } from 'zod';
+import path from 'node:path';
 
 // Default no-op context for handlers that don't need progress
 const defaultContext: ToolHandlerContext = {
@@ -54,6 +55,11 @@ export class CodexToolHandler {
         workingDirectory,
         callbackUri,
       }: CodexToolArgs = CodexToolSchema.parse(args);
+
+      // Resolve to absolute path once so -C and spawn cwd agree
+      const resolvedWorkDir = workingDirectory
+        ? path.resolve(workingDirectory)
+        : undefined;
 
       let activeSessionId = sessionId;
       let enhancedPrompt = prompt;
@@ -134,8 +140,8 @@ export class CodexToolHandler {
         }
 
         // Add working directory (v0.75.0+)
-        if (workingDirectory) {
-          cmdArgs.push('-C', workingDirectory);
+        if (resolvedWorkDir) {
+          cmdArgs.push('-C', resolvedWorkDir);
         }
 
         // Skip git repo check for v0.50.0+
@@ -155,7 +161,7 @@ export class CodexToolHandler {
 
       // Pass cwd to spawn so the child process starts in the correct directory.
       // This works around openai/codex#9084 where -C is ignored by some subcommands.
-      const cmdOptions = { cwd: workingDirectory, envOverride };
+      const cmdOptions = { cwd: resolvedWorkDir, envOverride };
 
       const result = useStreaming
         ? await executeCommandStreaming('codex', cmdArgs, {
@@ -390,11 +396,16 @@ export class ReviewToolHandler {
         );
       }
 
+      // Resolve to absolute path once so -C and spawn cwd agree
+      const resolvedWorkDir = workingDirectory
+        ? path.resolve(workingDirectory)
+        : undefined;
+
       // Build command arguments for codex review
       const cmdArgs: string[] = [];
 
-      if (workingDirectory) {
-        cmdArgs.push('-C', workingDirectory);
+      if (resolvedWorkDir) {
+        cmdArgs.push('-C', resolvedWorkDir);
       }
 
       // Add model parameter via config
@@ -434,7 +445,7 @@ export class ReviewToolHandler {
       const useStreaming = !!context.progressToken;
       // Pass cwd to spawn so the child process starts in the correct directory.
       // This works around openai/codex#9084 where -C is ignored by `review`.
-      const cmdOptions = { cwd: workingDirectory };
+      const cmdOptions = { cwd: resolvedWorkDir };
       const result = useStreaming
         ? await executeCommandStreaming('codex', cmdArgs, {
             ...cmdOptions,
