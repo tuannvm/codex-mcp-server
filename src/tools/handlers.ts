@@ -153,17 +153,19 @@ export class CodexToolHandler {
         ? { CODEX_MCP_CALLBACK_URI: effectiveCallbackUri }
         : undefined;
 
+      // Pass cwd to spawn so the child process starts in the correct directory.
+      // This works around openai/codex#9084 where -C is ignored by some subcommands.
+      const cmdOptions = { cwd: workingDirectory, envOverride };
+
       const result = useStreaming
         ? await executeCommandStreaming('codex', cmdArgs, {
+            ...cmdOptions,
             onProgress: (message) => {
               // Send progress notification for each chunk of output
               context.sendProgress(message);
             },
-            envOverride,
           })
-        : envOverride
-          ? await executeCommand('codex', cmdArgs, envOverride)
-          : await executeCommand('codex', cmdArgs);
+        : await executeCommand('codex', cmdArgs, cmdOptions);
 
       // Codex CLI may output to stderr, so check both
       const response = result.stdout || result.stderr || 'No output from Codex';
@@ -429,15 +431,18 @@ export class ReviewToolHandler {
       // Send initial progress notification
       await context.sendProgress('Starting code review...', 0);
 
-      // Use streaming execution if progress is enabled
       const useStreaming = !!context.progressToken;
+      // Pass cwd to spawn so the child process starts in the correct directory.
+      // This works around openai/codex#9084 where -C is ignored by `review`.
+      const cmdOptions = { cwd: workingDirectory };
       const result = useStreaming
         ? await executeCommandStreaming('codex', cmdArgs, {
+            ...cmdOptions,
             onProgress: (message) => {
               context.sendProgress(message);
             },
           })
-        : await executeCommand('codex', cmdArgs);
+        : await executeCommand('codex', cmdArgs, cmdOptions);
 
       // Codex CLI outputs to stderr, so check both stdout and stderr
       const response =

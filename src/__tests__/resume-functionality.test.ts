@@ -48,13 +48,17 @@ describe('Codex Resume Functionality', () => {
       sessionId,
     });
 
-    expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
-      'exec',
-      '--model',
-      'gpt-5.3-codex',
-      '--skip-git-repo-check',
-      'First message',
-    ]);
+    expect(mockedExecuteCommand).toHaveBeenCalledWith(
+      'codex',
+      [
+        'exec',
+        '--model',
+        'gpt-5.3-codex',
+        '--skip-git-repo-check',
+        'First message',
+      ],
+      expect.any(Object)
+    );
   });
 
   test('should extract and store session ID', async () => {
@@ -130,7 +134,11 @@ describe('Codex Resume Functionality', () => {
     expect(mockedExecuteCommand).toHaveBeenCalledWith(
       'codex',
       expect.any(Array),
-      { CODEX_MCP_CALLBACK_URI: 'http://localhost:1234/callback' }
+      expect.objectContaining({
+        envOverride: {
+          CODEX_MCP_CALLBACK_URI: 'http://localhost:1234/callback',
+        },
+      })
     );
   });
 
@@ -152,15 +160,19 @@ describe('Codex Resume Functionality', () => {
     });
 
     // Resume mode: all exec options must come BEFORE 'resume' subcommand
-    expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
-      'exec',
-      '--skip-git-repo-check',
-      '-c',
-      'model="gpt-5.3-codex"',
-      'resume',
-      'existing-codex-session-id',
-      'Continue the task',
-    ]);
+    expect(mockedExecuteCommand).toHaveBeenCalledWith(
+      'codex',
+      [
+        'exec',
+        '--skip-git-repo-check',
+        '-c',
+        'model="gpt-5.3-codex"',
+        'resume',
+        'existing-codex-session-id',
+        'Continue the task',
+      ],
+      expect.any(Object)
+    );
   });
 
   test('should reset session ID when session is reset', async () => {
@@ -179,13 +191,17 @@ describe('Codex Resume Functionality', () => {
     });
 
     // Should use exec (not resume) and get new session ID
-    expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
-      'exec',
-      '--model',
-      'gpt-5.3-codex',
-      '--skip-git-repo-check',
-      'Reset and start new',
-    ]);
+    expect(mockedExecuteCommand).toHaveBeenCalledWith(
+      'codex',
+      [
+        'exec',
+        '--model',
+        'gpt-5.3-codex',
+        '--skip-git-repo-check',
+        'Reset and start new',
+      ],
+      expect.any(Object)
+    );
     expect(sessionStorage.getCodexConversationId(sessionId)).toBe(
       'new-session-id'
     );
