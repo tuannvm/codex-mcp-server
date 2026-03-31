@@ -1,12 +1,6 @@
-import {
-  readFileSync,
-  mkdirSync,
-  renameSync,
-  unlinkSync,
-  readdirSync,
-} from 'fs';
+import { readFileSync, mkdirSync, renameSync, unlinkSync } from 'fs';
 import { writeFile, rename } from 'fs/promises';
-import { dirname, join, basename } from 'path';
+import { dirname, join } from 'path';
 import { homedir } from 'os';
 import { randomUUID } from 'crypto';
 import { TOOLS } from '../types.js';
@@ -42,6 +36,7 @@ export class FileSessionStorage implements SessionStorage {
   // eslint-disable-next-line no-control-regex
   private readonly sessionIdPattern = /^[^\x00-\x1f\x7f]+$/;
 
+  private readonly tmpSuffix = randomUUID();
   private dirty = false;
   private saving = false;
   private pendingSave: Promise<void> | null = null;
@@ -186,34 +181,58 @@ export class FileSessionStorage implements SessionStorage {
   // --- Private: Persistence ---
 
   private loadSync(): void {
+    // Phase 1: Read file — filesystem errors propagate
+    let raw: string;
     try {
-      const raw = readFileSync(this.filePath, 'utf-8');
+      raw = readFileSync(this.filePath, 'utf-8');
+    } catch (err: unknown) {
+      if ((err as { code?: string }).code === 'ENOENT') {
+        return; // File doesn't exist yet — normal first run
+      }
+      throw err; // EACCES, EISDIR, EMFILE, etc. — fatal
+    }
+
+    // Phase 2: Parse and hydrate — only data errors trigger backup
+    try {
       const data: StorageFile = JSON.parse(raw);
       this.validateAndMigrate(data);
 
       for (const s of data.sessions) {
-        this.sessions.set(s.id, {
-          id: s.id,
-          createdAt: new Date(s.createdAt),
-          lastAccessedAt: new Date(s.lastAccessedAt),
-          turns: s.turns.map((t) => ({
+        const createdAt = this.parseDate(s.createdAt);
+        const lastAccessedAt = this.parseDate(s.lastAccessedAt);
+
+        if (!createdAt || !lastAccessedAt) {
+          console.error(
+            `[FileSessionStorage] skipping session ${s.id}: invalid dates`
+          );
+          continue;
+        }
+
+        const turns: ConversationTurn[] = [];
+        for (const t of s.turns) {
+          const timestamp = this.parseDate(t.timestamp);
+          if (!timestamp) {
+            console.error(
+              `[FileSessionStorage] skipping turn in session ${s.id}: invalid timestamp`
+            );
+            continue;
+          }
+          turns.push({
             prompt: t.prompt,
             response: t.response,
-            timestamp: new Date(t.timestamp),
-          })),
+            timestamp,
+          });
+        }
+
+        this.sessions.set(s.id, {
+          id: s.id,
+          createdAt,
+          lastAccessedAt,
+          turns,
           codexConversationId: s.codexConversationId,
         });
       }
-    } catch (err: unknown) {
-      const error = err as { code?: string };
-      if (error.code === 'ENOENT') {
-        // File doesn't exist yet — normal first run
-        return;
-      }
-      if (error.code === 'EACCES') {
-        throw error; // Fatal: permission denied
-      }
-      // JSON corruption or other error — backup and start fresh
+    } catch {
       this.backupCorruptedFile();
     }
   }
@@ -239,6 +258,11 @@ export class FileSessionStorage implements SessionStorage {
     } catch {
       // Best-effort backup — if it fails, continue with empty state
     }
+  }
+
+  private parseDate(value: string): Date | null {
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? null : date;
   }
 
   private serialize(): string {
@@ -273,49 +297,39 @@ export class FileSessionStorage implements SessionStorage {
     // Debounce: schedule save on next tick
     this.dirty = false;
     this.saving = true;
-    this.pendingSave = this.executeSave().finally(() => {
-      this.saving = false;
-      this.pendingSave = null;
+    this.pendingSave = this.executeSave()
+      .catch((err) => {
+        console.error('[FileSessionStorage] save failed:', err);
+        // Do NOT set dirty = true here — would cause infinite retry loop
+        // via finally's queueSave(). Next mutation will naturally re-trigger.
+      })
+      .finally(() => {
+        this.saving = false;
+        this.pendingSave = null;
 
-      // If more changes came in during save, trigger another
-      if (this.dirty) {
-        this.queueSave();
-      }
-    });
+        // If more changes came in during save, trigger another
+        if (this.dirty) {
+          this.queueSave();
+        }
+      });
   }
 
   private async executeSave(): Promise<void> {
-    try {
-      const dir = dirname(this.filePath);
-      mkdirSync(dir, { recursive: true, mode: 0o700 });
+    const dir = dirname(this.filePath);
+    mkdirSync(dir, { recursive: true, mode: 0o700 });
 
-      const tmpPath = `${this.filePath}.${process.pid}.tmp`;
-      const content = this.serialize();
+    const tmpPath = `${this.filePath}.${this.tmpSuffix}.tmp`;
+    const content = this.serialize();
 
-      await writeFile(tmpPath, content, { mode: 0o600 });
-      await rename(tmpPath, this.filePath);
-    } catch {
-      // Non-fatal: data is still in memory
-    }
+    await writeFile(tmpPath, content, { mode: 0o600 });
+    await rename(tmpPath, this.filePath);
   }
 
   private cleanupTmpFiles(): void {
     try {
-      const dir = dirname(this.filePath);
-      const base = basename(this.filePath);
-      const files = readdirSync(dir);
-
-      for (const file of files) {
-        if (file.startsWith(base) && file.endsWith('.tmp')) {
-          try {
-            unlinkSync(join(dir, file));
-          } catch {
-            // Ignore cleanup failures
-          }
-        }
-      }
+      unlinkSync(`${this.filePath}.${this.tmpSuffix}.tmp`);
     } catch {
-      // Directory may not exist yet
+      // File doesn't exist — normal
     }
   }
 

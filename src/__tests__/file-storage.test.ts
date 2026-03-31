@@ -1,4 +1,12 @@
-import { mkdtempSync, rmSync, readFileSync, writeFileSync, statSync } from 'fs';
+import {
+  mkdtempSync,
+  rmSync,
+  readFileSync,
+  writeFileSync,
+  unlinkSync,
+  statSync,
+  chmodSync,
+} from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { FileSessionStorage } from '../session/file-storage.js';
@@ -180,6 +188,13 @@ describe('FileSessionStorage', () => {
     cleanup(freshDir);
   });
 
+  test('should throw on filesystem errors like EISDIR', () => {
+    // Use a directory path as filePath — readFileSync will throw EISDIR
+    const dirAsFile = mkdtempSync(join(tmpdir(), 'codex-mcp-eisdir-'));
+    expect(() => new FileSessionStorage(dirAsFile)).toThrow();
+    cleanup(dirAsFile);
+  });
+
   test('should backup corrupted JSON and start fresh', async () => {
     writeFileSync(filePath, 'NOT VALID JSON {{{', 'utf-8');
 
@@ -205,15 +220,114 @@ describe('FileSessionStorage', () => {
     expect(futureStorage.listSessions()).toEqual([]);
   });
 
-  test('should clean up leftover tmp files', async () => {
-    const tmpFile = `${filePath}.12345.tmp`;
-    writeFileSync(tmpFile, 'leftover', 'utf-8');
+  test('should skip sessions with invalid dates', () => {
+    const data = {
+      version: 1,
+      sessions: [
+        {
+          id: 'good-session',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          lastAccessedAt: '2026-01-01T00:00:00.000Z',
+          turns: [],
+        },
+        {
+          id: 'bad-session',
+          createdAt: 'not-a-date',
+          lastAccessedAt: '2026-01-01T00:00:00.000Z',
+          turns: [],
+        },
+      ],
+    };
+    writeFileSync(filePath, JSON.stringify(data), 'utf-8');
 
-    // Constructor should clean up tmp files
+    const spy = jest.spyOn(console, 'error').mockImplementation();
+    const loaded = new FileSessionStorage(filePath);
+
+    expect(loaded.getSession('good-session')).toBeDefined();
+    expect(loaded.getSession('bad-session')).toBeUndefined();
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('skipping session bad-session')
+    );
+    spy.mockRestore();
+  });
+
+  test('should skip turns with invalid timestamps', () => {
+    const data = {
+      version: 1,
+      sessions: [
+        {
+          id: 'session-with-bad-turn',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          lastAccessedAt: '2026-01-01T00:00:00.000Z',
+          turns: [
+            {
+              prompt: 'good',
+              response: 'ok',
+              timestamp: '2026-01-01T00:00:00.000Z',
+            },
+            { prompt: 'bad', response: 'fail', timestamp: 'invalid' },
+          ],
+        },
+      ],
+    };
+    writeFileSync(filePath, JSON.stringify(data), 'utf-8');
+
+    const spy = jest.spyOn(console, 'error').mockImplementation();
+    const loaded = new FileSessionStorage(filePath);
+
+    const session = loaded.getSession('session-with-bad-turn');
+    expect(session?.turns).toHaveLength(1);
+    expect(session?.turns[0].prompt).toBe('good');
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('skipping turn'));
+    spy.mockRestore();
+  });
+
+  test('should handle all-invalid-date sessions gracefully', () => {
+    const data = {
+      version: 1,
+      sessions: [
+        { id: 's1', createdAt: 'bad', lastAccessedAt: 'bad', turns: [] },
+        { id: 's2', createdAt: 'bad', lastAccessedAt: 'bad', turns: [] },
+      ],
+    };
+    writeFileSync(filePath, JSON.stringify(data), 'utf-8');
+
+    const spy = jest.spyOn(console, 'error').mockImplementation();
+    const loaded = new FileSessionStorage(filePath);
+    expect(loaded.listSessions()).toEqual([]);
+    spy.mockRestore();
+  });
+
+  test('should not delete other instances tmp files', async () => {
+    const otherTmpFile = `${filePath}.other-uuid.tmp`;
+    writeFileSync(otherTmpFile, 'leftover', 'utf-8');
+
+    // Constructor should NOT delete tmp files from other instances
     const cleanStorage = new FileSessionStorage(filePath);
-    expect(() => readFileSync(tmpFile)).toThrow();
+    expect(readFileSync(otherTmpFile, 'utf-8')).toBe('leftover');
 
     await cleanStorage.flush();
+    unlinkSync(otherTmpFile);
+  });
+
+  test('should use unique tmp suffix per instance', async () => {
+    const storage1 = new FileSessionStorage(filePath);
+    const storage2 = new FileSessionStorage(filePath);
+
+    storage1.createSession();
+    storage2.createSession();
+
+    await storage1.flush();
+    await storage2.flush();
+
+    // Final file should be valid JSON (no corruption from shared tmp path)
+    const raw = readFileSync(filePath, 'utf-8');
+    const data = JSON.parse(raw);
+    expect(data.version).toBe(1);
+    expect(Array.isArray(data.sessions)).toBe(true);
+
+    await storage1.flush();
+    await storage2.flush();
   });
 
   // --- TTL / LRU ---
@@ -354,5 +468,120 @@ describe('FileSessionStorage', () => {
   test('should reject invalid session IDs', () => {
     expect(() => storage.ensureSession('bad\x00id')).toThrow();
     expect(() => storage.ensureSession('')).toThrow();
+  });
+
+  // --- Error Propagation ---
+
+  test('flush should reject when write fails', async () => {
+    // Create storage with a valid path, then make the directory unwritable
+    const tempDir = mkdtempSync(join(tmpdir(), 'codex-mcp-badwrite-'));
+    const validPath = join(tempDir, 'sessions.json');
+    const badStorage = new FileSessionStorage(validPath);
+    badStorage.createSession();
+
+    // Make directory unwritable after construction
+    chmodSync(tempDir, 0o444);
+
+    await expect(badStorage.flush()).rejects.toThrow();
+
+    chmodSync(tempDir, 0o755);
+    cleanup(tempDir);
+  });
+
+  test('background save failure should log error and not auto-retry', async () => {
+    const spy = jest.spyOn(console, 'error').mockImplementation();
+
+    // Create storage with a valid path
+    const tempDir = mkdtempSync(join(tmpdir(), 'codex-mcp-bgfail-'));
+    const validPath = join(tempDir, 'sessions.json');
+    const badStorage = new FileSessionStorage(validPath);
+
+    // Make directory unwritable to cause save failure
+    chmodSync(tempDir, 0o444);
+
+    // Trigger a background save
+    badStorage.createSession();
+
+    // Wait for the background save to complete
+    await new Promise((r) => globalThis.setTimeout(r, 100));
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('[FileSessionStorage] save failed:'),
+      expect.anything()
+    );
+
+    // Count how many save-failed messages — should be exactly 1 (no auto-retry)
+    const saveFails = spy.mock.calls.filter(
+      (call) =>
+        typeof call[0] === 'string' &&
+        call[0].includes('[FileSessionStorage] save failed:')
+    );
+    expect(saveFails).toHaveLength(1);
+
+    spy.mockRestore();
+    chmodSync(tempDir, 0o755);
+    cleanup(tempDir);
+  });
+
+  test('flush should recover after background save failure when path is restored (F7)', async () => {
+    const spy = jest.spyOn(console, 'error').mockImplementation();
+    const tempDir = mkdtempSync(join(tmpdir(), 'codex-mcp-f7-'));
+    const targetPath = join(tempDir, 'sessions.json');
+    const recoverStorage = new FileSessionStorage(targetPath);
+
+    // Make dir unwritable to cause background save failure
+    chmodSync(tempDir, 0o444);
+    recoverStorage.createSession();
+    await new Promise((r) => globalThis.setTimeout(r, 100));
+
+    // Verify background save failed
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringContaining('[FileSessionStorage] save failed:'),
+      expect.anything()
+    );
+
+    // Restore permissions — no new mutation, just flush()
+    chmodSync(tempDir, 0o755);
+    await recoverStorage.flush();
+
+    // File should exist with valid data
+    const raw = readFileSync(targetPath, 'utf-8');
+    const data = JSON.parse(raw);
+    expect(data.version).toBe(1);
+    expect(data.sessions.length).toBeGreaterThan(0);
+
+    spy.mockRestore();
+    cleanup(tempDir);
+  });
+
+  test('two instances should use different tmp paths (F12/E5)', async () => {
+    const tempDir = mkdtempSync(join(tmpdir(), 'codex-mcp-uuid-'));
+    const targetPath = join(tempDir, 'sessions.json');
+
+    const storage1 = new FileSessionStorage(targetPath);
+    const storage2 = new FileSessionStorage(targetPath);
+
+    // Verify instances have different UUID suffixes (white-box: access private field)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const suffix1 = (storage1 as any).tmpSuffix as string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const suffix2 = (storage2 as any).tmpSuffix as string;
+    expect(suffix1).toBeDefined();
+    expect(suffix2).toBeDefined();
+    expect(suffix1).not.toBe(suffix2);
+
+    // Both instances can flush without interfering
+    storage1.createSession();
+    storage2.createSession();
+    await storage1.flush();
+    await storage2.flush();
+
+    // Final file should be valid JSON
+    const raw = readFileSync(targetPath, 'utf-8');
+    const data = JSON.parse(raw);
+    expect(data.version).toBe(1);
+    expect(Array.isArray(data.sessions)).toBe(true);
+
+    cleanup(tempDir);
   });
 });
