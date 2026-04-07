@@ -4,7 +4,9 @@ export class ToolExecutionError extends Error {
     message: string,
     public readonly cause?: unknown
   ) {
-    super(`Failed to execute tool "${toolName}": ${message}`);
+    const causeMsg = cause instanceof Error ? cause.message : '';
+    const detail = causeMsg && causeMsg !== message ? ` (${causeMsg})` : '';
+    super(`Failed to execute tool "${toolName}": ${message}${detail}`);
     this.name = 'ToolExecutionError';
   }
 }
@@ -15,7 +17,9 @@ export class CommandExecutionError extends Error {
     message: string,
     public readonly cause?: unknown
   ) {
-    super(`Command execution failed for "${command}": ${message}`);
+    const causeMsg = cause instanceof Error ? cause.message : '';
+    const detail = causeMsg && causeMsg !== message ? ` (${causeMsg})` : '';
+    super(`Command execution failed for "${command}": ${message}${detail}`);
     this.name = 'CommandExecutionError';
   }
 }
