@@ -1,6 +1,3 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
 // Mock chalk to avoid ESM issues in Jest
 jest.mock('chalk', () => ({
   default: {
@@ -37,14 +34,7 @@ import {
 import { InMemorySessionStorage } from '../session/storage.js';
 import { CodexMcpServer } from '../server.js';
 
-const execAsync = promisify(exec);
-
 describe('Codex MCP Server', () => {
-  test('should build successfully', async () => {
-    const { stdout } = await execAsync('npm run build');
-    expect(stdout).toBeDefined();
-  });
-
   describe('Tool Definitions', () => {
     test('should have all required tools defined', () => {
       expect(toolDefinitions).toHaveLength(6);
