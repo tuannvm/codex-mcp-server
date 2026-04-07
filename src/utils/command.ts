@@ -1,6 +1,7 @@
 type ProcessEnv = Record<string, string | undefined>;
-import { spawn } from 'child_process';
+import { type SpawnOptionsWithoutStdio, spawn } from 'child_process';
 import { Buffer } from 'node:buffer';
+import path from 'node:path';
 import chalk from 'chalk';
 import { CommandExecutionError } from '../errors.js';
 import { type CommandResult } from '../types.js';
@@ -26,15 +27,19 @@ const MAX_BUFFER_SIZE = 10 * 1024 * 1024;
 
 export type ProgressCallback = (message: string) => void;
 
-export interface StreamingCommandOptions {
-  onProgress?: ProgressCallback;
+export interface CommandOptions {
   envOverride?: ProcessEnv;
+  cwd?: string;
+}
+
+export interface StreamingCommandOptions extends CommandOptions {
+  onProgress?: ProgressCallback;
 }
 
 export async function executeCommand(
   file: string,
   args: string[] = [],
-  envOverride?: ProcessEnv
+  options?: CommandOptions
 ): Promise<CommandResult> {
   return new Promise((resolve, reject) => {
     // Escape args for Windows shell
@@ -42,11 +47,18 @@ export async function executeCommand(
 
     console.error(chalk.blue('Executing:'), file, escapedArgs.join(' '));
 
-    const child = spawn(file, escapedArgs, {
+    const spawnOptions: SpawnOptionsWithoutStdio = {
       shell: isWindows,
-      env: envOverride ? { ...process.env, ...envOverride } : process.env,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
+      env: options?.envOverride
+        ? { ...process.env, ...options.envOverride }
+        : process.env,
+    };
+
+    if (options?.cwd) {
+      spawnOptions.cwd = path.resolve(options.cwd);
+    }
+
+    const child = spawn(file, escapedArgs, spawnOptions);
 
     let stdout = '';
     let stderr = '';
@@ -139,13 +151,18 @@ export async function executeCommandStreaming(
       escapedArgs.join(' ')
     );
 
-    const child = spawn(file, escapedArgs, {
+    const spawnOptions: SpawnOptionsWithoutStdio = {
       shell: isWindows, // Use shell on Windows to inherit PATH correctly
       env: options.envOverride
         ? { ...process.env, ...options.envOverride }
         : process.env,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    };
+
+    if (options.cwd) {
+      spawnOptions.cwd = path.resolve(options.cwd);
+    }
+
+    const child = spawn(file, escapedArgs, spawnOptions);
 
     let stdout = '';
     let stderr = '';

@@ -45,13 +45,11 @@ describe('Model Selection and Reasoning Effort', () => {
       model: 'gpt-4',
     });
 
-    expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
-      'exec',
-      '--model',
-      'gpt-4',
-      '--skip-git-repo-check',
-      'Test prompt',
-    ]);
+    expect(mockedExecuteCommand).toHaveBeenCalledWith(
+      'codex',
+      ['exec', '--model', 'gpt-4', '--skip-git-repo-check', 'Test prompt'],
+      expect.any(Object)
+    );
   });
 
   test('should pass reasoning effort to codex CLI', async () => {
@@ -60,15 +58,19 @@ describe('Model Selection and Reasoning Effort', () => {
       reasoningEffort: 'high',
     });
 
-    expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
-      'exec',
-      '--model',
-      'gpt-5.3-codex',
-      '-c',
-      'model_reasoning_effort="high"',
-      '--skip-git-repo-check',
-      'Complex analysis',
-    ]);
+    expect(mockedExecuteCommand).toHaveBeenCalledWith(
+      'codex',
+      [
+        'exec',
+        '--model',
+        'gpt-5.3-codex',
+        '-c',
+        'model_reasoning_effort="high"',
+        '--skip-git-repo-check',
+        'Complex analysis',
+      ],
+      expect.any(Object)
+    );
   });
 
   test('should combine model and reasoning effort', async () => {
@@ -78,15 +80,19 @@ describe('Model Selection and Reasoning Effort', () => {
       reasoningEffort: 'medium',
     });
 
-    expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
-      'exec',
-      '--model',
-      'gpt-4',
-      '-c',
-      'model_reasoning_effort="medium"',
-      '--skip-git-repo-check',
-      'Advanced task',
-    ]);
+    expect(mockedExecuteCommand).toHaveBeenCalledWith(
+      'codex',
+      [
+        'exec',
+        '--model',
+        'gpt-4',
+        '-c',
+        'model_reasoning_effort="medium"',
+        '--skip-git-repo-check',
+        'Advanced task',
+      ],
+      expect.any(Object)
+    );
   });
 
   test('should include model info in response metadata', async () => {
@@ -130,15 +136,19 @@ describe('Model Selection and Reasoning Effort', () => {
       reasoningEffort: 'minimal',
     });
 
-    expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
-      'exec',
-      '--model',
-      'gpt-5.3-codex',
-      '-c',
-      'model_reasoning_effort="minimal"',
-      '--skip-git-repo-check',
-      'Quick task',
-    ]);
+    expect(mockedExecuteCommand).toHaveBeenCalledWith(
+      'codex',
+      [
+        'exec',
+        '--model',
+        'gpt-5.3-codex',
+        '-c',
+        'model_reasoning_effort="minimal"',
+        '--skip-git-repo-check',
+        'Quick task',
+      ],
+      expect.any(Object)
+    );
   });
 
   test('should pass none reasoning effort to CLI', async () => {
@@ -147,15 +157,19 @@ describe('Model Selection and Reasoning Effort', () => {
       reasoningEffort: 'none',
     });
 
-    expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
-      'exec',
-      '--model',
-      'gpt-5.3-codex',
-      '-c',
-      'model_reasoning_effort="none"',
-      '--skip-git-repo-check',
-      'Simple task',
-    ]);
+    expect(mockedExecuteCommand).toHaveBeenCalledWith(
+      'codex',
+      [
+        'exec',
+        '--model',
+        'gpt-5.3-codex',
+        '-c',
+        'model_reasoning_effort="none"',
+        '--skip-git-repo-check',
+        'Simple task',
+      ],
+      expect.any(Object)
+    );
   });
 
   test('should pass xhigh reasoning effort to CLI', async () => {
@@ -164,14 +178,18 @@ describe('Model Selection and Reasoning Effort', () => {
       reasoningEffort: 'xhigh',
     });
 
-    expect(mockedExecuteCommand).toHaveBeenCalledWith('codex', [
-      'exec',
-      '--model',
-      'gpt-5.3-codex',
-      '-c',
-      'model_reasoning_effort="xhigh"',
-      '--skip-git-repo-check',
-      'Complex task',
-    ]);
+    expect(mockedExecuteCommand).toHaveBeenCalledWith(
+      'codex',
+      [
+        'exec',
+        '--model',
+        'gpt-5.3-codex',
+        '-c',
+        'model_reasoning_effort="xhigh"',
+        '--skip-git-repo-check',
+        'Complex task',
+      ],
+      expect.any(Object)
+    );
   });
 });
