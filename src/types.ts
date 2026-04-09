@@ -13,12 +13,15 @@ export const TOOLS = {
 export type ToolName = typeof TOOLS[keyof typeof TOOLS];
 
 // Codex model constants
-export const DEFAULT_CODEX_MODEL = 'gpt-5.3-codex' as const;
+export const DEFAULT_CODEX_MODEL = 'gpt-5.4' as const;
 export const CODEX_DEFAULT_MODEL_ENV_VAR = 'CODEX_DEFAULT_MODEL' as const;
 
 // Available model options (for documentation/reference)
 export const AVAILABLE_CODEX_MODELS = [
+  'gpt-5.4',
+  'gpt-5.4-mini',
   'gpt-5.3-codex',
+  'gpt-5.3-codex-spark',
   'gpt-5.2-codex',
   'gpt-5.1-codex',
   'gpt-5.1-codex-max',
