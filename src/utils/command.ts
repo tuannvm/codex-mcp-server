@@ -59,6 +59,7 @@ export async function executeCommand(
     }
 
     const child = spawn(file, escapedArgs, spawnOptions);
+    child.stdin.end();
 
     let stdout = '';
     let stderr = '';
@@ -163,6 +164,7 @@ export async function executeCommandStreaming(
     }
 
     const child = spawn(file, escapedArgs, spawnOptions);
+    child.stdin.end(); // Close stdin immediately to prevent "Reading additional input from stdin..." hang
 
     let stdout = '';
     let stderr = '';
