@@ -60,6 +60,10 @@ export async function executeCommand(
 
     const child = spawn(file, escapedArgs, spawnOptions);
 
+    // Close stdin to prevent processes like codex exec from waiting forever for input
+    // When spawned with stdio pipe, codex waits for stdin EOF that never arrives
+    child.stdin?.end();
+
     let stdout = '';
     let stderr = '';
     let stdoutTruncated = false;
@@ -163,6 +167,10 @@ export async function executeCommandStreaming(
     }
 
     const child = spawn(file, escapedArgs, spawnOptions);
+
+    // Close stdin to prevent processes like codex exec from waiting forever for input
+    // When spawned with stdio pipe, codex waits for stdin EOF that never arrives
+    child.stdin?.end();
 
     let stdout = '';
     let stderr = '';
