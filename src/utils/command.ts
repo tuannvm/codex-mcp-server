@@ -62,7 +62,7 @@ export async function executeCommand(
 
     // Close stdin to prevent processes like codex exec from waiting forever for input
     // When spawned with stdio pipe, codex waits for stdin EOF that never arrives
-    child.stdin.end();
+    child.stdin?.end();
 
     let stdout = '';
     let stderr = '';
@@ -170,7 +170,7 @@ export async function executeCommandStreaming(
 
     // Close stdin to prevent processes like codex exec from waiting forever for input
     // When spawned with stdio pipe, codex waits for stdin EOF that never arrives
-    child.stdin.end();
+    child.stdin?.end();
 
     let stdout = '';
     let stderr = '';
