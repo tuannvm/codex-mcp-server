@@ -123,7 +123,7 @@ jobs:
           EOF
           )
 
-          OUTPUT=$(cursor-agent --force --model "$MODEL" --output-format=text --print "$PROMPT" 2>&1)
+          OUTPUT=$(cursor-agent --force --model "$MODEL" --output-format=text --print "$PROMPT" 2>&1) || true
           echo "$OUTPUT"
 
           if echo "$OUTPUT" | grep -q "CRITICAL_ISSUES_FOUND=true"; then
