@@ -37,6 +37,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22.14.0'
+          registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
 
       - name: Install dependencies
@@ -104,10 +105,13 @@ jobs:
           draft: false
           prerelease: false
 
+      - name: Upgrade npm for OIDC Trusted Publishing
+        if: steps.tag.outputs.new_tag != ''
+        run: npm install -g npm@11
+
       - name: Publish to npm
         if: steps.tag.outputs.new_tag != ''
         run: npm publish --access public --provenance
-        # Auth via OIDC Trusted Publishing — no NPM_TOKEN secret needed
 
       - name: Upload build artifacts
         if: steps.tag.outputs.new_tag != ''
