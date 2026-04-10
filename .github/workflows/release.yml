@@ -105,6 +105,24 @@ jobs:
           draft: false
           prerelease: false
 
+      - name: Debug OIDC token exchange
+        if: steps.tag.outputs.new_tag != ''
+        run: |
+          echo "=== .npmrc contents ==="
+          cat ~/.npmrc 2>/dev/null || echo "(no user .npmrc)"
+          echo "---"
+          cat .npmrc 2>/dev/null || echo "(no project .npmrc)"
+          echo ""
+          echo "=== OIDC exchange test ==="
+          ID_TOKEN=$(curl -fsS \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=npm:registry.npmjs.org" \
+            | jq -er .value)
+          PKG=$(jq -r .name package.json)
+          echo "Package: $PKG"
+          curl -v "https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/$PKG" \
+            -H "Authorization: Bearer $ID_TOKEN" -d "" 2>&1 || true
+
       - name: Publish to npm
         if: steps.tag.outputs.new_tag != ''
         run: npm publish --access public --provenance
