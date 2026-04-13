@@ -58,6 +58,7 @@ export const toolDefinitions: ToolDefinition[] = [
     outputSchema: {
       type: 'object',
       properties: {
+        response: { type: 'string' },
         threadId: { type: 'string' },
       },
     },
