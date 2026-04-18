@@ -59,6 +59,7 @@ export async function executeCommand(
     }
 
     const child = spawn(file, escapedArgs, spawnOptions);
+    child.stdin.end();
 
     // Close stdin to prevent processes like codex exec from waiting forever for input
     // When spawned with stdio pipe, codex waits for stdin EOF that never arrives
@@ -167,6 +168,7 @@ export async function executeCommandStreaming(
     }
 
     const child = spawn(file, escapedArgs, spawnOptions);
+    child.stdin.end(); // Close stdin immediately to prevent "Reading additional input from stdin..." hang
 
     // Close stdin to prevent processes like codex exec from waiting forever for input
     // When spawned with stdio pipe, codex waits for stdin EOF that never arrives
