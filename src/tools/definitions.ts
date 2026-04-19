@@ -1,5 +1,5 @@
 import { TOOLS, getModelDescription, type ToolDefinition } from '../types.js';
-import { computerUseToolDefinitions } from '../computer-use/definitions.js';
+import { browserUseToolDefinitions } from '../browser-use/definitions.js';
 
 export const toolDefinitions: ToolDefinition[] = [
   {
@@ -206,5 +206,5 @@ export const toolDefinitions: ToolDefinition[] = [
       openWorldHint: true,
     },
   },
-  ...computerUseToolDefinitions,
+  ...browserUseToolDefinitions,
 ];

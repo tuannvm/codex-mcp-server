@@ -24,7 +24,8 @@ import { ToolExecutionError, ValidationError } from '../errors.js';
 import { executeCommand, executeCommandStreaming } from '../utils/command.js';
 import { ZodError } from 'zod';
 import path from 'node:path';
-import { ComputerUseToolHandler } from '../computer-use/handlers.js';
+import { browserUseHandler } from '../browser-use/handlers.js';
+import { bridge } from '../browser-use/bridge.js';
 
 // Default no-op context for handlers that don't need progress
 const defaultContext: ToolHandlerContext = {
@@ -578,13 +579,10 @@ export class WebSearchToolHandler {
 
 // Tool handler registry
 const sessionStorage = new InMemorySessionStorage();
-const computerUseHandler = new ComputerUseToolHandler();
 
-// Wrap ComputerUseToolHandler to match the execute(args, context) signature
-// expected by server.ts. Each wrapper injects the tool name.
-const cuHandler = (toolName: string) => ({
-  execute: (args: unknown, context: ToolHandlerContext) =>
-    computerUseHandler.execute(toolName, args, context),
+const browserHandler = (toolName: string) => ({
+  execute: (args: unknown, context?: ToolHandlerContext) =>
+    browserUseHandler.execute(toolName, args, context),
 });
 
 export const toolHandlers = {
@@ -594,14 +592,19 @@ export const toolHandlers = {
   [TOOLS.HELP]: new HelpToolHandler(),
   [TOOLS.LIST_SESSIONS]: new ListSessionsToolHandler(sessionStorage),
   [TOOLS.WEBSEARCH]: new WebSearchToolHandler(),
-  [TOOLS.CU_LIST_APPS]: cuHandler(TOOLS.CU_LIST_APPS),
-  [TOOLS.CU_GET_APP_STATE]: cuHandler(TOOLS.CU_GET_APP_STATE),
-  [TOOLS.CU_CLICK]: cuHandler(TOOLS.CU_CLICK),
-  [TOOLS.CU_PERFORM_SECONDARY_ACTION]: cuHandler(TOOLS.CU_PERFORM_SECONDARY_ACTION),
-  [TOOLS.CU_SET_VALUE]: cuHandler(TOOLS.CU_SET_VALUE),
-  [TOOLS.CU_SCROLL]: cuHandler(TOOLS.CU_SCROLL),
-  [TOOLS.CU_DRAG]: cuHandler(TOOLS.CU_DRAG),
-  [TOOLS.CU_PRESS_KEY]: cuHandler(TOOLS.CU_PRESS_KEY),
-  [TOOLS.CU_TYPE_TEXT]: cuHandler(TOOLS.CU_TYPE_TEXT),
-  [TOOLS.CU_STATUS]: cuHandler(TOOLS.CU_STATUS),
+  [TOOLS.BROWSER_LAUNCH]: browserHandler(TOOLS.BROWSER_LAUNCH),
+  [TOOLS.BROWSER_SCREENSHOT]: browserHandler(TOOLS.BROWSER_SCREENSHOT),
+  [TOOLS.BROWSER_CLICK]: browserHandler(TOOLS.BROWSER_CLICK),
+  [TOOLS.BROWSER_TYPE]: browserHandler(TOOLS.BROWSER_TYPE),
+  [TOOLS.BROWSER_SCROLL]: browserHandler(TOOLS.BROWSER_SCROLL),
+  [TOOLS.BROWSER_DRAG]: browserHandler(TOOLS.BROWSER_DRAG),
+  [TOOLS.BROWSER_KEY]: browserHandler(TOOLS.BROWSER_KEY),
+  [TOOLS.BROWSER_NAVIGATE]: browserHandler(TOOLS.BROWSER_NAVIGATE),
+  [TOOLS.BROWSER_CLOSE]: browserHandler(TOOLS.BROWSER_CLOSE),
+  [TOOLS.BROWSER_STATUS]: browserHandler(TOOLS.BROWSER_STATUS),
 };
+
+// Export shutdown function for browser cleanup
+export async function shutdownBrowserSessions(): Promise<void> {
+  await bridge.shutdown();
+}

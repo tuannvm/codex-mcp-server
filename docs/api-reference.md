@@ -52,16 +52,16 @@ All tools include annotations that provide hints to MCP clients about tool behav
 | `ping` | Ping Server | `true` | `false` | `true` | `false` |
 | `help` | Get Help | `true` | `false` | `true` | `false` |
 | `listSessions` | List Sessions | `true` | `false` | `true` | `false` |
-| `cu_list_apps` | List Apps | `true` | `false` | `true` | `false` |
-| `cu_get_app_state` | Get App State | `true` | `false` | `true` | `false` |
-| `cu_status` | Computer Use Status | `true` | `false` | `true` | `false` |
-| `cu_click` | Click | — | `false` | — | `false` |
-| `cu_type_text` | Type Text | — | `false` | — | `false` |
-| `cu_press_key` | Press Key | — | `false` | — | `false` |
-| `cu_scroll` | Scroll | — | `false` | — | `false` |
-| `cu_drag` | Drag | — | `false` | — | `false` |
-| `cu_set_value` | Set Value | — | `false` | — | `false` |
-| `cu_perform_secondary_action` | Secondary Action | — | `false` | — | `false` |
+| `browser_launch` | Launch Browser | `false` | `false` | `false` | `true` |
+| `browser_screenshot` | Browser Screenshot | `true` | `false` | `true` | `false` |
+| `browser_click` | Browser Click | `false` | `false` | `false` | `false` |
+| `browser_type` | Browser Type | `false` | `false` | `false` | `false` |
+| `browser_scroll` | Browser Scroll | `false` | `false` | `false` | `false` |
+| `browser_drag` | Browser Drag | `false` | `false` | `false` | `false` |
+| `browser_key` | Browser Key Press | `false` | `false` | `false` | `false` |
+| `browser_navigate` | Browser Navigate | `false` | `false` | `false` | `true` |
+| `browser_close` | Close Browser | `false` | `true` | `true` | `false` |
+| `browser_status` | Browser Status | `true` | `false` | `true` | `false` |
 
 ### Progress Notifications
 For long-running operations, the server sends `notifications/progress` messages when the client includes a `progressToken` in the request `_meta`.
@@ -451,91 +451,96 @@ Optional:
 - **CODEX_HOME**: Custom directory for Codex CLI configuration
 - **Session Limits**: Configurable in server implementation (default: 100)
 - **TTL Settings**: Configurable session expiration (default: 24 hours)
-- **CODEX_COMPUTER_USE_BINARY**: Path to computer-use binary (macOS only)
-- **NODE_DEBUG**: Include `computer-use` to forward binary stderr
 
-## Computer Use Tools
+## Browser Use Tools
 
-macOS-only tools for controlling apps via accessibility APIs. See [Computer Use](computer-use.md) for setup instructions.
+Cross-platform browser automation via Playwright. See [Browser Use](browser-use.md) for setup instructions.
 
-### `cu_status` — Health Check
+### `browser_status` — Health Check
 
-**Annotations:** `readOnlyHint: true`, `idempotentHint: true`
+**Annotations:** `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true`
 
-No parameters. Returns binary path, type, connection status, and any error.
+No parameters. Returns Playwright availability, active sessions, and any error.
 
-### `cu_list_apps` — List Running Apps
+### `browser_launch` — Launch Browser
 
-**Annotations:** `readOnlyHint: true`, `idempotentHint: true`
+**Annotations:** `readOnlyHint: false`, `destructiveHint: false`, `idempotentHint: false`, `openWorldHint: true`
 
-No parameters. Returns list of running and recently used macOS apps.
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `sessionId` | string | yes | - | Unique session identifier |
+| `url` | string | no | - | URL to navigate to on launch |
+| `headless` | boolean | no | `true` | Run without visible window |
+| `viewportWidth` | integer | no | `1440` | Viewport width in pixels |
+| `viewportHeight` | integer | no | `900` | Viewport height in pixels |
 
-### `cu_get_app_state` — Screenshot & Accessibility Tree
+### `browser_screenshot` — Take Screenshot
 
-**Annotations:** `readOnlyHint: true`, `idempotentHint: true`
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `app` | string | yes | App name or bundle identifier |
-
-Returns screenshot (base64 image) and accessibility tree with element indices.
-
-### `cu_click` — Click Element
+**Annotations:** `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true`
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `app` | string | yes | App name or bundle identifier |
-| `element_index` | string | no | Element index from accessibility tree |
-| `x` | number | no | X coordinate (pixels) |
-| `y` | number | no | Y coordinate (pixels) |
-| `mouse_button` | enum | no | `left`, `right`, or `middle` |
-| `click_count` | integer | no | Number of clicks (default: 1) |
+| `sessionId` | string | yes | Browser session ID |
 
-### `cu_type_text` — Type Text
+Returns base64 PNG image, page URL, and page title.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `app` | string | yes | App name or bundle identifier |
-| `text` | string | yes | Literal text to type |
+### `browser_click` — Click
 
-### `cu_press_key` — Key Press
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `sessionId` | string | yes | - | Browser session ID |
+| `x` | number | yes | - | X coordinate (viewport-relative) |
+| `y` | number | yes | - | Y coordinate (viewport-relative) |
+| `button` | enum | no | `left` | `left`, `right`, or `middle` |
+| `clickCount` | integer | no | `1` | Number of clicks |
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `app` | string | yes | App name or bundle identifier |
-| `key` | string | yes | Key or combo (`a`, `Return`, `cmd+s`, `Up`) |
-
-### `cu_scroll` — Scroll
+### `browser_type` — Type Text
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `app` | string | yes | App name or bundle identifier |
-| `element_index` | string | yes | Element identifier |
-| `direction` | string | yes | `up`, `down`, `left`, or `right` |
-| `pages` | integer | no | Page scroll count (default: 1) |
+| `sessionId` | string | yes | Browser session ID |
+| `text` | string | yes | Text to type into focused element |
 
-### `cu_drag` — Drag
+### `browser_scroll` — Scroll
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `app` | string | yes | App name or bundle identifier |
-| `from_x` | number | yes | Start X coordinate |
-| `from_y` | number | yes | Start Y coordinate |
-| `to_x` | number | yes | End X coordinate |
-| `to_y` | number | yes | End Y coordinate |
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `sessionId` | string | yes | - | Browser session ID |
+| `direction` | enum | yes | - | `up`, `down`, `left`, or `right` |
+| `amount` | integer | no | `300` | Scroll amount in pixels |
 
-### `cu_set_value` — Set Value
+### `browser_drag` — Drag
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `app` | string | yes | App name or bundle identifier |
-| `element_index` | string | yes | Element identifier |
-| `value` | string | yes | Value to assign |
+| `sessionId` | string | yes | Browser session ID |
+| `fromX` | number | yes | Start X coordinate |
+| `fromY` | number | yes | Start Y coordinate |
+| `toX` | number | yes | End X coordinate |
+| `toY` | number | yes | End Y coordinate |
 
-### `cu_perform_secondary_action` — Secondary Action
+### `browser_key` — Key Press
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `app` | string | yes | App name or bundle identifier |
-| `element_index` | string | yes | Element identifier |
-| `action` | string | yes | Action name (`toggle`, `expand`, `pick`, etc.) |
+| `sessionId` | string | yes | Browser session ID |
+| `key` | string | yes | Key or combo (`Enter`, `Control+a`, `Meta+s`) |
+
+Modifier keys are auto-normalized: `Cmd`/`Command` → `Meta`, `Ctrl` → `Control`, `Opt`/`Option` → `Alt`.
+
+### `browser_navigate` — Navigate
+
+**Annotations:** `readOnlyHint: false`, `destructiveHint: false`, `idempotentHint: false`, `openWorldHint: true`
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `sessionId` | string | yes | Browser session ID |
+| `url` | string | yes | URL to navigate to |
+
+### `browser_close` — Close Session
+
+**Annotations:** `readOnlyHint: false`, `destructiveHint: true`, `idempotentHint: true`
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `sessionId` | string | yes | Browser session ID to close |

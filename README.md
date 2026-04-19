@@ -4,15 +4,15 @@
 [![npm downloads](https://img.shields.io/npm/dm/codex-mcp-server.svg)](https://www.npmjs.com/package/codex-mcp-server)
 [![license](https://img.shields.io/npm/l/codex-mcp-server.svg)](https://www.npmjs.com/package/codex-mcp-server)
 
-Bridge between Claude and OpenAI's Codex CLI — get AI-powered code analysis, generation, and review right in your editor. Also includes optional macOS computer control.
+Bridge between Claude and OpenAI's Codex CLI — get AI-powered code analysis, generation, and review right in your editor. Also includes optional browser automation via Playwright.
 
 ```mermaid
 graph LR
     A[Claude Code] --> B[Codex MCP Server]
     B --> C[Codex CLI]
     C --> D[OpenAI API]
-    B --> E[Computer Use]
-    E --> F[macOS Apps]
+    B --> E[Browser Use]
+    E --> F[Chromium]
 
     style A fill:#FF6B35
     style B fill:#4A90E2
@@ -58,7 +58,7 @@ Use review to check my uncommitted changes
 | `codex` | AI coding assistant with session support, model selection, and structured output metadata |
 | `review` | AI-powered code review for uncommitted changes, branches, or commits |
 | `websearch` | Web search using Codex CLI with customizable result count and search depth |
-| `cu_*` | 10 macOS computer-use tools — control apps via screenshots and accessibility ([setup](docs/computer-use.md)) |
+| `browser_*` | 10 browser automation tools — launch, screenshot, click, type, scroll, drag, navigate ([setup](docs/browser-use.md)) |
 | `listSessions` | View active conversation sessions |
 | `ping` | Test server connection |
 | `help` | Get Codex CLI help |
@@ -97,11 +97,12 @@ Use codex to return structuredContent with threadId metadata when available
 Use websearch with query "TypeScript 5.8 new features"
 ```
 
-**Computer Use (macOS):**
+**Browser Automation:**
 ```
-Use cu_status to check connection
-Use cu_get_app_state with app "Finder" to see the desktop
-Use cu_click with app "Safari" and element_index "42" to click a link
+Use browser_status to check if Playwright is available
+Use browser_launch with sessionId "web1" and url "https://example.com"
+Use browser_screenshot with sessionId "web1" to see the page
+Use browser_click with sessionId "web1", x 100, and y 200
 ```
 
 ## Requirements
@@ -115,7 +116,7 @@ Use cu_click with app "Safari" and element_index "42" to click a link
 ## Documentation
 
 - **[API Reference](docs/api-reference.md)** — Full tool parameters and response formats
-- **[Computer Use](docs/computer-use.md)** — macOS setup, tools, and troubleshooting
+- **[Browser Use](docs/browser-use.md)** — Playwright setup, tools, and troubleshooting
 - **[Session Management](docs/session-management.md)** — How conversations work
 - **[Codex CLI Integration](docs/codex-cli-integration.md)** — Version compatibility and CLI details
 
