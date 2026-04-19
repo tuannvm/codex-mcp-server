@@ -28,4 +28,5 @@ export default {
     '**/__tests__/**/*.test.ts',
     '**/?(*.)+(spec|test).ts',
   ],
+  testPathIgnorePatterns: ['/node_modules/', '/trash/'],
 };

@@ -4,18 +4,22 @@
 [![npm downloads](https://img.shields.io/npm/dm/codex-mcp-server.svg)](https://www.npmjs.com/package/codex-mcp-server)
 [![license](https://img.shields.io/npm/l/codex-mcp-server.svg)](https://www.npmjs.com/package/codex-mcp-server)
 
-Bridge between Claude and OpenAI's Codex CLI — get AI-powered code analysis, generation, and review right in your editor.
+Bridge between Claude and OpenAI's Codex CLI — get AI-powered code analysis, generation, and review right in your editor. Also includes optional browser automation via Playwright.
 
 ```mermaid
 graph LR
     A[Claude Code] --> B[Codex MCP Server]
     B --> C[Codex CLI]
     C --> D[OpenAI API]
+    B --> E[Browser Use]
+    E --> F[Chromium]
 
     style A fill:#FF6B35
     style B fill:#4A90E2
     style C fill:#00D4AA
     style D fill:#FFA500
+    style E fill:#9B59B6
+    style F fill:#E74C3C
 ```
 
 ## Quick Start
@@ -54,6 +58,7 @@ Use review to check my uncommitted changes
 | `codex` | AI coding assistant with session support, model selection, and structured output metadata |
 | `review` | AI-powered code review for uncommitted changes, branches, or commits |
 | `websearch` | Web search using Codex CLI with customizable result count and search depth |
+| `browser` | Browser automation via Playwright — open, screenshot, click, type, scroll, drag, navigate ([setup](docs/browser-use.md)) |
 | `listSessions` | View active conversation sessions |
 | `ping` | Test server connection |
 | `help` | Get Codex CLI help |
@@ -90,8 +95,14 @@ Use codex to return structuredContent with threadId metadata when available
 **Web search:**
 ```
 Use websearch with query "TypeScript 5.8 new features"
-Use websearch with query "Rust vs Go performance 2025" and numResults 15
-Use websearch with query "React Server Components" and searchDepth "full"
+```
+
+**Browser Automation:**
+```
+Use browser with action "status" to check if Playwright is available
+Use browser with action "open", sessionId "web1", and url "https://example.com"
+Use browser with action "screenshot" and sessionId "web1" to see the page
+Use browser with action "click", sessionId "web1", x 100, and y 200
 ```
 
 ## Requirements
@@ -105,6 +116,7 @@ Use websearch with query "React Server Components" and searchDepth "full"
 ## Documentation
 
 - **[API Reference](docs/api-reference.md)** — Full tool parameters and response formats
+- **[Browser Use](docs/browser-use.md)** — Playwright setup, tools, and troubleshooting
 - **[Session Management](docs/session-management.md)** — How conversations work
 - **[Codex CLI Integration](docs/codex-cli-integration.md)** — Version compatibility and CLI details
 

@@ -24,6 +24,8 @@ import { ToolExecutionError, ValidationError } from '../errors.js';
 import { executeCommand, executeCommandStreaming } from '../utils/command.js';
 import { ZodError } from 'zod';
 import path from 'node:path';
+import { browserUseHandler } from '../browser-use/handlers.js';
+import { bridge } from '../browser-use/bridge.js';
 
 // Default no-op context for handlers that don't need progress
 const defaultContext: ToolHandlerContext = {
@@ -585,4 +587,10 @@ export const toolHandlers = {
   [TOOLS.HELP]: new HelpToolHandler(),
   [TOOLS.LIST_SESSIONS]: new ListSessionsToolHandler(sessionStorage),
   [TOOLS.WEBSEARCH]: new WebSearchToolHandler(),
-} as const;
+  [TOOLS.BROWSER]: browserUseHandler,
+};
+
+// Export shutdown function for browser cleanup
+export async function shutdownBrowserSessions(): Promise<void> {
+  await bridge.shutdown();
+}

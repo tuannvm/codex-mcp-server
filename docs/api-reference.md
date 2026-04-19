@@ -48,9 +48,11 @@ All tools include annotations that provide hints to MCP clients about tool behav
 |------|---------|---------------|-------------------|------------------|-----------------|
 | `codex` | Execute Codex CLI | `false` | `true` | `false` | `true` |
 | `review` | Code Review | `true` | `false` | `true` | `true` |
+| `websearch` | Web Search | `true` | `false` | `true` | `true` |
 | `ping` | Ping Server | `true` | `false` | `true` | `false` |
 | `help` | Get Help | `true` | `false` | `true` | `false` |
 | `listSessions` | List Sessions | `true` | `false` | `true` | `false` |
+| `browser` | Browser Control | `false` | `true` | `false` | `true` |
 
 ### Progress Notifications
 For long-running operations, the server sends `notifications/progress` messages when the client includes a `progressToken` in the request `_meta`.
@@ -440,3 +442,36 @@ Optional:
 - **CODEX_HOME**: Custom directory for Codex CLI configuration
 - **Session Limits**: Configurable in server implementation (default: 100)
 - **TTL Settings**: Configurable session expiration (default: 24 hours)
+
+## Browser Use
+
+Cross-platform browser automation via Playwright. See [Browser Use](browser-use.md) for setup instructions.
+
+### `browser` — Browser Control
+
+**Annotations:** `readOnlyHint: false`, `destructiveHint: true`, `idempotentHint: false`, `openWorldHint: true`
+
+A single tool for all browser operations, selected via the `action` parameter.
+
+| Parameter | Type | Required | Action | Default | Description |
+|-----------|------|----------|--------|---------|-------------|
+| `action` | enum | yes | all | — | `open`, `screenshot`, `navigate`, `click`, `type`, `key`, `scroll`, `drag`, `close`, `status` |
+| `sessionId` | string | see below | all except `status` | — | Browser session ID |
+| `url` | string | no | `open`, `navigate` | — | URL to open or navigate to |
+| `headless` | boolean | no | `open` | `true` | Run without visible window |
+| `viewportWidth` | integer | no | `open` | `1440` | Viewport width in pixels |
+| `viewportHeight` | integer | no | `open` | `900` | Viewport height in pixels |
+| `x` | number | no | `click` | — | X coordinate (viewport-relative) |
+| `y` | number | no | `click` | — | Y coordinate (viewport-relative) |
+| `button` | enum | no | `click` | `left` | `left`, `right`, or `middle` |
+| `clickCount` | integer | no | `click` | `1` | Number of clicks |
+| `text` | string | no | `type` | — | Text to type into focused element |
+| `key` | string | no | `key` | — | Key or combo (`Enter`, `Control+a`, `Meta+s`) |
+| `direction` | enum | no | `scroll` | — | `up`, `down`, `left`, or `right` |
+| `amount` | integer | no | `scroll` | `300` | Scroll amount in pixels |
+| `fromX` | number | no | `drag` | — | Start X coordinate |
+| `fromY` | number | no | `drag` | — | Start Y coordinate |
+| `toX` | number | no | `drag` | — | End X coordinate |
+| `toY` | number | no | `drag` | — | End Y coordinate |
+
+Modifier keys are auto-normalized: `Cmd`/`Command` → `Meta`, `Ctrl` → `Control`, `Opt`/`Option` → `Alt`.

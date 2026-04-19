@@ -8,6 +8,7 @@ export const TOOLS = {
   HELP: 'help',
   LIST_SESSIONS: 'listSessions',
   WEBSEARCH: 'websearch',
+  BROWSER: 'browser',
 } as const;
 
 export type ToolName = typeof TOOLS[keyof typeof TOOLS];
@@ -67,8 +68,10 @@ export interface ToolDefinition {
 // Tool result interface matching MCP SDK expectations
 export interface ToolResult {
   content: Array<{
-    type: 'text';
+    type: 'text' | 'image';
     text: string;
+    data?: string;
+    mimeType?: string;
     _meta?: Record<string, unknown>;
   }>;
   structuredContent?: Record<string, unknown>;
