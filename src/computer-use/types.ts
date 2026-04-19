@@ -114,7 +114,7 @@ export const CU_SCHEMAS: Record<string, z.ZodType> = {
 // Binary discovery info.
 export interface BinaryInfo {
   path: string;
-  type: 'npm-package' | 'codex-app' | 'custom';
+  type: 'codex-app' | 'custom';
   args: string[];
 }
 

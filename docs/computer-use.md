@@ -8,38 +8,31 @@ OS-level macOS computer control via Codex's accessibility binary. Control runnin
 Claude Code
   → codex-mcp-server
     → ComputerUseBridge (singleton, lazy init)
-      → open-computer-use / SkyComputerUseClient (subprocess)
+      → SkyComputerUseClient (Codex.app subprocess)
         → stdio JSON-RPC (newline-delimited)
           → macOS Accessibility APIs
 ```
 
 The bridge spawns the binary once and maintains a persistent connection. Binary discovery happens on the first computer-use tool call — no impact on codex/review startup.
 
-## Binary Setup
+## Setup
 
-### Option 1: npm package (recommended)
+Requires [Codex.app](https://codex.ai) installed. The `SkyComputerUseClient` binary is detected automatically from `/Applications/Codex.app`.
 
-```bash
-npm install -g open-codex-computer-use-mcp
-open-computer-use doctor
-```
-
-The `doctor` command verifies the binary runs and can communicate.
-
-### Option 2: Codex.app bundled binary
-
-If Codex.app is installed at `/Applications/Codex.app`, the `SkyComputerUseClient` binary is detected automatically.
-
-If it fails to launch (hardened runtime restriction), re-sign it:
+If you get `Apple event error -10000`, the binary needs re-signing:
 
 ```bash
 sudo codesign --force --deep --sign - \
   "/Applications/Codex.app/Contents/Resources/plugins/openai-bundled/plugins/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient"
 ```
 
+Or run `/codex-setup` in Claude Code to do this automatically.
+
+**Note:** Re-signing is machine-local. Re-run after Codex.app auto-updates.
+
 ### Custom binary path
 
-Set `CODEX_COMPUTER_USE_BINARY` to any binary that speaks the same protocol:
+Set `CODEX_COMPUTER_USE_BINARY` to override auto-discovery:
 
 ```json
 {
@@ -48,7 +41,7 @@ Set `CODEX_COMPUTER_USE_BINARY` to any binary that speaks the same protocol:
       "command": "npx",
       "args": ["-y", "codex-mcp-server"],
       "env": {
-        "CODEX_COMPUTER_USE_BINARY": "/usr/local/bin/open-computer-use"
+        "CODEX_COMPUTER_USE_BINARY": "/path/to/SkyComputerUseClient"
       }
     }
   }
@@ -58,8 +51,7 @@ Set `CODEX_COMPUTER_USE_BINARY` to any binary that speaks the same protocol:
 ## Discovery Priority
 
 1. `CODEX_COMPUTER_USE_BINARY` env var (explicit override)
-2. `open-computer-use` in PATH (npm global install)
-3. Codex.app bundled `SkyComputerUseClient`
+2. Codex.app bundled `SkyComputerUseClient`
 
 ## Protocol
 
@@ -78,20 +70,16 @@ The binary speaks bare **newline-delimited JSON-RPC** (not Content-Length framed
 Works on any platform (no binary needed). Returns binary path, discovery type, and connection status.
 
 ```json
-{ "connected": true, "binary": { "path": "/usr/local/bin/open-computer-use", "type": "npm-package" }, "error": null }
+{ "connected": true, "binary": { "path": "/Applications/.../SkyComputerUseClient", "type": "codex-app" }, "error": null }
 ```
 
 ### `cu_list_apps` — List Apps
 
 Returns running and recently used macOS apps. Call this first to discover what's available.
 
-```json
-{ "app": "Finder" }
-```
-
 ### `cu_get_app_state` — Screenshot + Accessibility Tree
 
-Returns a screenshot (as base64 image data) and the accessibility tree with element indices. Must be called once per turn before interacting with an app.
+Returns a screenshot (base64 image data) and the accessibility tree with element indices. Must be called once per turn before interacting with an app.
 
 ```json
 { "app": "Safari" }
@@ -122,7 +110,6 @@ Press a key or key-combination using xdotool-style syntax.
 
 ```json
 { "app": "VSCode", "key": "cmd+s" }
-{ "app": "Finder", "key": "cmd+shift+n" }
 { "app": "Terminal", "key": "Return" }
 ```
 
@@ -171,13 +158,10 @@ Invoke a secondary accessibility action (toggle, expand, pick, etc.).
 These tools require macOS accessibility APIs. They won't work on Linux or Windows.
 
 **"Computer Use binary not found"**
-Install via npm (`npm install -g open-codex-computer-use-mcp`), install Codex.app, or set `CODEX_COMPUTER_USE_BINARY`.
+Install Codex.app from https://codex.ai, or set `CODEX_COMPUTER_USE_BINARY` to a custom path.
 
-**"Binary spawn failed" or "initialize failed"**
-The binary likely needs re-signing. Run `/codex-setup` in Claude Code, or manually:
-```bash
-sudo codesign --force --deep --sign - <binary_path>
-```
+**"Apple event error -10000: Sender process is not authenticated"**
+The binary needs re-signing. Run `/codex-setup` or the codesign command above.
 
 **"Request timed out"**
 `get_app_state` has a 60s timeout; other tools have 30s. The app may be unresponsive.
