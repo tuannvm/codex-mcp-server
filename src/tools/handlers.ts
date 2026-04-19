@@ -24,6 +24,7 @@ import { ToolExecutionError, ValidationError } from '../errors.js';
 import { executeCommand, executeCommandStreaming } from '../utils/command.js';
 import { ZodError } from 'zod';
 import path from 'node:path';
+import { ComputerUseToolHandler } from '../computer-use/handlers.js';
 
 // Default no-op context for handlers that don't need progress
 const defaultContext: ToolHandlerContext = {
@@ -577,6 +578,14 @@ export class WebSearchToolHandler {
 
 // Tool handler registry
 const sessionStorage = new InMemorySessionStorage();
+const computerUseHandler = new ComputerUseToolHandler();
+
+// Wrap ComputerUseToolHandler to match the execute(args, context) signature
+// expected by server.ts. Each wrapper injects the tool name.
+const cuHandler = (toolName: string) => ({
+  execute: (args: unknown, context: ToolHandlerContext) =>
+    computerUseHandler.execute(toolName, args, context),
+});
 
 export const toolHandlers = {
   [TOOLS.CODEX]: new CodexToolHandler(sessionStorage),
@@ -585,4 +594,14 @@ export const toolHandlers = {
   [TOOLS.HELP]: new HelpToolHandler(),
   [TOOLS.LIST_SESSIONS]: new ListSessionsToolHandler(sessionStorage),
   [TOOLS.WEBSEARCH]: new WebSearchToolHandler(),
-} as const;
+  [TOOLS.CU_LIST_APPS]: cuHandler(TOOLS.CU_LIST_APPS),
+  [TOOLS.CU_GET_APP_STATE]: cuHandler(TOOLS.CU_GET_APP_STATE),
+  [TOOLS.CU_CLICK]: cuHandler(TOOLS.CU_CLICK),
+  [TOOLS.CU_PERFORM_SECONDARY_ACTION]: cuHandler(TOOLS.CU_PERFORM_SECONDARY_ACTION),
+  [TOOLS.CU_SET_VALUE]: cuHandler(TOOLS.CU_SET_VALUE),
+  [TOOLS.CU_SCROLL]: cuHandler(TOOLS.CU_SCROLL),
+  [TOOLS.CU_DRAG]: cuHandler(TOOLS.CU_DRAG),
+  [TOOLS.CU_PRESS_KEY]: cuHandler(TOOLS.CU_PRESS_KEY),
+  [TOOLS.CU_TYPE_TEXT]: cuHandler(TOOLS.CU_TYPE_TEXT),
+  [TOOLS.CU_STATUS]: cuHandler(TOOLS.CU_STATUS),
+};

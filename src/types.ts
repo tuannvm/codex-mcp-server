@@ -8,6 +8,16 @@ export const TOOLS = {
   HELP: 'help',
   LIST_SESSIONS: 'listSessions',
   WEBSEARCH: 'websearch',
+  CU_LIST_APPS: 'cu_list_apps',
+  CU_GET_APP_STATE: 'cu_get_app_state',
+  CU_CLICK: 'cu_click',
+  CU_PERFORM_SECONDARY_ACTION: 'cu_perform_secondary_action',
+  CU_SET_VALUE: 'cu_set_value',
+  CU_SCROLL: 'cu_scroll',
+  CU_DRAG: 'cu_drag',
+  CU_PRESS_KEY: 'cu_press_key',
+  CU_TYPE_TEXT: 'cu_type_text',
+  CU_STATUS: 'cu_status',
 } as const;
 
 export type ToolName = typeof TOOLS[keyof typeof TOOLS];
@@ -67,8 +77,10 @@ export interface ToolDefinition {
 // Tool result interface matching MCP SDK expectations
 export interface ToolResult {
   content: Array<{
-    type: 'text';
+    type: 'text' | 'image';
     text: string;
+    data?: string;
+    mimeType?: string;
     _meta?: Record<string, unknown>;
   }>;
   structuredContent?: Record<string, unknown>;
