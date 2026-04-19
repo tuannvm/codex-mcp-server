@@ -17,34 +17,38 @@ jest.mock('../utils/command.js', () => ({
 }));
 
 // Mock playwright to avoid requiring it at test time
-jest.mock('playwright', () => ({
-  chromium: {
-    launch: jest.fn().mockResolvedValue({
-      newContext: jest.fn().mockResolvedValue({
-        newPage: jest.fn().mockResolvedValue({
-          goto: jest.fn(),
-          screenshot: jest.fn().mockResolvedValue(Buffer.from('fake-png')),
-          title: jest.fn().mockResolvedValue('Test Page'),
-          url: jest.fn().mockReturnValue('https://example.com'),
-          mouse: {
-            click: jest.fn(),
-            move: jest.fn(),
-            down: jest.fn(),
-            up: jest.fn(),
-            wheel: jest.fn(),
-          },
-          keyboard: {
-            press: jest.fn(),
-            type: jest.fn(),
-          },
-          waitForLoadState: jest.fn(),
+jest.mock(
+  'playwright',
+  () => ({
+    chromium: {
+      launch: jest.fn().mockResolvedValue({
+        newContext: jest.fn().mockResolvedValue({
+          newPage: jest.fn().mockResolvedValue({
+            goto: jest.fn(),
+            screenshot: jest.fn().mockResolvedValue(Buffer.from('fake-png')),
+            title: jest.fn().mockResolvedValue('Test Page'),
+            url: jest.fn().mockReturnValue('https://example.com'),
+            mouse: {
+              click: jest.fn(),
+              move: jest.fn(),
+              down: jest.fn(),
+              up: jest.fn(),
+              wheel: jest.fn(),
+            },
+            keyboard: {
+              press: jest.fn(),
+              type: jest.fn(),
+            },
+            waitForLoadState: jest.fn(),
+          }),
+          close: jest.fn(),
         }),
         close: jest.fn(),
       }),
-      close: jest.fn(),
-    }),
-  },
-}), { virtual: true });
+    },
+  }),
+  { virtual: true }
+);
 
 import { TOOLS } from '../types.js';
 import { toolDefinitions } from '../tools/definitions.js';
@@ -86,17 +90,34 @@ describe('Codex MCP Server', () => {
     });
 
     test('browser tool should require action parameter', () => {
-      const browserTool = toolDefinitions.find((tool) => tool.name === TOOLS.BROWSER);
+      const browserTool = toolDefinitions.find(
+        (tool) => tool.name === TOOLS.BROWSER
+      );
       expect(browserTool).toBeDefined();
       expect(browserTool?.inputSchema.required).toContain('action');
       expect(browserTool?.inputSchema.required).not.toContain('sessionId');
     });
 
     test('browser tool should include all action types in enum', () => {
-      const browserTool = toolDefinitions.find((tool) => tool.name === TOOLS.BROWSER);
-      const actionEnum = browserTool?.inputSchema.properties.action as { enum: string[] };
+      const browserTool = toolDefinitions.find(
+        (tool) => tool.name === TOOLS.BROWSER
+      );
+      const actionEnum = browserTool?.inputSchema.properties.action as {
+        enum: string[];
+      };
       expect(actionEnum.enum).toEqual(
-        expect.arrayContaining(['open', 'screenshot', 'navigate', 'click', 'type', 'key', 'scroll', 'drag', 'close', 'status'])
+        expect.arrayContaining([
+          'open',
+          'screenshot',
+          'navigate',
+          'click',
+          'type',
+          'key',
+          'scroll',
+          'drag',
+          'close',
+          'status',
+        ])
       );
     });
 
@@ -212,35 +233,52 @@ describe('Codex MCP Server', () => {
     });
 
     test('action=open should create a session', async () => {
-      const result = await handler().execute({ action: 'open', sessionId: 'test-1' });
+      const result = await handler().execute({
+        action: 'open',
+        sessionId: 'test-1',
+      });
       expect(result.content[0].text).toContain('test-1');
       expect(result.content[0].text).toContain('opened');
       await handler().execute({ action: 'close', sessionId: 'test-1' });
     });
 
     test('action=open with url should navigate on launch', async () => {
-      const result = await handler().execute({ action: 'open', sessionId: 'test-url', url: 'https://example.com' });
+      const result = await handler().execute({
+        action: 'open',
+        sessionId: 'test-url',
+        url: 'https://example.com',
+      });
       expect(result.content[0].text).toContain('test-url');
       await handler().execute({ action: 'close', sessionId: 'test-url' });
     });
 
     test('action=close should close a session', async () => {
       await handler().execute({ action: 'open', sessionId: 'test-close' });
-      const result = await handler().execute({ action: 'close', sessionId: 'test-close' });
+      const result = await handler().execute({
+        action: 'close',
+        sessionId: 'test-close',
+      });
       expect(result.content[0].text).toContain('test-close');
       expect(result.content[0].text).toContain('closed');
     });
 
     test('action=navigate should go to URL', async () => {
       await handler().execute({ action: 'open', sessionId: 'test-nav' });
-      const result = await handler().execute({ action: 'navigate', sessionId: 'test-nav', url: 'https://example.com' });
+      const result = await handler().execute({
+        action: 'navigate',
+        sessionId: 'test-nav',
+        url: 'https://example.com',
+      });
       expect(result.content[0].text).toContain('Navigated');
       await handler().execute({ action: 'close', sessionId: 'test-nav' });
     });
 
     test('action=screenshot should return image data', async () => {
       await handler().execute({ action: 'open', sessionId: 'test-ss' });
-      const result = await handler().execute({ action: 'screenshot', sessionId: 'test-ss' });
+      const result = await handler().execute({
+        action: 'screenshot',
+        sessionId: 'test-ss',
+      });
       expect(result.content).toHaveLength(2);
       expect(result.content[0].type).toBe('image');
       expect(result.content[0].data).toBeDefined();
@@ -251,7 +289,12 @@ describe('Codex MCP Server', () => {
 
     test('action=click should return confirmation', async () => {
       await handler().execute({ action: 'open', sessionId: 'test-click' });
-      const result = await handler().execute({ action: 'click', sessionId: 'test-click', x: 100, y: 200 });
+      const result = await handler().execute({
+        action: 'click',
+        sessionId: 'test-click',
+        x: 100,
+        y: 200,
+      });
       expect(result.content[0].text).toContain('100');
       expect(result.content[0].text).toContain('200');
       await handler().execute({ action: 'close', sessionId: 'test-click' });
@@ -259,7 +302,11 @@ describe('Codex MCP Server', () => {
 
     test('action=type should type text', async () => {
       await handler().execute({ action: 'open', sessionId: 'test-type' });
-      const result = await handler().execute({ action: 'type', sessionId: 'test-type', text: 'hello' });
+      const result = await handler().execute({
+        action: 'type',
+        sessionId: 'test-type',
+        text: 'hello',
+      });
       expect(result.content[0].text).toContain('Typed');
       expect(result.content[0].text).toContain('hello');
       await handler().execute({ action: 'close', sessionId: 'test-type' });
@@ -267,14 +314,23 @@ describe('Codex MCP Server', () => {
 
     test('action=key should normalize key names', async () => {
       await handler().execute({ action: 'open', sessionId: 'test-key' });
-      const result = await handler().execute({ action: 'key', sessionId: 'test-key', key: 'Cmd+s' });
+      const result = await handler().execute({
+        action: 'key',
+        sessionId: 'test-key',
+        key: 'Cmd+s',
+      });
       expect(result.content[0].text).toContain('Cmd+s');
       await handler().execute({ action: 'close', sessionId: 'test-key' });
     });
 
     test('action=scroll should scroll page', async () => {
       await handler().execute({ action: 'open', sessionId: 'test-scroll' });
-      const result = await handler().execute({ action: 'scroll', sessionId: 'test-scroll', direction: 'down', amount: 500 });
+      const result = await handler().execute({
+        action: 'scroll',
+        sessionId: 'test-scroll',
+        direction: 'down',
+        amount: 500,
+      });
       expect(result.content[0].text).toContain('down');
       expect(result.content[0].text).toContain('500');
       await handler().execute({ action: 'close', sessionId: 'test-scroll' });
@@ -282,13 +338,22 @@ describe('Codex MCP Server', () => {
 
     test('action=drag should drag between coordinates', async () => {
       await handler().execute({ action: 'open', sessionId: 'test-drag' });
-      const result = await handler().execute({ action: 'drag', sessionId: 'test-drag', fromX: 0, fromY: 0, toX: 100, toY: 100 });
+      const result = await handler().execute({
+        action: 'drag',
+        sessionId: 'test-drag',
+        fromX: 0,
+        fromY: 0,
+        toX: 100,
+        toY: 100,
+      });
       expect(result.content[0].text).toContain('Dragged');
       await handler().execute({ action: 'close', sessionId: 'test-drag' });
     });
 
     test('should reject invalid action', async () => {
-      await expect(handler().execute({ action: 'invalid' })).rejects.toThrow('Validation failed');
+      await expect(handler().execute({ action: 'invalid' })).rejects.toThrow(
+        'Validation failed'
+      );
     });
   });
 

@@ -20,22 +20,76 @@ const browserDef: ToolDefinition = {
     properties: {
       action: {
         type: 'string',
-        enum: ['open', 'screenshot', 'navigate', 'click', 'type', 'key', 'scroll', 'drag', 'close', 'status'],
+        enum: [
+          'open',
+          'screenshot',
+          'navigate',
+          'click',
+          'type',
+          'key',
+          'scroll',
+          'drag',
+          'close',
+          'status',
+        ],
         description: 'The action to perform',
       },
-      sessionId: { type: 'string', description: 'Browser session ID (required for all actions except "status")' },
-      url: { type: 'string', description: 'URL to open or navigate to (for "open" and "navigate")' },
-      headless: { type: 'boolean', description: 'Run without visible window (default: true, for "open")' },
-      viewportWidth: { type: 'integer', description: 'Viewport width in pixels (default: 1440, for "open")' },
-      viewportHeight: { type: 'integer', description: 'Viewport height in pixels (default: 900, for "open")' },
-      x: { type: 'number', description: 'X coordinate in pixels, viewport-relative (for "click")' },
-      y: { type: 'number', description: 'Y coordinate in pixels, viewport-relative (for "click")' },
-      button: { type: 'string', enum: ['left', 'right', 'middle'], description: 'Mouse button (default: left, for "click")' },
-      clickCount: { type: 'integer', description: 'Number of clicks (default: 1, for "click")' },
-      text: { type: 'string', description: 'Text to type into focused element (for "type")' },
-      key: { type: 'string', description: 'Key or combo, e.g. "Enter", "Control+a", "Meta+s" (for "key")' },
-      direction: { type: 'string', enum: ['up', 'down', 'left', 'right'], description: 'Scroll direction (for "scroll")' },
-      amount: { type: 'integer', description: 'Scroll amount in pixels (default: 300, for "scroll")' },
+      sessionId: {
+        type: 'string',
+        description:
+          'Browser session ID (required for all actions except "status")',
+      },
+      url: {
+        type: 'string',
+        description: 'URL to open or navigate to (for "open" and "navigate")',
+      },
+      headless: {
+        type: 'boolean',
+        description: 'Run without visible window (default: true, for "open")',
+      },
+      viewportWidth: {
+        type: 'integer',
+        description: 'Viewport width in pixels (default: 1440, for "open")',
+      },
+      viewportHeight: {
+        type: 'integer',
+        description: 'Viewport height in pixels (default: 900, for "open")',
+      },
+      x: {
+        type: 'number',
+        description: 'X coordinate in pixels, viewport-relative (for "click")',
+      },
+      y: {
+        type: 'number',
+        description: 'Y coordinate in pixels, viewport-relative (for "click")',
+      },
+      button: {
+        type: 'string',
+        enum: ['left', 'right', 'middle'],
+        description: 'Mouse button (default: left, for "click")',
+      },
+      clickCount: {
+        type: 'integer',
+        description: 'Number of clicks (default: 1, for "click")',
+      },
+      text: {
+        type: 'string',
+        description: 'Text to type into focused element (for "type")',
+      },
+      key: {
+        type: 'string',
+        description:
+          'Key or combo, e.g. "Enter", "Control+a", "Meta+s" (for "key")',
+      },
+      direction: {
+        type: 'string',
+        enum: ['up', 'down', 'left', 'right'],
+        description: 'Scroll direction (for "scroll")',
+      },
+      amount: {
+        type: 'integer',
+        description: 'Scroll amount in pixels (default: 300, for "scroll")',
+      },
       fromX: { type: 'number', description: 'Start X coordinate (for "drag")' },
       fromY: { type: 'number', description: 'Start Y coordinate (for "drag")' },
       toX: { type: 'number', description: 'End X coordinate (for "drag")' },

@@ -13,7 +13,11 @@ declare module 'playwright' {
     goto(url: string, opts?: Record<string, unknown>): Promise<unknown>;
     screenshot(opts?: Record<string, unknown>): Promise<Buffer>;
     mouse: {
-      click(x: number, y: number, opts?: Record<string, unknown>): Promise<void>;
+      click(
+        x: number,
+        y: number,
+        opts?: Record<string, unknown>
+      ): Promise<void>;
       move(x: number, y: number, opts?: Record<string, unknown>): Promise<void>;
       down(): Promise<void>;
       up(): Promise<void>;

@@ -4,7 +4,7 @@ Playwright-based browser automation. Launch a real Chromium browser, take screen
 
 ## Architecture
 
-```
+```text
 Claude Code
   → codex-mcp-server
     → BrowserUseBridge (singleton, lazy init)
