@@ -60,5 +60,8 @@
     "ts-jest": "^29.4.1",
     "tsx": "^4.20.4",
     "typescript": "^5.9.2"
+  },
+  "peerDependencies": {
+    "playwright": "^1.59.1"
   }
 }

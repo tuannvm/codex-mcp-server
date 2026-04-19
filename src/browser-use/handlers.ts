@@ -2,129 +2,105 @@ import { TOOLS, type ToolResult, type ToolHandlerContext } from '../types.js';
 import { ToolExecutionError, ValidationError } from '../errors.js';
 import { ZodError } from 'zod';
 import { bridge } from './bridge.js';
-import { BROWSER_SCHEMAS, normalizeKey } from './types.js';
+import { parseBrowserAction, normalizeKey } from './types.js';
 
 const noopContext: ToolHandlerContext = { sendProgress: async () => {} };
 
 export class BrowserUseToolHandler {
   async execute(
-    toolName: string,
     args: unknown,
     _context: ToolHandlerContext = noopContext
   ): Promise<ToolResult> {
     try {
-      const schema = BROWSER_SCHEMAS[toolName];
-      if (!schema) {
-        throw new ValidationError(toolName, `Unknown browser tool: ${toolName}`);
-      }
-      const p = schema.parse(args) as Record<string, unknown>;
+      const parsed = parseBrowserAction(args);
 
-      switch (toolName) {
-        case TOOLS.BROWSER_STATUS: {
-          await bridge.checkAvailability();
-          const status = bridge.getStatus();
-          return {
-            content: [
-              { type: 'text', text: JSON.stringify(status, null, 2) },
-            ],
-          };
-        }
-        case TOOLS.BROWSER_LAUNCH: {
-          const session = await bridge.launch(
-            p.sessionId as string,
-            {
-              url: p.url as string | undefined,
-              headless: p.headless as boolean | undefined,
-              viewportWidth: p.viewportWidth as number | undefined,
-              viewportHeight: p.viewportHeight as number | undefined,
-            }
-          );
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `Browser session "${session.sessionId}" launched successfully at ${session.createdAt.toISOString()}`,
-              },
-            ],
-          };
-        }
-        case TOOLS.BROWSER_SCREENSHOT: {
-          const { image, url, title } = await bridge.screenshot(p.sessionId as string);
-          return {
-            content: [
-              { type: 'image', text: '', data: image.toString('base64'), mimeType: 'image/png' },
-              { type: 'text', text: `URL: ${url}\nTitle: ${title}` },
-            ],
-          };
-        }
-        case TOOLS.BROWSER_CLICK: {
-          const x = p.x as number;
-          const y = p.y as number;
-          await bridge.click(p.sessionId as string, x, y, {
-            button: p.button as string | undefined,
-            clickCount: p.clickCount as number | undefined,
-          });
-          return {
-            content: [{ type: 'text', text: `Clicked at (${x}, ${y}) with ${p.button ?? 'left'} button` }],
-          };
-        }
-        case TOOLS.BROWSER_TYPE: {
-          const text = p.text as string;
-          await bridge.type(p.sessionId as string, text);
-          return {
-            content: [{ type: 'text', text: `Typed "${text}"` }],
-          };
-        }
-        case TOOLS.BROWSER_SCROLL: {
-          const direction = p.direction as string;
-          const amount = p.amount as number;
-          await bridge.scroll(p.sessionId as string, direction, amount);
-          return {
-            content: [{ type: 'text', text: `Scrolled ${direction} by ${amount}px` }],
-          };
-        }
-        case TOOLS.BROWSER_DRAG: {
-          const fromX = p.fromX as number;
-          const fromY = p.fromY as number;
-          const toX = p.toX as number;
-          const toY = p.toY as number;
-          await bridge.drag(p.sessionId as string, fromX, fromY, toX, toY);
-          return {
-            content: [{ type: 'text', text: `Dragged from (${fromX}, ${fromY}) to (${toX}, ${toY})` }],
-          };
-        }
-        case TOOLS.BROWSER_KEY: {
-          const key = p.key as string;
-          const normalizedKey = normalizeKey(key);
-          await bridge.key(p.sessionId as string, normalizedKey);
-          return {
-            content: [{ type: 'text', text: `Pressed key: ${key}` }],
-          };
-        }
-        case TOOLS.BROWSER_NAVIGATE: {
-          const url = p.url as string;
-          await bridge.navigate(p.sessionId as string, url);
-          return {
-            content: [{ type: 'text', text: `Navigated to ${url}` }],
-          };
-        }
-        case TOOLS.BROWSER_CLOSE: {
-          const sessionId = p.sessionId as string;
-          await bridge.close(sessionId);
-          return {
-            content: [{ type: 'text', text: `Session "${sessionId}" closed` }],
-          };
-        }
-        default:
-          throw new ValidationError(toolName, `Unknown browser tool: ${toolName}`);
+      switch (parsed.action) {
+        case 'open': return this.handleOpen(parsed);
+        case 'screenshot': return this.handleScreenshot(parsed);
+        case 'navigate': return this.handleNavigate(parsed);
+        case 'click': return this.handleClick(parsed);
+        case 'type': return this.handleType(parsed);
+        case 'key': return this.handleKey(parsed);
+        case 'scroll': return this.handleScroll(parsed);
+        case 'drag': return this.handleDrag(parsed);
+        case 'close': return this.handleClose(parsed);
+        case 'status': return this.handleStatus();
       }
     } catch (error) {
       if (error instanceof ValidationError) throw error;
       if (error instanceof ZodError) {
-        throw new ValidationError(toolName, error.message);
+        throw new ValidationError(TOOLS.BROWSER, error.message);
       }
-      throw new ToolExecutionError(toolName, 'Browser operation failed', error);
+      throw new ToolExecutionError(TOOLS.BROWSER, 'Browser operation failed', error);
     }
+  }
+
+  private async handleOpen(args: { action: 'open'; sessionId: string; url?: string; headless?: boolean; viewportWidth?: number; viewportHeight?: number }): Promise<ToolResult> {
+    const session = await bridge.launch(args.sessionId, {
+      url: args.url,
+      headless: args.headless,
+      viewportWidth: args.viewportWidth,
+      viewportHeight: args.viewportHeight,
+    });
+    return {
+      content: [
+        { type: 'text', text: `Session "${session.sessionId}" opened at ${session.createdAt.toISOString()}` },
+      ],
+    };
+  }
+
+  private async handleScreenshot(args: { action: 'screenshot'; sessionId: string }): Promise<ToolResult> {
+    const { image, url, title } = await bridge.screenshot(args.sessionId);
+    return {
+      content: [
+        { type: 'image', text: '', data: image.toString('base64'), mimeType: 'image/png' },
+        { type: 'text', text: `URL: ${url}\nTitle: ${title}` },
+      ],
+    };
+  }
+
+  private async handleNavigate(args: { action: 'navigate'; sessionId: string; url: string }): Promise<ToolResult> {
+    await bridge.navigate(args.sessionId, args.url);
+    return { content: [{ type: 'text', text: `Navigated to ${args.url}` }] };
+  }
+
+  private async handleClick(args: { action: 'click'; sessionId: string; x: number; y: number; button?: string; clickCount?: number }): Promise<ToolResult> {
+    await bridge.click(args.sessionId, args.x, args.y, {
+      button: args.button,
+      clickCount: args.clickCount,
+    });
+    return { content: [{ type: 'text', text: `Clicked at (${args.x}, ${args.y})` }] };
+  }
+
+  private async handleType(args: { action: 'type'; sessionId: string; text: string }): Promise<ToolResult> {
+    await bridge.type(args.sessionId, args.text);
+    return { content: [{ type: 'text', text: `Typed "${args.text}"` }] };
+  }
+
+  private async handleKey(args: { action: 'key'; sessionId: string; key: string }): Promise<ToolResult> {
+    await bridge.key(args.sessionId, normalizeKey(args.key));
+    return { content: [{ type: 'text', text: `Pressed key: ${args.key}` }] };
+  }
+
+  private async handleScroll(args: { action: 'scroll'; sessionId: string; direction: string; amount: number }): Promise<ToolResult> {
+    await bridge.scroll(args.sessionId, args.direction, args.amount);
+    return { content: [{ type: 'text', text: `Scrolled ${args.direction} by ${args.amount}px` }] };
+  }
+
+  private async handleDrag(args: { action: 'drag'; sessionId: string; fromX: number; fromY: number; toX: number; toY: number }): Promise<ToolResult> {
+    await bridge.drag(args.sessionId, args.fromX, args.fromY, args.toX, args.toY);
+    return { content: [{ type: 'text', text: `Dragged from (${args.fromX}, ${args.fromY}) to (${args.toX}, ${args.toY})` }] };
+  }
+
+  private async handleClose(args: { action: 'close'; sessionId: string }): Promise<ToolResult> {
+    await bridge.close(args.sessionId);
+    return { content: [{ type: 'text', text: `Session "${args.sessionId}" closed` }] };
+  }
+
+  private async handleStatus(): Promise<ToolResult> {
+    await bridge.checkAvailability();
+    const status = bridge.getStatus();
+    return { content: [{ type: 'text', text: JSON.stringify(status, null, 2) }] };
   }
 }
 

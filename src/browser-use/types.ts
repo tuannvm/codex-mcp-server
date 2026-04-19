@@ -1,19 +1,8 @@
 import { z } from 'zod';
 
-export const BROWSER_TOOLS = {
-  LAUNCH: 'browser_launch',
-  SCREENSHOT: 'browser_screenshot',
-  CLICK: 'browser_click',
-  TYPE: 'browser_type',
-  SCROLL: 'browser_scroll',
-  DRAG: 'browser_drag',
-  KEY: 'browser_key',
-  NAVIGATE: 'browser_navigate',
-  CLOSE: 'browser_close',
-  STATUS: 'browser_status',
-} as const;
-
-export const LaunchSchema = z.object({
+// Per-action schemas (separate for validation reuse and clean errors)
+const openSchema = z.object({
+  action: z.literal('open'),
   sessionId: z.string().min(1, 'Session ID is required'),
   url: z.string().optional(),
   headless: z.boolean().optional().default(true),
@@ -21,11 +10,19 @@ export const LaunchSchema = z.object({
   viewportHeight: z.int().optional().default(900),
 });
 
-export const ScreenshotSchema = z.object({
+const navigateSchema = z.object({
+  action: z.literal('navigate'),
+  sessionId: z.string().min(1, 'Session ID is required'),
+  url: z.string().min(1, 'URL is required'),
+});
+
+const screenshotSchema = z.object({
+  action: z.literal('screenshot'),
   sessionId: z.string().min(1, 'Session ID is required'),
 });
 
-export const ClickSchema = z.object({
+const clickSchema = z.object({
+  action: z.literal('click'),
   sessionId: z.string().min(1, 'Session ID is required'),
   x: z.number(),
   y: z.number(),
@@ -33,18 +30,27 @@ export const ClickSchema = z.object({
   clickCount: z.int().optional().default(1),
 });
 
-export const TypeSchema = z.object({
+const typeSchema = z.object({
+  action: z.literal('type'),
   sessionId: z.string().min(1, 'Session ID is required'),
   text: z.string().min(1, 'Text to type is required'),
 });
 
-export const ScrollSchema = z.object({
+const keySchema = z.object({
+  action: z.literal('key'),
+  sessionId: z.string().min(1, 'Session ID is required'),
+  key: z.string().min(1, 'Key is required'),
+});
+
+const scrollSchema = z.object({
+  action: z.literal('scroll'),
   sessionId: z.string().min(1, 'Session ID is required'),
   direction: z.enum(['up', 'down', 'left', 'right']),
   amount: z.int().optional().default(300),
 });
 
-export const DragSchema = z.object({
+const dragSchema = z.object({
+  action: z.literal('drag'),
   sessionId: z.string().min(1, 'Session ID is required'),
   fromX: z.number(),
   fromY: z.number(),
@@ -52,34 +58,50 @@ export const DragSchema = z.object({
   toY: z.number(),
 });
 
-export const KeySchema = z.object({
-  sessionId: z.string().min(1, 'Session ID is required'),
-  key: z.string().min(1, 'Key is required'),
-});
-
-export const NavigateSchema = z.object({
-  sessionId: z.string().min(1, 'Session ID is required'),
-  url: z.string().min(1, 'URL is required'),
-});
-
-export const CloseSchema = z.object({
+const closeSchema = z.object({
+  action: z.literal('close'),
   sessionId: z.string().min(1, 'Session ID is required'),
 });
 
-export const StatusSchema = z.object({});
+const statusSchema = z.object({
+  action: z.literal('status'),
+});
 
-export const BROWSER_SCHEMAS: Record<string, z.ZodType> = {
-  [BROWSER_TOOLS.LAUNCH]: LaunchSchema,
-  [BROWSER_TOOLS.SCREENSHOT]: ScreenshotSchema,
-  [BROWSER_TOOLS.CLICK]: ClickSchema,
-  [BROWSER_TOOLS.TYPE]: TypeSchema,
-  [BROWSER_TOOLS.SCROLL]: ScrollSchema,
-  [BROWSER_TOOLS.DRAG]: DragSchema,
-  [BROWSER_TOOLS.KEY]: KeySchema,
-  [BROWSER_TOOLS.NAVIGATE]: NavigateSchema,
-  [BROWSER_TOOLS.CLOSE]: CloseSchema,
-  [BROWSER_TOOLS.STATUS]: StatusSchema,
+// Discriminated union for single-parse validation
+export const BrowserActionSchema = z.discriminatedUnion('action', [
+  openSchema, navigateSchema, screenshotSchema, clickSchema,
+  typeSchema, keySchema, scrollSchema, dragSchema,
+  closeSchema, statusSchema,
+]);
+
+// Map action to its schema for per-action validation (fixes #3: clean error messages)
+const ACTION_SCHEMAS: Record<string, z.ZodType> = {
+  open: openSchema,
+  navigate: navigateSchema,
+  screenshot: screenshotSchema,
+  click: clickSchema,
+  type: typeSchema,
+  key: keySchema,
+  scroll: scrollSchema,
+  drag: dragSchema,
+  close: closeSchema,
+  status: statusSchema,
 };
+
+export type BrowserAction = z.infer<typeof BrowserActionSchema>;
+
+export function parseBrowserAction(args: unknown): BrowserAction {
+  const raw = args as Record<string, unknown>;
+  const action = typeof raw.action === 'string' ? raw.action : undefined;
+
+  // Per-action validation for clean error messages
+  if (action && ACTION_SCHEMAS[action]) {
+    return ACTION_SCHEMAS[action].parse(args) as BrowserAction;
+  }
+
+  // Fallback: full discriminated union parse (handles missing/invalid action)
+  return BrowserActionSchema.parse(args) as BrowserAction;
+}
 
 export interface BrowserSession {
   sessionId: string;
@@ -95,7 +117,6 @@ export interface BrowserStatus {
   sessionIds: string[];
 }
 
-// Map modifier keys from user-friendly names to Playwright key names
 export function normalizeKey(key: string): string {
   const map: Record<string, string> = {
     Ctrl: 'Control',

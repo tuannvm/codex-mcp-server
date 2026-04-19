@@ -52,16 +52,7 @@ All tools include annotations that provide hints to MCP clients about tool behav
 | `ping` | Ping Server | `true` | `false` | `true` | `false` |
 | `help` | Get Help | `true` | `false` | `true` | `false` |
 | `listSessions` | List Sessions | `true` | `false` | `true` | `false` |
-| `browser_launch` | Launch Browser | `false` | `false` | `false` | `true` |
-| `browser_screenshot` | Browser Screenshot | `true` | `false` | `true` | `false` |
-| `browser_click` | Browser Click | `false` | `false` | `false` | `false` |
-| `browser_type` | Browser Type | `false` | `false` | `false` | `false` |
-| `browser_scroll` | Browser Scroll | `false` | `false` | `false` | `false` |
-| `browser_drag` | Browser Drag | `false` | `false` | `false` | `false` |
-| `browser_key` | Browser Key Press | `false` | `false` | `false` | `false` |
-| `browser_navigate` | Browser Navigate | `false` | `false` | `false` | `true` |
-| `browser_close` | Close Browser | `false` | `true` | `true` | `false` |
-| `browser_status` | Browser Status | `true` | `false` | `true` | `false` |
+| `browser` | Browser Control | `false` | `true` | `false` | `true` |
 
 ### Progress Notifications
 For long-running operations, the server sends `notifications/progress` messages when the client includes a `progressToken` in the request `_meta`.
@@ -452,95 +443,35 @@ Optional:
 - **Session Limits**: Configurable in server implementation (default: 100)
 - **TTL Settings**: Configurable session expiration (default: 24 hours)
 
-## Browser Use Tools
+## Browser Use
 
 Cross-platform browser automation via Playwright. See [Browser Use](browser-use.md) for setup instructions.
 
-### `browser_status` — Health Check
+### `browser` — Browser Control
 
-**Annotations:** `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true`
+**Annotations:** `readOnlyHint: false`, `destructiveHint: true`, `idempotentHint: false`, `openWorldHint: true`
 
-No parameters. Returns Playwright availability, active sessions, and any error.
+A single tool for all browser operations, selected via the `action` parameter.
 
-### `browser_launch` — Launch Browser
-
-**Annotations:** `readOnlyHint: false`, `destructiveHint: false`, `idempotentHint: false`, `openWorldHint: true`
-
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `sessionId` | string | yes | - | Unique session identifier |
-| `url` | string | no | - | URL to navigate to on launch |
-| `headless` | boolean | no | `true` | Run without visible window |
-| `viewportWidth` | integer | no | `1440` | Viewport width in pixels |
-| `viewportHeight` | integer | no | `900` | Viewport height in pixels |
-
-### `browser_screenshot` — Take Screenshot
-
-**Annotations:** `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true`
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `sessionId` | string | yes | Browser session ID |
-
-Returns base64 PNG image, page URL, and page title.
-
-### `browser_click` — Click
-
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `sessionId` | string | yes | - | Browser session ID |
-| `x` | number | yes | - | X coordinate (viewport-relative) |
-| `y` | number | yes | - | Y coordinate (viewport-relative) |
-| `button` | enum | no | `left` | `left`, `right`, or `middle` |
-| `clickCount` | integer | no | `1` | Number of clicks |
-
-### `browser_type` — Type Text
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `sessionId` | string | yes | Browser session ID |
-| `text` | string | yes | Text to type into focused element |
-
-### `browser_scroll` — Scroll
-
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `sessionId` | string | yes | - | Browser session ID |
-| `direction` | enum | yes | - | `up`, `down`, `left`, or `right` |
-| `amount` | integer | no | `300` | Scroll amount in pixels |
-
-### `browser_drag` — Drag
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `sessionId` | string | yes | Browser session ID |
-| `fromX` | number | yes | Start X coordinate |
-| `fromY` | number | yes | Start Y coordinate |
-| `toX` | number | yes | End X coordinate |
-| `toY` | number | yes | End Y coordinate |
-
-### `browser_key` — Key Press
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `sessionId` | string | yes | Browser session ID |
-| `key` | string | yes | Key or combo (`Enter`, `Control+a`, `Meta+s`) |
+| Parameter | Type | Required | Action | Default | Description |
+|-----------|------|----------|--------|---------|-------------|
+| `action` | enum | yes | all | — | `open`, `screenshot`, `navigate`, `click`, `type`, `key`, `scroll`, `drag`, `close`, `status` |
+| `sessionId` | string | see below | all except `status` | — | Browser session ID |
+| `url` | string | no | `open`, `navigate` | — | URL to open or navigate to |
+| `headless` | boolean | no | `open` | `true` | Run without visible window |
+| `viewportWidth` | integer | no | `open` | `1440` | Viewport width in pixels |
+| `viewportHeight` | integer | no | `open` | `900` | Viewport height in pixels |
+| `x` | number | no | `click` | — | X coordinate (viewport-relative) |
+| `y` | number | no | `click` | — | Y coordinate (viewport-relative) |
+| `button` | enum | no | `click` | `left` | `left`, `right`, or `middle` |
+| `clickCount` | integer | no | `click` | `1` | Number of clicks |
+| `text` | string | no | `type` | — | Text to type into focused element |
+| `key` | string | no | `key` | — | Key or combo (`Enter`, `Control+a`, `Meta+s`) |
+| `direction` | enum | no | `scroll` | — | `up`, `down`, `left`, or `right` |
+| `amount` | integer | no | `scroll` | `300` | Scroll amount in pixels |
+| `fromX` | number | no | `drag` | — | Start X coordinate |
+| `fromY` | number | no | `drag` | — | Start Y coordinate |
+| `toX` | number | no | `drag` | — | End X coordinate |
+| `toY` | number | no | `drag` | — | End Y coordinate |
 
 Modifier keys are auto-normalized: `Cmd`/`Command` → `Meta`, `Ctrl` → `Control`, `Opt`/`Option` → `Alt`.
-
-### `browser_navigate` — Navigate
-
-**Annotations:** `readOnlyHint: false`, `destructiveHint: false`, `idempotentHint: false`, `openWorldHint: true`
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `sessionId` | string | yes | Browser session ID |
-| `url` | string | yes | URL to navigate to |
-
-### `browser_close` — Close Session
-
-**Annotations:** `readOnlyHint: false`, `destructiveHint: true`, `idempotentHint: true`
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `sessionId` | string | yes | Browser session ID to close |

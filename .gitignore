@@ -44,4 +44,10 @@ temp/
 
 # Jest cache
 .jest/
-.claude/harness/
+.claude/
+
+# Local artifacts
+trash/
+.entire/
+test-mcp.mjs
+tmux/

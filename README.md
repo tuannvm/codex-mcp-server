@@ -58,7 +58,7 @@ Use review to check my uncommitted changes
 | `codex` | AI coding assistant with session support, model selection, and structured output metadata |
 | `review` | AI-powered code review for uncommitted changes, branches, or commits |
 | `websearch` | Web search using Codex CLI with customizable result count and search depth |
-| `browser_*` | 10 browser automation tools — launch, screenshot, click, type, scroll, drag, navigate ([setup](docs/browser-use.md)) |
+| `browser` | Browser automation via Playwright — open, screenshot, click, type, scroll, drag, navigate ([setup](docs/browser-use.md)) |
 | `listSessions` | View active conversation sessions |
 | `ping` | Test server connection |
 | `help` | Get Codex CLI help |
@@ -99,10 +99,10 @@ Use websearch with query "TypeScript 5.8 new features"
 
 **Browser Automation:**
 ```
-Use browser_status to check if Playwright is available
-Use browser_launch with sessionId "web1" and url "https://example.com"
-Use browser_screenshot with sessionId "web1" to see the page
-Use browser_click with sessionId "web1", x 100, and y 200
+Use browser with action "status" to check if Playwright is available
+Use browser with action "open", sessionId "web1", and url "https://example.com"
+Use browser with action "screenshot" and sessionId "web1" to see the page
+Use browser with action "click", sessionId "web1", x 100, and y 200
 ```
 
 ## Requirements

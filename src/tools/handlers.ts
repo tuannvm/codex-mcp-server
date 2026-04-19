@@ -580,11 +580,6 @@ export class WebSearchToolHandler {
 // Tool handler registry
 const sessionStorage = new InMemorySessionStorage();
 
-const browserHandler = (toolName: string) => ({
-  execute: (args: unknown, context?: ToolHandlerContext) =>
-    browserUseHandler.execute(toolName, args, context),
-});
-
 export const toolHandlers = {
   [TOOLS.CODEX]: new CodexToolHandler(sessionStorage),
   [TOOLS.REVIEW]: new ReviewToolHandler(),
@@ -592,16 +587,7 @@ export const toolHandlers = {
   [TOOLS.HELP]: new HelpToolHandler(),
   [TOOLS.LIST_SESSIONS]: new ListSessionsToolHandler(sessionStorage),
   [TOOLS.WEBSEARCH]: new WebSearchToolHandler(),
-  [TOOLS.BROWSER_LAUNCH]: browserHandler(TOOLS.BROWSER_LAUNCH),
-  [TOOLS.BROWSER_SCREENSHOT]: browserHandler(TOOLS.BROWSER_SCREENSHOT),
-  [TOOLS.BROWSER_CLICK]: browserHandler(TOOLS.BROWSER_CLICK),
-  [TOOLS.BROWSER_TYPE]: browserHandler(TOOLS.BROWSER_TYPE),
-  [TOOLS.BROWSER_SCROLL]: browserHandler(TOOLS.BROWSER_SCROLL),
-  [TOOLS.BROWSER_DRAG]: browserHandler(TOOLS.BROWSER_DRAG),
-  [TOOLS.BROWSER_KEY]: browserHandler(TOOLS.BROWSER_KEY),
-  [TOOLS.BROWSER_NAVIGATE]: browserHandler(TOOLS.BROWSER_NAVIGATE),
-  [TOOLS.BROWSER_CLOSE]: browserHandler(TOOLS.BROWSER_CLOSE),
-  [TOOLS.BROWSER_STATUS]: browserHandler(TOOLS.BROWSER_STATUS),
+  [TOOLS.BROWSER]: browserUseHandler,
 };
 
 // Export shutdown function for browser cleanup

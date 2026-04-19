@@ -1,6 +1,6 @@
 # Browser Use
 
-Playwright-based browser automation. Launch a real Chromium browser, take screenshots, click, type, scroll, drag, and navigate — all via MCP tools.
+Playwright-based browser automation. Launch a real Chromium browser, take screenshots, click, type, scroll, drag, and navigate — all via a single MCP tool with an `action` parameter.
 
 ## Architecture
 
@@ -21,96 +21,36 @@ npm install playwright
 npx playwright install chromium
 ```
 
-Playwright is a **peer dependency** — install it separately. The server works fine without it; browser tools will return a helpful error if Playwright isn't available.
+Playwright is a **peer dependency** — install it separately. The server works fine without it; the browser tool will return a helpful error if Playwright isn't available.
 
-## Tools
+## Tool: `browser`
 
-### `browser_status` — Health Check
+A single tool for all browser operations. Every call requires an `action` parameter.
 
-Works even without Playwright installed. Returns availability, active sessions, and any error.
+### Session Lifecycle
 
-```json
-{ "sessionId": "my-session" }
-```
+| Action | Example | Description |
+|--------|---------|-------------|
+| `open` | `{ "action": "open", "sessionId": "s1", "url": "https://example.com" }` | Launch a browser session. Optional: `url`, `headless` (default true), `viewportWidth` (default 1440), `viewportHeight` (default 900) |
+| `status` | `{ "action": "status" }` | Check if Playwright is available and list active sessions |
+| `close` | `{ "action": "close", "sessionId": "s1" }` | Close a session and clean up resources |
 
-### `browser_launch` — Launch Browser
+### Navigation & Capture
 
-Creates a new browser session. Supports multiple concurrent sessions with unique IDs.
+| Action | Example | Description |
+|--------|---------|-------------|
+| `navigate` | `{ "action": "navigate", "sessionId": "s1", "url": "https://example.com/page2" }` | Navigate to a URL |
+| `screenshot` | `{ "action": "screenshot", "sessionId": "s1" }` | Take a screenshot. Returns base64 PNG image data + page URL + title |
 
-```json
-{
-  "sessionId": "my-session",
-  "url": "https://example.com",
-  "headless": true,
-  "viewportWidth": 1440,
-  "viewportHeight": 900
-}
-```
+### Input Actions
 
-### `browser_screenshot` — Take Screenshot
-
-Returns base64 PNG image data along with the current page URL and title.
-
-```json
-{ "sessionId": "my-session" }
-```
-
-### `browser_click` — Click
-
-Click at viewport-relative pixel coordinates.
-
-```json
-{ "sessionId": "my-session", "x": 100, "y": 200, "button": "left", "clickCount": 1 }
-```
-
-### `browser_type` — Type Text
-
-Type literal text into the currently focused element. Click on an input field first.
-
-```json
-{ "sessionId": "my-session", "text": "hello world" }
-```
-
-### `browser_scroll` — Scroll
-
-Scroll the page in a direction by a pixel amount.
-
-```json
-{ "sessionId": "my-session", "direction": "down", "amount": 300 }
-```
-
-### `browser_drag` — Drag
-
-Drag from one coordinate to another (viewport-relative).
-
-```json
-{ "sessionId": "my-session", "fromX": 100, "fromY": 100, "toX": 300, "toY": 300 }
-```
-
-### `browser_key` — Key Press
-
-Press a key or key combination. Supports Playwright key names. Modifier keys are auto-normalized: `Cmd` → `Meta`, `Ctrl` → `Control`, `Opt` → `Alt`, etc.
-
-```json
-{ "sessionId": "my-session", "key": "Control+a" }
-{ "sessionId": "my-session", "key": "Cmd+s" }
-```
-
-### `browser_navigate` — Navigate
-
-Go to a URL in the current page.
-
-```json
-{ "sessionId": "my-session", "url": "https://example.com" }
-```
-
-### `browser_close` — Close Session
-
-Close a browser session and clean up resources.
-
-```json
-{ "sessionId": "my-session" }
-```
+| Action | Example | Description |
+|--------|---------|-------------|
+| `click` | `{ "action": "click", "sessionId": "s1", "x": 100, "y": 200 }` | Click at viewport coordinates. Optional: `button` (left/right/middle), `clickCount` |
+| `type` | `{ "action": "type", "sessionId": "s1", "text": "hello world" }` | Type text into the focused element |
+| `key` | `{ "action": "key", "sessionId": "s1", "key": "Control+a" }` | Press a key or combo. Modifier keys auto-normalized (`Cmd`→`Meta`, `Ctrl`→`Control`) |
+| `scroll` | `{ "action": "scroll", "sessionId": "s1", "direction": "down", "amount": 300 }` | Scroll page: `up`/`down`/`left`/`right` by pixel amount |
+| `drag` | `{ "action": "drag", "sessionId": "s1", "fromX": 0, "fromY": 0, "toX": 100, "toY": 100 }` | Drag from one coordinate to another (viewport-relative) |
 
 ## Troubleshooting
 
@@ -118,10 +58,10 @@ Close a browser session and clean up resources.
 Install it: `npm install playwright && npx playwright install chromium`
 
 **"Session already exists"**
-Use a different sessionId or close the existing session first with `browser_close`.
+Use a different sessionId or close the existing session first.
 
 **"No active browser session"**
-You must call `browser_launch` before using other browser tools.
+You must call `{ "action": "open" }` before any other action.
 
 **Screenshots not loading**
 Check that the client supports `image` content type in MCP tool results. Claude Code supports this natively.

@@ -45,7 +45,7 @@ class BrowserUseBridge {
   getSession(sessionId: string): BrowserSession {
     const session = this.sessions.get(sessionId);
     if (!session) {
-      throw new Error(`No active browser session with ID "${sessionId}". Use browser_launch to create one.`);
+      throw new Error(`No active browser session with ID "${sessionId}". Use browser with action "open" to create one.`);
     }
     return session;
   }

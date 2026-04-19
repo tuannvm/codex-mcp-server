@@ -41,6 +41,11 @@ MCP Client (Claude Code)
     → ToolHandlers (handlers.ts)
     → executeCommand (command.ts)
     → Codex CLI
+
+    → BrowserUseToolHandler (handlers.ts)
+    → BrowserUseBridge (bridge.ts)
+    → Playwright (peer dependency)
+    → Chromium instances
 ```
 
 ### Key Files
@@ -55,6 +60,11 @@ MCP Client (Claude Code)
 | `src/session/storage.ts` | In-memory session storage for conversation context |
 | `src/utils/command.ts` | Command spawning with streaming support and Windows compatibility |
 | `src/errors.ts` | Custom error classes (ValidationError, ToolExecutionError) |
+| `src/browser-use/bridge.ts` | Singleton browser session manager (lazy Playwright init) |
+| `src/browser-use/client.ts` | Playwright session operations (launch, screenshot, click, etc.) |
+| `src/browser-use/handlers.ts` | Browser tool handler — dispatches on `action` parameter |
+| `src/browser-use/definitions.ts` | Browser tool MCP schema and annotations |
+| `src/browser-use/types.ts` | Zod schemas for browser actions, key normalization |
 
 ### MCP Tools
 
@@ -64,6 +74,7 @@ MCP Client (Claude Code)
 - **listSessions**: View active conversation sessions
 - **ping**: Test server connection
 - **help**: Get Codex CLI help
+- **browser**: Playwright-based browser automation via a single `action` parameter (`open`, `screenshot`, `navigate`, `click`, `type`, `key`, `scroll`, `drag`, `close`, `status`). Playwright is a peer dependency — lazy-loaded on first use.
 
 ### Session Management
 

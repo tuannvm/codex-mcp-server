@@ -68,8 +68,8 @@ import { bridge } from '../browser-use/bridge.js';
 describe('Codex MCP Server', () => {
   describe('Tool Definitions', () => {
     test('should have all required tools defined', () => {
-      // 6 core tools + 10 browser tools = 16
-      expect(toolDefinitions).toHaveLength(16);
+      // 6 core tools + 1 browser tool = 7
+      expect(toolDefinitions).toHaveLength(7);
 
       const toolNames = toolDefinitions.map((tool) => tool.name);
       expect(toolNames).toContain(TOOLS.CODEX);
@@ -80,18 +80,24 @@ describe('Codex MCP Server', () => {
       expect(toolNames).toContain(TOOLS.LIST_SESSIONS);
     });
 
-    test('should have all browser tools defined', () => {
+    test('should have browser tool defined', () => {
       const toolNames = toolDefinitions.map((tool) => tool.name);
-      expect(toolNames).toContain(TOOLS.BROWSER_LAUNCH);
-      expect(toolNames).toContain(TOOLS.BROWSER_SCREENSHOT);
-      expect(toolNames).toContain(TOOLS.BROWSER_CLICK);
-      expect(toolNames).toContain(TOOLS.BROWSER_TYPE);
-      expect(toolNames).toContain(TOOLS.BROWSER_SCROLL);
-      expect(toolNames).toContain(TOOLS.BROWSER_DRAG);
-      expect(toolNames).toContain(TOOLS.BROWSER_KEY);
-      expect(toolNames).toContain(TOOLS.BROWSER_NAVIGATE);
-      expect(toolNames).toContain(TOOLS.BROWSER_CLOSE);
-      expect(toolNames).toContain(TOOLS.BROWSER_STATUS);
+      expect(toolNames).toContain(TOOLS.BROWSER);
+    });
+
+    test('browser tool should require action parameter', () => {
+      const browserTool = toolDefinitions.find((tool) => tool.name === TOOLS.BROWSER);
+      expect(browserTool).toBeDefined();
+      expect(browserTool?.inputSchema.required).toContain('action');
+      expect(browserTool?.inputSchema.required).not.toContain('sessionId');
+    });
+
+    test('browser tool should include all action types in enum', () => {
+      const browserTool = toolDefinitions.find((tool) => tool.name === TOOLS.BROWSER);
+      const actionEnum = browserTool?.inputSchema.properties.action as { enum: string[] };
+      expect(actionEnum.enum).toEqual(
+        expect.arrayContaining(['open', 'screenshot', 'navigate', 'click', 'type', 'key', 'scroll', 'drag', 'close', 'status'])
+      );
     });
 
     test('codex tool should define output schema', () => {
@@ -124,23 +130,6 @@ describe('Codex MCP Server', () => {
       expect(helpTool?.inputSchema.required).toEqual([]);
       expect(helpTool?.description).toContain('Get Codex CLI help');
     });
-
-    test('browser tools should have sessionId required', () => {
-      const browserTools = toolDefinitions.filter((t) =>
-        t.name.startsWith('browser_') && t.name !== 'browser_status'
-      );
-      for (const tool of browserTools) {
-        expect(tool.inputSchema.required).toContain('sessionId');
-      }
-    });
-
-    test('browser_status should have no required parameters', () => {
-      const statusTool = toolDefinitions.find(
-        (tool) => tool.name === TOOLS.BROWSER_STATUS
-      );
-      expect(statusTool).toBeDefined();
-      expect(statusTool?.inputSchema.required).toEqual([]);
-    });
   });
 
   describe('Tool Handlers', () => {
@@ -157,17 +146,8 @@ describe('Codex MCP Server', () => {
       );
     });
 
-    test('should have handlers for all browser tools', () => {
-      expect(toolHandlers[TOOLS.BROWSER_LAUNCH]).toBeDefined();
-      expect(toolHandlers[TOOLS.BROWSER_SCREENSHOT]).toBeDefined();
-      expect(toolHandlers[TOOLS.BROWSER_CLICK]).toBeDefined();
-      expect(toolHandlers[TOOLS.BROWSER_TYPE]).toBeDefined();
-      expect(toolHandlers[TOOLS.BROWSER_SCROLL]).toBeDefined();
-      expect(toolHandlers[TOOLS.BROWSER_DRAG]).toBeDefined();
-      expect(toolHandlers[TOOLS.BROWSER_KEY]).toBeDefined();
-      expect(toolHandlers[TOOLS.BROWSER_NAVIGATE]).toBeDefined();
-      expect(toolHandlers[TOOLS.BROWSER_CLOSE]).toBeDefined();
-      expect(toolHandlers[TOOLS.BROWSER_STATUS]).toBeDefined();
+    test('should have handler for browser tool', () => {
+      expect(toolHandlers[TOOLS.BROWSER]).toBeDefined();
     });
 
     test('ping handler should return message', async () => {
@@ -215,15 +195,15 @@ describe('Codex MCP Server', () => {
     });
   });
 
-  describe('Browser Tool Handlers', () => {
+  describe('Browser Tool Handler', () => {
     afterEach(async () => {
       await bridge.shutdown();
     });
 
-    test('browser_status should return status JSON', async () => {
-      const handler = toolHandlers[TOOLS.BROWSER_STATUS];
-      const result = await handler.execute({});
+    const handler = () => toolHandlers[TOOLS.BROWSER];
 
+    test('action=status should return status JSON', async () => {
+      const result = await handler().execute({ action: 'status' });
       expect(result.content[0].type).toBe('text');
       const status = JSON.parse(result.content[0].text);
       expect(status).toHaveProperty('available');
@@ -231,77 +211,84 @@ describe('Codex MCP Server', () => {
       expect(status).toHaveProperty('sessionIds');
     });
 
-    test('browser_launch should create a session', async () => {
-      const handler = toolHandlers[TOOLS.BROWSER_LAUNCH];
-      const result = await handler.execute({ sessionId: 'test-session-1' });
-
-      expect(result.content[0].type).toBe('text');
-      expect(result.content[0].text).toContain('test-session-1');
-      expect(result.content[0].text).toContain('launched successfully');
-
-      // Clean up
-      const closeHandler = toolHandlers[TOOLS.BROWSER_CLOSE];
-      await closeHandler.execute({ sessionId: 'test-session-1' });
+    test('action=open should create a session', async () => {
+      const result = await handler().execute({ action: 'open', sessionId: 'test-1' });
+      expect(result.content[0].text).toContain('test-1');
+      expect(result.content[0].text).toContain('opened');
+      await handler().execute({ action: 'close', sessionId: 'test-1' });
     });
 
-    test('browser_close should close a session', async () => {
-      // First launch
-      const launchHandler = toolHandlers[TOOLS.BROWSER_LAUNCH];
-      await launchHandler.execute({ sessionId: 'test-session-close' });
+    test('action=open with url should navigate on launch', async () => {
+      const result = await handler().execute({ action: 'open', sessionId: 'test-url', url: 'https://example.com' });
+      expect(result.content[0].text).toContain('test-url');
+      await handler().execute({ action: 'close', sessionId: 'test-url' });
+    });
 
-      // Then close
-      const closeHandler = toolHandlers[TOOLS.BROWSER_CLOSE];
-      const result = await closeHandler.execute({ sessionId: 'test-session-close' });
-
-      expect(result.content[0].text).toContain('test-session-close');
+    test('action=close should close a session', async () => {
+      await handler().execute({ action: 'open', sessionId: 'test-close' });
+      const result = await handler().execute({ action: 'close', sessionId: 'test-close' });
+      expect(result.content[0].text).toContain('test-close');
       expect(result.content[0].text).toContain('closed');
     });
 
-    test('browser_screenshot should return image data', async () => {
-      const launchHandler = toolHandlers[TOOLS.BROWSER_LAUNCH];
-      await launchHandler.execute({ sessionId: 'test-screenshot' });
+    test('action=navigate should go to URL', async () => {
+      await handler().execute({ action: 'open', sessionId: 'test-nav' });
+      const result = await handler().execute({ action: 'navigate', sessionId: 'test-nav', url: 'https://example.com' });
+      expect(result.content[0].text).toContain('Navigated');
+      await handler().execute({ action: 'close', sessionId: 'test-nav' });
+    });
 
-      const screenshotHandler = toolHandlers[TOOLS.BROWSER_SCREENSHOT];
-      const result = await screenshotHandler.execute({ sessionId: 'test-screenshot' });
-
+    test('action=screenshot should return image data', async () => {
+      await handler().execute({ action: 'open', sessionId: 'test-ss' });
+      const result = await handler().execute({ action: 'screenshot', sessionId: 'test-ss' });
       expect(result.content).toHaveLength(2);
       expect(result.content[0].type).toBe('image');
       expect(result.content[0].data).toBeDefined();
       expect(result.content[0].mimeType).toBe('image/png');
       expect(result.content[1].type).toBe('text');
-
-      // Clean up
-      const closeHandler = toolHandlers[TOOLS.BROWSER_CLOSE];
-      await closeHandler.execute({ sessionId: 'test-screenshot' });
+      await handler().execute({ action: 'close', sessionId: 'test-ss' });
     });
 
-    test('browser_click should return confirmation', async () => {
-      const launchHandler = toolHandlers[TOOLS.BROWSER_LAUNCH];
-      await launchHandler.execute({ sessionId: 'test-click' });
-
-      const clickHandler = toolHandlers[TOOLS.BROWSER_CLICK];
-      const result = await clickHandler.execute({ sessionId: 'test-click', x: 100, y: 200 });
-
+    test('action=click should return confirmation', async () => {
+      await handler().execute({ action: 'open', sessionId: 'test-click' });
+      const result = await handler().execute({ action: 'click', sessionId: 'test-click', x: 100, y: 200 });
       expect(result.content[0].text).toContain('100');
       expect(result.content[0].text).toContain('200');
-
-      // Clean up
-      const closeHandler = toolHandlers[TOOLS.BROWSER_CLOSE];
-      await closeHandler.execute({ sessionId: 'test-click' });
+      await handler().execute({ action: 'close', sessionId: 'test-click' });
     });
 
-    test('browser_key should normalize key names', async () => {
-      const launchHandler = toolHandlers[TOOLS.BROWSER_LAUNCH];
-      await launchHandler.execute({ sessionId: 'test-key' });
+    test('action=type should type text', async () => {
+      await handler().execute({ action: 'open', sessionId: 'test-type' });
+      const result = await handler().execute({ action: 'type', sessionId: 'test-type', text: 'hello' });
+      expect(result.content[0].text).toContain('Typed');
+      expect(result.content[0].text).toContain('hello');
+      await handler().execute({ action: 'close', sessionId: 'test-type' });
+    });
 
-      const keyHandler = toolHandlers[TOOLS.BROWSER_KEY];
-      const result = await keyHandler.execute({ sessionId: 'test-key', key: 'Cmd+s' });
-
+    test('action=key should normalize key names', async () => {
+      await handler().execute({ action: 'open', sessionId: 'test-key' });
+      const result = await handler().execute({ action: 'key', sessionId: 'test-key', key: 'Cmd+s' });
       expect(result.content[0].text).toContain('Cmd+s');
+      await handler().execute({ action: 'close', sessionId: 'test-key' });
+    });
 
-      // Clean up
-      const closeHandler = toolHandlers[TOOLS.BROWSER_CLOSE];
-      await closeHandler.execute({ sessionId: 'test-key' });
+    test('action=scroll should scroll page', async () => {
+      await handler().execute({ action: 'open', sessionId: 'test-scroll' });
+      const result = await handler().execute({ action: 'scroll', sessionId: 'test-scroll', direction: 'down', amount: 500 });
+      expect(result.content[0].text).toContain('down');
+      expect(result.content[0].text).toContain('500');
+      await handler().execute({ action: 'close', sessionId: 'test-scroll' });
+    });
+
+    test('action=drag should drag between coordinates', async () => {
+      await handler().execute({ action: 'open', sessionId: 'test-drag' });
+      const result = await handler().execute({ action: 'drag', sessionId: 'test-drag', fromX: 0, fromY: 0, toX: 100, toY: 100 });
+      expect(result.content[0].text).toContain('Dragged');
+      await handler().execute({ action: 'close', sessionId: 'test-drag' });
+    });
+
+    test('should reject invalid action', async () => {
+      await expect(handler().execute({ action: 'invalid' })).rejects.toThrow('Validation failed');
     });
   });
 

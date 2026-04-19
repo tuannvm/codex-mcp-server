@@ -8,16 +8,7 @@ export const TOOLS = {
   HELP: 'help',
   LIST_SESSIONS: 'listSessions',
   WEBSEARCH: 'websearch',
-  BROWSER_LAUNCH: 'browser_launch',
-  BROWSER_SCREENSHOT: 'browser_screenshot',
-  BROWSER_CLICK: 'browser_click',
-  BROWSER_TYPE: 'browser_type',
-  BROWSER_SCROLL: 'browser_scroll',
-  BROWSER_DRAG: 'browser_drag',
-  BROWSER_KEY: 'browser_key',
-  BROWSER_NAVIGATE: 'browser_navigate',
-  BROWSER_CLOSE: 'browser_close',
-  BROWSER_STATUS: 'browser_status',
+  BROWSER: 'browser',
 } as const;
 
 export type ToolName = typeof TOOLS[keyof typeof TOOLS];
