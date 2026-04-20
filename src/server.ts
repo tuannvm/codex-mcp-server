@@ -52,10 +52,12 @@ export class CodexMcpServer {
       // Create progress sender that uses MCP notifications
       const createProgressContext = (): ToolHandlerContext => {
         let progressCount = 0;
+        let done = false;
         return {
           progressToken,
+          done: () => { done = true; },
           sendProgress: async (message: string, progress?: number, total?: number) => {
-            if (!progressToken) return;
+            if (!progressToken || done) return;
 
             progressCount++;
             try {
@@ -83,7 +85,9 @@ export class CodexMcpServer {
 
         const handler = toolHandlers[name];
         const context = createProgressContext();
-        return await handler.execute(args, context);
+        const result = await handler.execute(args, context);
+        context.done?.();
+        return result;
       } catch (error) {
         return {
           content: [

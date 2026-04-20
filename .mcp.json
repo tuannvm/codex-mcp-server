@@ -4,7 +4,7 @@
       "type": "stdio",
       "command": "node",
       "args": [
-        "dist/index.js"
+        "/Users/jonathanborduas/code/codex-mcp-server/dist/index.js"
       ],
       "env": {}
     }

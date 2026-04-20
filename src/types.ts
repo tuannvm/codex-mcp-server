@@ -153,4 +153,5 @@ export type ProgressToken = string | number;
 export interface ToolHandlerContext {
   progressToken?: ProgressToken;
   sendProgress: (message: string, progress?: number, total?: number) => Promise<void>;
+  done?: () => void;
 }
