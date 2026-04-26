@@ -1,18 +1,17 @@
-import { CodexToolHandler } from '../tools/handlers.js';
+import type { CodexToolHandler as CodexToolHandlerType } from '../tools/handlers.js';
 import { InMemorySessionStorage } from '../session/storage.js';
-import { executeCommand } from '../utils/command.js';
 
 // Mock the command execution
 jest.mock('../utils/command.js', () => ({
   executeCommand: jest.fn(),
 }));
 
-const mockedExecuteCommand = executeCommand as jest.MockedFunction<
-  typeof executeCommand
->;
-
 describe('Default Model Configuration', () => {
-  let handler: CodexToolHandler;
+  let CodexToolHandler: typeof import('../tools/handlers.js').CodexToolHandler;
+  let handler: CodexToolHandlerType;
+  let mockedExecuteCommand: jest.MockedFunction<
+    typeof import('../utils/command.js').executeCommand
+  >;
   let sessionStorage: InMemorySessionStorage;
   let originalStructuredContent: string | undefined;
 
@@ -28,7 +27,14 @@ describe('Default Model Configuration', () => {
     }
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    jest.resetModules();
+    process.env.STRUCTURED_CONTENT_ENABLED = '1';
+    ({ CodexToolHandler } = await import('../tools/handlers.js'));
+    const commandModule = await import('../utils/command.js');
+    mockedExecuteCommand = commandModule.executeCommand as jest.MockedFunction<
+      typeof commandModule.executeCommand
+    >;
     sessionStorage = new InMemorySessionStorage();
     handler = new CodexToolHandler(sessionStorage);
     mockedExecuteCommand.mockClear();
@@ -36,22 +42,15 @@ describe('Default Model Configuration', () => {
       stdout: 'Test response',
       stderr: '',
     });
-    process.env.STRUCTURED_CONTENT_ENABLED = '1';
     delete process.env.CODEX_MCP_CALLBACK_URI;
   });
 
-  test('should use gpt-5.3-codex as default model when no model specified', async () => {
+  test('should use gpt-5.4 as default model when no model specified', async () => {
     await handler.execute({ prompt: 'Test prompt' });
 
     expect(mockedExecuteCommand).toHaveBeenCalledWith(
       'codex',
-      [
-        'exec',
-        '--model',
-        'gpt-5.3-codex',
-        '--skip-git-repo-check',
-        'Test prompt',
-      ],
+      ['exec', '--model', 'gpt-5.4', '--skip-git-repo-check', 'Test prompt'],
       expect.any(Object)
     );
   });
@@ -59,8 +58,8 @@ describe('Default Model Configuration', () => {
   test('should include default model in response metadata', async () => {
     const result = await handler.execute({ prompt: 'Test prompt' });
 
-    expect(result.content[0]._meta?.model).toBe('gpt-5.3-codex');
-    expect(result.structuredContent?.model).toBe('gpt-5.3-codex');
+    expect(result.content[0]._meta?.model).toBe('gpt-5.4');
+    expect(result.structuredContent?.model).toBe('gpt-5.4');
     expect(result._meta?.callbackUri).toBeUndefined();
   });
 
@@ -87,13 +86,7 @@ describe('Default Model Configuration', () => {
 
     expect(mockedExecuteCommand).toHaveBeenCalledWith(
       'codex',
-      [
-        'exec',
-        '--model',
-        'gpt-5.3-codex',
-        '--skip-git-repo-check',
-        'Test prompt',
-      ],
+      ['exec', '--model', 'gpt-5.4', '--skip-git-repo-check', 'Test prompt'],
       expect.any(Object)
     );
   });
@@ -114,7 +107,7 @@ describe('Default Model Configuration', () => {
         'exec',
         '--skip-git-repo-check',
         '-c',
-        'model="gpt-5.3-codex"',
+        'model="gpt-5.4"',
         'resume',
         'existing-conv-id',
         'Resume with default model',
@@ -134,7 +127,7 @@ describe('Default Model Configuration', () => {
       [
         'exec',
         '--model',
-        'gpt-5.3-codex',
+        'gpt-5.4',
         '-c',
         'model_reasoning_effort="high"',
         '--skip-git-repo-check',

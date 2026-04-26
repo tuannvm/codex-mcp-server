@@ -111,6 +111,30 @@ describe('Error Handling Scenarios', () => {
     expect(mockedExecuteCommand).not.toHaveBeenCalled();
   });
 
+  test('should reject bypassApprovals when sandbox is also set', async () => {
+    await expect(
+      handler.execute({
+        prompt: 'Test prompt',
+        sandbox: 'workspace-write',
+        bypassApprovals: true,
+      })
+    ).rejects.toThrow(ValidationError);
+
+    expect(mockedExecuteCommand).not.toHaveBeenCalled();
+  });
+
+  test('should reject bypassApprovals when fullAuto is also set', async () => {
+    await expect(
+      handler.execute({
+        prompt: 'Test prompt',
+        fullAuto: true,
+        bypassApprovals: true,
+      })
+    ).rejects.toThrow(ValidationError);
+
+    expect(mockedExecuteCommand).not.toHaveBeenCalled();
+  });
+
   test('should handle corrupted session data', async () => {
     const sessionId = sessionStorage.createSession();
 
@@ -157,7 +181,7 @@ describe('Error Handling Scenarios', () => {
     expect(result.content[0].text).toBe('Response');
     expect(mockedExecuteCommand).toHaveBeenCalledWith(
       'codex',
-      ['exec', '--model', 'gpt-5.3-codex', '--skip-git-repo-check', longPrompt],
+      ['exec', '--model', 'gpt-5.4', '--skip-git-repo-check', longPrompt],
       expect.any(Object)
     );
   });

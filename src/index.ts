@@ -2,11 +2,7 @@
 
 import chalk from 'chalk';
 import { CodexMcpServer } from './server.js';
-
-const SERVER_CONFIG = {
-  name: 'codex-mcp-server',
-  version: '0.0.6',
-} as const;
+import { SERVER_CONFIG } from './runtime-config.js';
 
 async function main(): Promise<void> {
   try {

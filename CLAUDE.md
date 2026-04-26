@@ -73,7 +73,7 @@ Sessions enable multi-turn conversations with Codex:
 2. **Subsequent requests with same sessionId**: Uses `codex exec resume <conversation-id>` (native Codex resume)
 3. **Fallback**: If no conversation ID exists, manually builds enhanced prompt from conversation history
 
-**Important**: When resuming sessions, `sandbox`, `fullAuto`, and `workingDirectory` parameters are NOT applied (Codex CLI limitation).
+**Important**: When resuming sessions, `sandbox` and `workingDirectory` are not applied. This server does forward `fullAuto` and `bypassApprovals` on resume, but those flags still depend on the installed Codex CLI supporting them.
 
 ### Streaming Progress
 
@@ -113,16 +113,18 @@ codex exec --model X --sandbox Y [-c config=value] --skip-git-repo-check "prompt
 
 **Resume mode** (existing conversations):
 ```
-codex exec --skip-git-repo-check -c model="X" -c model_reasoning_effort="Y" resume <conversation-id> "prompt"
+codex exec --skip-git-repo-check -c model="X" -c model_reasoning_effort="Y" [--full-auto] [--dangerously-bypass-approvals-and-sandbox] resume <conversation-id> "prompt"
 ```
 
 Note: Config flags (`-c`) must come BEFORE the subcommand (`exec` or `resume`).
 
 ### Environment Variables
 
-- `CODEX_DEFAULT_MODEL`: Default model for codex/review tools (default: `gpt-5.3-codex`)
+- `CODEX_DEFAULT_MODEL`: Default model for codex/review tools (default: `gpt-5.4`)
 - `CODEX_MCP_CALLBACK_URI`: Static MCP callback URI passed to Codex (override via tool arg)
 - `STRUCTURED_CONTENT_ENABLED`: Enable `structuredContent` in responses (default: false)
+- `CODEX_MCP_DEBUG_STARTUP`: Emit startup banner for debugging (default: false)
+- `CODEX_MCP_DEBUG_COMMANDS`: Emit command argv/stderr for debugging (default: false)
 
 ## TypeScript Configuration
 
