@@ -1,4 +1,9 @@
-import { CodexToolHandler, ReviewToolHandler } from '../tools/handlers.js';
+import {
+  CodexToolHandler,
+  HelpToolHandler,
+  ReviewToolHandler,
+  WebSearchToolHandler,
+} from '../tools/handlers.js';
 import { InMemorySessionStorage } from '../session/storage.js';
 import { executeCommand, executeCommandStreaming } from '../utils/command.js';
 
@@ -18,13 +23,17 @@ const mockedExecuteCommandStreaming =
 
 describe('Working Directory (cwd) Support', () => {
   let codexHandler: CodexToolHandler;
+  let helpHandler: HelpToolHandler;
   let reviewHandler: ReviewToolHandler;
   let sessionStorage: InMemorySessionStorage;
+  let webSearchHandler: WebSearchToolHandler;
 
   beforeEach(() => {
     sessionStorage = new InMemorySessionStorage();
     codexHandler = new CodexToolHandler(sessionStorage);
+    helpHandler = new HelpToolHandler();
     reviewHandler = new ReviewToolHandler();
+    webSearchHandler = new WebSearchToolHandler();
     mockedExecuteCommand.mockClear();
     mockedExecuteCommandStreaming.mockClear();
     mockedExecuteCommand.mockResolvedValue({
@@ -70,12 +79,15 @@ describe('Working Directory (cwd) Support', () => {
     });
 
     test('should pass cwd to streaming execution', async () => {
+      const controller = new AbortController();
+
       await reviewHandler.execute(
         {
           uncommitted: true,
           workingDirectory: '/path/to/worktree',
         },
         {
+          abortSignal: controller.signal,
           sendProgress: async () => {},
           progressToken: 'test-token',
         }
@@ -84,7 +96,10 @@ describe('Working Directory (cwd) Support', () => {
       expect(mockedExecuteCommandStreaming).toHaveBeenCalledWith(
         'codex',
         expect.arrayContaining(['-C', '/path/to/worktree']),
-        expect.objectContaining({ cwd: '/path/to/worktree' })
+        expect.objectContaining({
+          cwd: '/path/to/worktree',
+          signal: controller.signal,
+        })
       );
     });
   });
@@ -115,6 +130,19 @@ describe('Working Directory (cwd) Support', () => {
       );
     });
 
+    test('should pass bypassApprovals flag when starting a new execution', async () => {
+      await codexHandler.execute({
+        prompt: 'Test prompt',
+        bypassApprovals: true,
+      });
+
+      expect(mockedExecuteCommand).toHaveBeenCalledWith(
+        'codex',
+        expect.arrayContaining(['--dangerously-bypass-approvals-and-sandbox']),
+        expect.any(Object)
+      );
+    });
+
     test('should not apply cwd when resuming a session', async () => {
       const sessionId = sessionStorage.createSession();
       sessionStorage.setCodexConversationId(sessionId, 'conv-123');
@@ -134,6 +162,90 @@ describe('Working Directory (cwd) Support', () => {
       // -C should also be absent from resume args
       const args = mockedExecuteCommand.mock.calls[0][1];
       expect(args).not.toContain('-C');
+    });
+
+    test('should pass bypassApprovals flag when resuming a session', async () => {
+      const sessionId = sessionStorage.createSession();
+      sessionStorage.setCodexConversationId(sessionId, 'conv-123');
+
+      await codexHandler.execute({
+        prompt: 'Continue task',
+        sessionId,
+        bypassApprovals: true,
+      });
+
+      expect(mockedExecuteCommand).toHaveBeenCalledWith(
+        'codex',
+        expect.arrayContaining([
+          '--dangerously-bypass-approvals-and-sandbox',
+          'resume',
+          'conv-123',
+          'Continue task',
+        ]),
+        expect.any(Object)
+      );
+    });
+
+    test('should pass fullAuto flag when resuming a session', async () => {
+      const sessionId = sessionStorage.createSession();
+      sessionStorage.setCodexConversationId(sessionId, 'conv-123');
+
+      await codexHandler.execute({
+        prompt: 'Continue task',
+        sessionId,
+        fullAuto: true,
+      });
+
+      expect(mockedExecuteCommand).toHaveBeenCalledWith(
+        'codex',
+        expect.arrayContaining([
+          '--full-auto',
+          'resume',
+          'conv-123',
+          'Continue task',
+        ]),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe('HelpToolHandler', () => {
+    test('should pass abortSignal to command execution', async () => {
+      const controller = new AbortController();
+
+      await helpHandler.execute(
+        {},
+        {
+          abortSignal: controller.signal,
+          sendProgress: async () => {},
+        }
+      );
+
+      expect(mockedExecuteCommand).toHaveBeenCalledWith(
+        'codex',
+        ['--help'],
+        expect.objectContaining({ signal: controller.signal })
+      );
+    });
+  });
+
+  describe('WebSearchToolHandler', () => {
+    test('should pass abortSignal to command execution', async () => {
+      const controller = new AbortController();
+
+      await webSearchHandler.execute(
+        { query: 'timeout regression' },
+        {
+          abortSignal: controller.signal,
+          sendProgress: async () => {},
+        }
+      );
+
+      expect(mockedExecuteCommand).toHaveBeenCalledWith(
+        'codex',
+        expect.arrayContaining(['--search', 'exec']),
+        expect.objectContaining({ signal: controller.signal })
+      );
     });
   });
 });

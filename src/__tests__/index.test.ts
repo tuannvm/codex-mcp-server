@@ -65,6 +65,24 @@ describe('Codex MCP Server', () => {
       expect(codexTool?.description).toContain('Execute Codex CLI');
     });
 
+    test('codex tool should expose timeout override parameter', () => {
+      const codexTool = toolDefinitions.find(
+        (tool) => tool.name === TOOLS.CODEX
+      );
+      expect(codexTool?.inputSchema.properties).toHaveProperty('timeoutMs');
+    });
+
+    test('codex tool should expose bypass approvals parameter', () => {
+      const codexTool = toolDefinitions.find(
+        (tool) => tool.name === TOOLS.CODEX
+      );
+      const bypassApprovals = codexTool?.inputSchema.properties
+        .bypassApprovals as { type?: string; description?: string } | undefined;
+
+      expect(bypassApprovals?.type).toBe('boolean');
+      expect(bypassApprovals?.description).toContain('externally sandboxed');
+    });
+
     test('ping tool should have optional message parameter', () => {
       const pingTool = toolDefinitions.find((tool) => tool.name === TOOLS.PING);
       expect(pingTool).toBeDefined();
@@ -152,7 +170,7 @@ describe('Codex MCP Server', () => {
       const result = {
         content: [{ type: 'text', text: 'ok', _meta: { threadId: 'th_123' } }],
         structuredContent: { threadId: 'th_123' },
-        _meta: { model: 'gpt-5.3-codex' },
+        _meta: { model: 'gpt-5.4' },
       };
 
       const parsed = CallToolResultSchema.safeParse(result);

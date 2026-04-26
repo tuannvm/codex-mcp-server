@@ -1,442 +1,157 @@
 # API Reference
 
-## Overview
-Complete reference for the Codex MCP Server tools and interfaces.
+Current reference for the public MCP surface exposed by `codex-mcp-server`.
 
-This server implements the **MCP 2025-11-25 specification**, including tool annotations and progress notifications.
+## Requirements
 
-## Installation Options
+- Codex CLI `v0.75.0+`
+- An authenticated Codex CLI (`codex login --api-key "..."`)
+- For resumed-session `fullAuto` or `bypassApprovals`, use a Codex CLI build whose `codex exec resume --help` lists those flags
 
-### Claude Code
-```bash
-claude mcp add codex-cli -- npx -y codex-mcp-server
-```
+## Tool Matrix
 
-### Claude Desktop
-Add to your configuration file:
+| Tool | Purpose | Progress-capable | Spawns Codex CLI |
+| --- | --- | --- | --- |
+| `codex` | General Codex execution with sessions and execution controls | Yes | Yes |
+| `review` | Repository review against working tree, base branch, or commit | Yes | Yes |
+| `websearch` | Search-backed Codex run via `codex --search exec` | Yes | Yes |
+| `help` | Return `codex --help` output | Yes | Yes |
+| `listSessions` | List active in-memory sessions | No | No |
+| `ping` | Echo/health check | No | No |
 
-**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+## `codex`
 
-**Windows:** `%APPDATA%/Claude/claude_desktop_config.json`
+Execute Codex CLI in non-interactive mode.
+
+| Parameter | Type | Required | Default | Notes |
+| --- | --- | --- | --- | --- |
+| `prompt` | string | Yes | - | Main Codex task |
+| `sessionId` | string | No | - | Caller-supplied session key, 1-256 chars, `[A-Za-z0-9_-]+` |
+| `resetSession` | boolean | No | `false` | Clears stored server-side history before this request |
+| `model` | string | No | `gpt-5.4` | Free-form Codex model string |
+| `reasoningEffort` | enum | No | - | `none`, `minimal`, `low`, `medium`, `high`, `xhigh` |
+| `sandbox` | enum | No | - | `read-only`, `workspace-write`, `danger-full-access` |
+| `fullAuto` | boolean | No | `false` | Sandboxed automatic execution without approval prompts |
+| `bypassApprovals` | boolean | No | `false` | Disables prompts and sandboxing entirely; use only in externally sandboxed environments |
+| `workingDirectory` | string | No | - | Passed via `-C` for new executions |
+| `callbackUri` | string | No | - | Overrides `CODEX_MCP_CALLBACK_URI` for this request |
+| `timeoutMs` | integer | No | `CODEX_TOOL_TIMEOUT_MS` or `120000` | Per-request override for this tool only |
+
+Important behavior:
+
+- `bypassApprovals` is mutually exclusive with `sandbox`.
+- `bypassApprovals` is mutually exclusive with `fullAuto`.
+- On resumed sessions, `sandbox` and `workingDirectory` are not applied.
+- On resumed sessions, this server still forwards `fullAuto` and `bypassApprovals` when requested. If your local Codex CLI does not support those resume flags, the CLI itself will reject the command.
+
+Response behavior:
+
+- The primary text result is returned in `content[0].text`.
+- `content[0]._meta` includes `model`, plus `sessionId`, `callbackUri`, and `threadId` when available.
+- `structuredContent` is only included when `STRUCTURED_CONTENT_ENABLED` is truthy.
+
+Example:
 
 ```json
 {
-  "mcpServers": {
-    "codex-cli": {
-      "command": "npx",
-      "args": ["-y", "codex-mcp-server"]
-    }
+  "prompt": "Review this refactor for race conditions",
+  "sessionId": "race-audit",
+  "model": "gpt-5.4",
+  "reasoningEffort": "high",
+  "timeoutMs": 300000
+}
+```
+
+## `review`
+
+Run `codex review`.
+
+| Parameter | Type | Required | Default | Notes |
+| --- | --- | --- | --- | --- |
+| `prompt` | string | No | - | Extra review instructions |
+| `uncommitted` | boolean | No | `false` | Review staged, unstaged, and untracked changes |
+| `base` | string | No | - | Review against a branch or ref |
+| `commit` | string | No | - | Review a single commit |
+| `title` | string | No | - | Optional review title |
+| `model` | string | No | `gpt-5.4` | Passed via `-c model="..."` |
+| `workingDirectory` | string | No | - | Passed via global `-C` and spawn `cwd` |
+
+Notes:
+
+- `prompt` cannot be combined with `uncommitted: true`.
+- Global `CODEX_TOOL_TIMEOUT_MS` still applies.
+- Timed-out reviews now honor abort and unblock the serialized queue promptly.
+
+## `websearch`
+
+Run `codex --search exec`.
+
+| Parameter | Type | Required | Default | Notes |
+| --- | --- | --- | --- | --- |
+| `query` | string | Yes | - | Search request |
+| `numResults` | integer | No | `10` | `1` through `50` |
+| `searchDepth` | enum | No | `basic` | `basic` or `full` |
+
+Notes:
+
+- Global `CODEX_TOOL_TIMEOUT_MS` applies.
+- Timed-out web searches honor abort and unblock the serialized queue promptly.
+
+## `help`
+
+Returns `codex --help`.
+
+- No arguments
+- Global `CODEX_TOOL_TIMEOUT_MS` applies
+- Timed-out help calls honor abort and unblock the serialized queue promptly
+
+## `listSessions`
+
+Returns active in-memory session metadata for the current server process.
+
+Example payload shape:
+
+```json
+[
+  {
+    "id": "refactor-thread",
+    "createdAt": "2026-04-26T08:00:00.000Z",
+    "lastAccessedAt": "2026-04-26T08:15:00.000Z",
+    "turnCount": 3
   }
-}
+]
 ```
 
-## MCP Protocol Features
-
-### Tool Annotations
-All tools include annotations that provide hints to MCP clients about tool behavior:
-
-| Annotation | Type | Description |
-|------------|------|-------------|
-| `title` | string | Human-readable tool name |
-| `readOnlyHint` | boolean | Tool doesn't modify state (safe to call) |
-| `destructiveHint` | boolean | Tool may modify files or external state |
-| `idempotentHint` | boolean | Multiple calls produce same result |
-| `openWorldHint` | boolean | Tool interacts with external services (network, APIs) |
-
-#### Tool Annotation Matrix
-| Tool | `title` | `readOnlyHint` | `destructiveHint` | `idempotentHint` | `openWorldHint` |
-|------|---------|---------------|-------------------|------------------|-----------------|
-| `codex` | Execute Codex CLI | `false` | `true` | `false` | `true` |
-| `review` | Code Review | `true` | `false` | `true` | `true` |
-| `ping` | Ping Server | `true` | `false` | `true` | `false` |
-| `help` | Get Help | `true` | `false` | `true` | `false` |
-| `listSessions` | List Sessions | `true` | `false` | `true` | `false` |
-
-### Progress Notifications
-For long-running operations, the server sends `notifications/progress` messages when the client includes a `progressToken` in the request `_meta`.
-
-**Request with Progress Token:**
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/call",
-  "params": {
-    "name": "codex",
-    "arguments": { "prompt": "Analyze this codebase" },
-    "_meta": { "progressToken": "unique-token-123" }
-  }
-}
-```
-
-**Progress Notification (sent during execution):**
-```json
-{
-  "jsonrpc": "2.0",
-  "method": "notifications/progress",
-  "params": {
-    "progressToken": "unique-token-123",
-    "progress": 1,
-    "message": "Processing output from Codex..."
-  }
-}
-```
-
-**Supported Tools:** `codex`, `review` (long-running operations)
-
-> **Note:** Progress notifications are streamed in real-time from CLI stdout/stderr. Client support for displaying these notifications varies.
-
-## Tools
-
-### `codex` - AI Coding Assistant
-
-Execute Codex CLI with advanced session management and model control.
-
-**Annotations:** `readOnlyHint: false`, `destructiveHint: true`, `idempotentHint: false`, `openWorldHint: true`
-
-#### Parameters
-
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `prompt` | string | ✅ | - | The coding task, question, or analysis request |
-| `sessionId` | string | ❌ | - | Session ID for conversational context |
-| `resetSession` | boolean | ❌ | `false` | Reset session history before processing |
-| `model` | string | ❌ | `gpt-5.2-codex` | Model to use for processing |
-| `reasoningEffort` | enum | ❌ | - | Control reasoning depth |
-| `sandbox` | enum | ❌ | - | Sandbox policy: `read-only`, `workspace-write`, `danger-full-access` |
-| `fullAuto` | boolean | ❌ | `false` | Enable full-auto mode (sandboxed automatic execution) |
-| `workingDirectory` | string | ❌ | - | Working directory for the agent |
-| `callbackUri` | string | ❌ | - | Static MCP callback URI passed via env to Codex |
-
-#### Model Options
-- `gpt-5.2-codex` (default) - Latest specialized coding model optimized for agentic tasks
-- `gpt-5.1-codex` - Previous coding model version
-- `gpt-5.1-codex-max` - Enhanced coding model for complex tasks
-- `gpt-5-codex` - Base GPT-5 coding model
-- `gpt-4o` - Fast multimodal model
-- `gpt-4` - Advanced reasoning capabilities
-
-#### Reasoning Effort Levels
-- `low` - Quick responses, minimal processing
-- `medium` - Balanced quality and speed
-- `high` - Thorough analysis and comprehensive responses
-
-#### Response Format
-```typescript
-interface CodexToolResponse {
-  content: Array<{
-    type: 'text';
-    text: string;
-    _meta?: {
-      threadId?: string;
-      model?: string;
-      sessionId?: string;
-      callbackUri?: string;
-    };
-  }>;
-  structuredContent?: {
-    threadId?: string;
-    model?: string;
-    sessionId?: string;
-    callbackUri?: string;
-  };
-}
-```
-
-**Note:** `structuredContent` is only emitted when `STRUCTURED_CONTENT_ENABLED` is set to a truthy value (`1`, `true`, `yes`, `on`). It is **disabled by default**. `_meta` remains available in `content` for Claude Code compatibility.
-
-#### Output Schema (structuredContent)
-The `codex` tool advertises an `outputSchema` that describes the structure of `structuredContent` returned in tool results when enabled.
-```json
-{
-  "type": "object",
-  "properties": {
-    "threadId": { "type": "string" }
-  }
-}
-```
-
-#### Examples
-
-**Basic Usage:**
-```json
-{
-  "prompt": "Explain this Python function and suggest improvements"
-}
-```
-
-**With Model Selection:**
-```json
-{
-  "prompt": "Perform complex architectural analysis",
-  "model": "gpt-4",
-  "reasoningEffort": "high"
-}
-```
-
-**Session Management:**
-```json
-{
-  "prompt": "Continue our previous discussion",
-  "sessionId": "my-coding-session"
-}
-```
-
-**Reset Session:**
-```json
-{
-  "prompt": "Start fresh analysis",
-  "sessionId": "my-coding-session",
-  "resetSession": true
-}
-```
-
----
-
-### `review` - Code Review
-
-Run AI-powered code reviews against your repository using Codex CLI.
-
-**Annotations:** `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true`, `openWorldHint: true`
-
-#### Parameters
-
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `prompt` | string | ❌ | - | Custom review instructions or focus areas |
-| `uncommitted` | boolean | ❌ | `false` | Review staged, unstaged, and untracked changes |
-| `base` | string | ❌ | - | Review changes against a specific base branch |
-| `commit` | string | ❌ | - | Review changes introduced by a specific commit SHA |
-| `title` | string | ❌ | - | Title to display in the review summary |
-| `model` | string | ❌ | `gpt-5.2-codex` | Model to use for the review (passed via `-c model="..."`) |
-| `workingDirectory` | string | ❌ | - | Working directory to run the review in (passed via `-C`) |
-
-#### Examples
-
-**Review Uncommitted Changes:**
-```json
-{
-  "uncommitted": true
-}
-```
-
-**Review Against Main Branch:**
-```json
-{
-  "base": "main",
-  "prompt": "Focus on security vulnerabilities"
-}
-```
-
-**Review Specific Commit:**
-```json
-{
-  "commit": "abc123def",
-  "title": "Security Audit"
-}
-```
-
-#### Response Format
-```typescript
-interface ReviewToolResponse {
-  content: Array<{
-    type: 'text';
-    text: string; // Review output from Codex
-    _meta?: {
-      model: string;
-      base?: string;
-      commit?: string;
-    };
-  }>;
-  structuredContent?: {
-    model: string;
-    base?: string;
-    commit?: string;
-  };
-}
-```
-
-**Note:** `structuredContent` is only emitted when `STRUCTURED_CONTENT_ENABLED` is set to a truthy value (`1`, `true`, `yes`, `on`). It is **disabled by default**. `_meta` remains available in `content` for Claude Code compatibility.
-
----
-
-### `listSessions` - Session Management
-
-List all active conversation sessions with metadata.
-
-**Annotations:** `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true`, `openWorldHint: false`
-
-#### Parameters
-No parameters required.
-
-#### Response Format
-```typescript
-interface SessionInfo {
-  id: string;
-  createdAt: string; // ISO 8601 timestamp
-  lastAccessedAt: string; // ISO 8601 timestamp
-  turnCount: number;
-}
-```
-
-#### Example Response
-```json
-{
-  "content": [{
-    "type": "text",
-    "text": "[\n  {\n    \"id\": \"abc-123-def\",\n    \"createdAt\": \"2025-01-01T12:00:00.000Z\",\n    \"lastAccessedAt\": \"2025-01-01T12:30:00.000Z\",\n    \"turnCount\": 5\n  }\n]"
-  }]
-}
-```
-
----
-
-### `ping` - Connection Test
-
-Test MCP server connection and responsiveness.
-
-**Annotations:** `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true`, `openWorldHint: false`
-
-#### Parameters
-
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `message` | string | ❌ | `pong` | Message to echo back |
-
-#### Example
-```json
-{
-  "message": "Hello, server!"
-}
-```
-
-#### Response
-```json
-{
-  "content": [{
-    "type": "text",
-    "text": "Hello, server!"
-  }]
-}
-```
-
----
-
-### `help` - Codex CLI Help
-
-Get information about Codex CLI capabilities and commands.
-
-**Annotations:** `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true`, `openWorldHint: false`
-
-#### Parameters
-No parameters required.
-
-#### Response
-Returns the output of `codex --help` command, providing comprehensive CLI documentation.
-
-## Session Management
-
-### Session Lifecycle
-
-1. **Creation**: Sessions are created automatically or explicitly via `sessionId`
-2. **Activity**: Each interaction updates `lastAccessedAt` timestamp
-3. **Persistence**: Sessions persist for 24 hours of inactivity
-4. **Cleanup**: Automatic removal of expired sessions
-5. **Limits**: Maximum 100 concurrent sessions
-
-### Session Data Structure
-
-```typescript
-interface SessionData {
-  id: string;                    // UUID-based session identifier
-  createdAt: Date;              // Session creation timestamp
-  lastAccessedAt: Date;         // Last interaction timestamp
-  turns: ConversationTurn[];    // Conversation history
-  codexConversationId?: string; // Native Codex conversation ID
-}
-
-interface ConversationTurn {
-  prompt: string;    // User's original prompt
-  response: string;  // Codex response
-  timestamp: Date;   // Turn timestamp
-}
-```
-
-### Resume Functionality
-
-The server leverages Codex CLI v0.50.0+ native resume functionality:
-
-1. **Conversation ID Extraction**: Automatically captures conversation IDs from Codex output (supports both "session id" and "conversation id" formats)
-2. **Native Resume**: Uses `codex exec resume <conversation-id>` for optimal continuity
-3. **Fallback Context**: Manual context building when native resume unavailable
-4. **Seamless Integration**: Transparent to end users
-
-## Error Handling
-
-### Error Response Format
-```typescript
-interface ErrorResponse {
-  content: Array<{
-    type: 'text';
-    text: string; // Error description
-  }>;
-  isError: true;
-}
-```
-
-### Common Error Scenarios
-
-#### Authentication Errors
-- **Cause**: Codex CLI not authenticated
-- **Message**: "Authentication failed: Please run `codex login`"
-- **Resolution**: Run `codex login --api-key "your-key"`
-
-#### Model Errors
-- **Cause**: Invalid or unavailable model specified
-- **Message**: "Invalid model: <model-name>"
-- **Resolution**: Use supported model or omit for default
-
-#### Session Errors
-- **Cause**: Corrupted session data or invalid session ID
-- **Behavior**: Graceful degradation, continues with fresh context
-- **Impact**: Minimal - system auto-recovers
-
-#### CLI Errors
-- **Cause**: Codex CLI not installed or network issues
-- **Message**: "Failed to execute codex command"
-- **Resolution**: Install CLI and check network connectivity
-
-## Performance Considerations
-
-### Memory Management
-- **Session TTL**: 24-hour automatic cleanup
-- **Session Limits**: Maximum 100 concurrent sessions
-- **Context Optimization**: Recent turns only (last 2) for fallback context
-
-### Response Optimization
-- **Model Selection**: Default `gpt-5.2-codex` optimized for agentic coding
-- **Reasoning Control**: Adjust effort based on task complexity
-- **Native Resume**: Preferred over manual context building
-
-### Scalability
-- **Stateless Design**: Core functionality works without sessions
-- **Graceful Degradation**: Continues operation despite component failures
-- **Resource Cleanup**: Automatic management of memory and storage
-
-## Configuration
-
-### Environment Variables
-None required - authentication handled by Codex CLI.
-
-Optional:
-- `CODEX_MCP_CALLBACK_URI`: Static MCP callback URI passed to Codex CLI when invoking tools.
-
-### Codex CLI Requirements
-- **Version**: 0.36.0 or later
-- **Authentication**: `codex login --api-key "your-key"`
-- **Verification**: `codex --help` should execute successfully
-
-### Optional Configuration
-- **CODEX_HOME**: Custom directory for Codex CLI configuration
-- **Session Limits**: Configurable in server implementation (default: 100)
-- **TTL Settings**: Configurable session expiration (default: 24 hours)
+## `ping`
+
+Echo/health check.
+
+| Parameter | Type | Required | Default |
+| --- | --- | --- | --- |
+| `message` | string | No | `pong` |
+
+## Sessions
+
+- Sessions are server-process local and stored only in memory.
+- A session is created on first `codex` call that supplies `sessionId`.
+- The server stores recent turns plus the Codex conversation ID when it can extract one from CLI output.
+- Sessions expire after 24 hours of inactivity.
+- The store keeps at most 100 sessions.
+- If the server restarts, sessions are lost.
+
+## Environment Variables
+
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `CODEX_DEFAULT_MODEL` | Override the default model for `codex` and `review` | `gpt-5.4` |
+| `CODEX_MCP_CALLBACK_URI` | Default callback URI for `codex` requests | unset |
+| `CODEX_TOOL_TIMEOUT_MS` | Timeout for serialized tool calls | `120000` |
+| `STRUCTURED_CONTENT_ENABLED` | Emit `structuredContent` alongside `_meta` | unset / false |
+| `CODEX_MCP_DEBUG_STARTUP` | Emit a startup banner to stderr | unset / false |
+| `CODEX_MCP_DEBUG_COMMANDS` | Emit command argv and stderr to stderr | unset / false |
+
+## Current Constraints
+
+- Calls are serialized through one queue to avoid stdio races.
+- `timeoutMs` is only a `codex` tool parameter; other tools use the global timeout.
+- `sandbox` and `workingDirectory` are not applied on resumed Codex sessions.

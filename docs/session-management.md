@@ -1,143 +1,86 @@
-# Session Management Implementation Guide
+# Session Management
 
-## Overview
-The Codex MCP Server provides advanced session management with native Codex CLI v0.50.0+ integration, enabling persistent conversational context and sophisticated AI coding assistance.
+This server provides lightweight in-memory session management for the `codex`
+tool.
 
-Sessions are created on first use when a sessionId is provided. If no sessionId
-is supplied, this request does not create a session (so it won't appear in
-listSessions).
+## What a Session Is
 
-## Architecture
+- A session is keyed by a caller-supplied `sessionId`.
+- Valid IDs are `1` to `256` characters and may contain only letters, numbers,
+  `_`, and `-`.
+- Sessions exist only inside the current server process.
+- If the server exits or is restarted, all sessions are lost.
 
-### Session Storage
-- **In-memory Map-based storage** with automatic cleanup
-- **UUID-based session IDs** for unique identification
-- **TTL management** - 24 hour automatic session expiration
-- **Session limit enforcement** - maximum 100 concurrent sessions
+## What the Server Stores
 
-### Enhanced Session Data Structure
-```typescript
-interface SessionData {
-  id: string;
-  createdAt: Date;
-  lastAccessedAt: Date;
-  turns: ConversationTurn[];
-  codexConversationId?: string; // Native Codex conversation ID
+For each session, the server keeps:
+
+- `id`
+- `createdAt`
+- `lastAccessedAt`
+- `turns`
+- `codexConversationId` when Codex CLI emits one
+
+Limits:
+
+- TTL: 24 hours of inactivity
+- Maximum active sessions: 100
+
+## How Resume Works
+
+1. The first `codex` call with a `sessionId` creates the session.
+2. If Codex CLI emits a conversation/session ID, the server stores it.
+3. Later calls with the same `sessionId` use `codex exec resume <conversation-id>`.
+4. If no native Codex conversation ID exists yet, the server falls back to a
+   short prompt-context reconstruction using the most recent turns.
+
+## Resume Constraints
+
+- `sandbox` is not applied on resumed sessions.
+- `workingDirectory` is not applied on resumed sessions.
+- This server forwards `fullAuto` and `bypassApprovals` on resumed sessions.
+  Whether those flags are accepted depends on the installed Codex CLI version.
+
+## MCP Examples
+
+Create or continue a session:
+
+```json
+{
+  "name": "codex",
+  "arguments": {
+    "prompt": "Audit this module for race conditions",
+    "sessionId": "race-audit"
+  }
 }
+```
 
-interface ConversationTurn {
-  prompt: string;
-  response: string;
-  timestamp: Date;
+Reset a session:
+
+```json
+{
+  "name": "codex",
+  "arguments": {
+    "prompt": "Start over from scratch",
+    "sessionId": "race-audit",
+    "resetSession": true
+  }
 }
 ```
 
-### Native Codex Integration
-- **Automatic conversation ID extraction** from Codex CLI output (supports both "session id" and "conversation id" formats)
-- **Resume functionality** using `codex exec resume <conversation-id>`
-- **Fallback context building** when native resume unavailable
-- **Model consistency** across session interactions
+List current sessions:
 
-### Tool Enhancements
-
-#### Enhanced Codex Tool
-- **sessionId** (optional): Session ID for conversational context
-- **resetSession** (optional): Reset session history before processing
-- **model** (optional): Model selection (defaults to `gpt-5.2-codex`)
-- **reasoningEffort** (optional): Control reasoning depth (low/medium/high)
-- **Smart context building**: Uses native resume or fallback context
-- **Robust error handling**: Graceful degradation for various failure modes
-
-#### ListSessions Tool
-- **Session enumeration**: Returns all active session IDs with comprehensive metadata
-- **Session introspection**: Creation time, last access, turn count, conversation ID
-- **Management interface**: Enables session lifecycle monitoring
-
-## Implementation Status ✅
-
-### ✅ Completed Features
-1. **Session Storage System**
-   - InMemorySessionStorage with TTL and cleanup
-   - Defensive programming against data corruption
-   - Conversation ID tracking and management
-
-2. **Enhanced Codex Tool Handler**
-   - Native resume functionality with fallback
-   - GPT-5.2-Codex as intelligent default model
-   - Model and reasoning effort parameter support
-   - Comprehensive error handling and validation
-
-3. **ListSessions Tool**
-   - Complete session metadata exposure
-   - JSON-formatted session information
-   - Real-time session status tracking
-
-4. **Robust Testing Suite**
-   - 54 comprehensive tests covering all functionality
-   - Edge case handling and error scenario validation
-   - Integration testing with Codex CLI interactions
-
-## Advanced Benefits
-- **Native Codex Resume**: Optimal conversation continuity using Codex CLI's built-in resume feature
-- **Intelligent Defaults**: GPT-5.2-Codex model selection for superior agentic coding assistance
-- **Production-Ready**: Comprehensive error handling, data validation, and graceful degradation
-- **Enterprise-Scale**: Session management suitable for professional development workflows
-- **Flexible Configuration**: Per-request model and reasoning effort customization
-
-## Usage Patterns
-
-### Basic Session Usage
-```bash
-# Explicit session management (creates the session on first use)
-codex --sessionId "auth-review" "Continue analysis"
-codex --sessionId "auth-review" --resetSession true "Start fresh review"
+```json
+{
+  "name": "listSessions",
+  "arguments": {}
+}
 ```
 
-### Advanced Configuration
-```bash
-# Model and reasoning control
-codex --model "gpt-4" --reasoningEffort "high" "Complex architectural analysis"
+## Operational Notes
 
-# Session with custom parameters
-codex --sessionId "deep-dive" --model "gpt-4" --reasoningEffort "high" "Advanced optimization review"
-
-# Session management
-listSessions  # View all active sessions
-```
-
-## Technical Architecture
-
-### Command Flow
-```mermaid
-graph TD
-    A[User Request] --> B{Session ID provided?}
-    B -->|Yes| C[Ensure Session Exists]
-    C --> D{Reset Session?}
-    B -->|No| M[Execute with Default Model]
-    D -->|Yes| E[Clear Session History]
-    D -->|No| F{Codex Conversation ID exists?}
-    E --> G[Execute with Default Model]
-    F -->|Yes| H[Use Codex Resume]
-    F -->|No| I[Build Enhanced Context]
-    H --> J[Execute with Parameters]
-    I --> J
-    G --> K[Extract Conversation ID]
-    J --> L[Save Turn to Session]
-    K --> L
-    M --> N[Return Response]
-    L --> N
-```
-
-### Error Handling Strategy
-- **Graceful Degradation**: System continues operation even with corrupted session data
-- **Defensive Programming**: Validates array structures and handles null/undefined gracefully
-- **Comprehensive Logging**: Error context preserved for debugging and monitoring
-- **Fallback Mechanisms**: Manual context building when native resume fails
-
-### Performance Considerations
-- **Memory Management**: In-memory, per-process sessions with automatic cleanup
-  of expired sessions (24hr TTL)
-- **Session Limits**: Maximum 100 concurrent sessions to prevent memory exhaustion
-- **Context Optimization**: Only recent turns (last 2) used for manual context building
-- **Efficient Storage**: Minimal session metadata for optimal memory usage      
-
+- `listSessions` only shows sessions for the current running server.
+- A caller can choose meaningful IDs like `refactor-auth-flow`; IDs are not
+  UUID-only.
+- Native Codex resume is preferred when available because it preserves Codex’s
+  own conversation state, not just the server’s short turn history.
