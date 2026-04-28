@@ -1,18 +1,17 @@
-import { CodexToolHandler } from '../tools/handlers.js';
+import type { CodexToolHandler as CodexToolHandlerType } from '../tools/handlers.js';
 import { InMemorySessionStorage } from '../session/storage.js';
-import { executeCommand } from '../utils/command.js';
 
 // Mock the command execution
 jest.mock('../utils/command.js', () => ({
   executeCommand: jest.fn(),
 }));
 
-const mockedExecuteCommand = executeCommand as jest.MockedFunction<
-  typeof executeCommand
->;
-
 describe('Codex Resume Functionality', () => {
-  let handler: CodexToolHandler;
+  let CodexToolHandler: typeof import('../tools/handlers.js').CodexToolHandler;
+  let handler: CodexToolHandlerType;
+  let mockedExecuteCommand: jest.MockedFunction<
+    typeof import('../utils/command.js').executeCommand
+  >;
   let sessionStorage: InMemorySessionStorage;
   let originalStructuredContent: string | undefined;
 
@@ -28,7 +27,14 @@ describe('Codex Resume Functionality', () => {
     }
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    jest.resetModules();
+    process.env.STRUCTURED_CONTENT_ENABLED = '1';
+    ({ CodexToolHandler } = await import('../tools/handlers.js'));
+    const commandModule = await import('../utils/command.js');
+    mockedExecuteCommand = commandModule.executeCommand as jest.MockedFunction<
+      typeof commandModule.executeCommand
+    >;
     sessionStorage = new InMemorySessionStorage();
     handler = new CodexToolHandler(sessionStorage);
     mockedExecuteCommand.mockClear();
@@ -50,13 +56,7 @@ describe('Codex Resume Functionality', () => {
 
     expect(mockedExecuteCommand).toHaveBeenCalledWith(
       'codex',
-      [
-        'exec',
-        '--model',
-        'gpt-5.3-codex',
-        '--skip-git-repo-check',
-        'First message',
-      ],
+      ['exec', '--model', 'gpt-5.4', '--skip-git-repo-check', 'First message'],
       expect.any(Object)
     );
   });
@@ -166,7 +166,7 @@ describe('Codex Resume Functionality', () => {
         'exec',
         '--skip-git-repo-check',
         '-c',
-        'model="gpt-5.3-codex"',
+        'model="gpt-5.4"',
         'resume',
         'existing-codex-session-id',
         'Continue the task',
@@ -196,7 +196,7 @@ describe('Codex Resume Functionality', () => {
       [
         'exec',
         '--model',
-        'gpt-5.3-codex',
+        'gpt-5.4',
         '--skip-git-repo-check',
         'Reset and start new',
       ],
@@ -229,7 +229,7 @@ describe('Codex Resume Functionality', () => {
 
     // Should build enhanced prompt since no codex session ID
     const call = mockedExecuteCommand.mock.calls[0];
-    const sentPrompt = call?.[1]?.[4]; // After exec, --model, gpt-5.3-codex, --skip-git-repo-check, prompt
+    const sentPrompt = call?.[1]?.[4]; // After exec, --model, gpt-5.4, --skip-git-repo-check, prompt
     expect(sentPrompt).toContain('Context:');
     expect(sentPrompt).toContain('Task: Follow up question');
   });

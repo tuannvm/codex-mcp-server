@@ -1,5 +1,9 @@
 # Codex MCP Server - TODO
 
+This file is backlog-oriented. Do not treat the "Implemented" section below as
+the current runtime source of truth; check `README.md`, `docs/api-reference.md`,
+and the code first.
+
 ## Features from Codex CLI v0.98.0
 
 These features were introduced/stabilized in Codex CLI v0.98.0 but are not yet implemented in this MCP server.
@@ -50,11 +54,11 @@ These features were introduced/stabilized in Codex CLI v0.98.0 but are not yet i
 
 ## Implemented in v1.3.4+
 
-### ✅ GPT-5.3-Codex Model
+### ✅ GPT-5.4 Default Model
 - **Status**: Implemented
 - **Description**: New default model
 - **Changes**:
-  - Updated `DEFAULT_CODEX_MODEL` constant to `'gpt-5.3-codex'`
+  - Updated `DEFAULT_CODEX_MODEL` constant to `'gpt-5.4'`
   - Updated tool definitions to reflect new default
   - Single source of truth for model updates
 

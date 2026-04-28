@@ -1,5 +1,8 @@
 # Codex MCP Server Implementation Plan
 
+Historical planning document. It does not describe the current repository
+layout or current public tool surface.
+
 ## Overview
 Create an MCP server wrapper for OpenAI Codex CLI that enables single-command integration with Claude, similar to gemini-mcp-tool.
 

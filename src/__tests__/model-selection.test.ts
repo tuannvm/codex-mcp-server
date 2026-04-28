@@ -1,18 +1,17 @@
-import { CodexToolHandler } from '../tools/handlers.js';
+import type { CodexToolHandler as CodexToolHandlerType } from '../tools/handlers.js';
 import { InMemorySessionStorage } from '../session/storage.js';
-import { executeCommand } from '../utils/command.js';
 
 // Mock the command execution
 jest.mock('../utils/command.js', () => ({
   executeCommand: jest.fn(),
 }));
 
-const mockedExecuteCommand = executeCommand as jest.MockedFunction<
-  typeof executeCommand
->;
-
 describe('Model Selection and Reasoning Effort', () => {
-  let handler: CodexToolHandler;
+  let CodexToolHandler: typeof import('../tools/handlers.js').CodexToolHandler;
+  let handler: CodexToolHandlerType;
+  let mockedExecuteCommand: jest.MockedFunction<
+    typeof import('../utils/command.js').executeCommand
+  >;
   let sessionStorage: InMemorySessionStorage;
   let originalStructuredContent: string | undefined;
 
@@ -28,7 +27,14 @@ describe('Model Selection and Reasoning Effort', () => {
     }
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    jest.resetModules();
+    process.env.STRUCTURED_CONTENT_ENABLED = '1';
+    ({ CodexToolHandler } = await import('../tools/handlers.js'));
+    const commandModule = await import('../utils/command.js');
+    mockedExecuteCommand = commandModule.executeCommand as jest.MockedFunction<
+      typeof commandModule.executeCommand
+    >;
     sessionStorage = new InMemorySessionStorage();
     handler = new CodexToolHandler(sessionStorage);
     mockedExecuteCommand.mockClear();
@@ -36,7 +42,6 @@ describe('Model Selection and Reasoning Effort', () => {
       stdout: 'Test response',
       stderr: '',
     });
-    process.env.STRUCTURED_CONTENT_ENABLED = '1';
   });
 
   test('should pass model parameter to codex CLI', async () => {
@@ -63,7 +68,7 @@ describe('Model Selection and Reasoning Effort', () => {
       [
         'exec',
         '--model',
-        'gpt-5.3-codex',
+        'gpt-5.4',
         '-c',
         'model_reasoning_effort="high"',
         '--skip-git-repo-check',
@@ -141,7 +146,7 @@ describe('Model Selection and Reasoning Effort', () => {
       [
         'exec',
         '--model',
-        'gpt-5.3-codex',
+        'gpt-5.4',
         '-c',
         'model_reasoning_effort="minimal"',
         '--skip-git-repo-check',
@@ -162,7 +167,7 @@ describe('Model Selection and Reasoning Effort', () => {
       [
         'exec',
         '--model',
-        'gpt-5.3-codex',
+        'gpt-5.4',
         '-c',
         'model_reasoning_effort="none"',
         '--skip-git-repo-check',
@@ -183,7 +188,7 @@ describe('Model Selection and Reasoning Effort', () => {
       [
         'exec',
         '--model',
-        'gpt-5.3-codex',
+        'gpt-5.4',
         '-c',
         'model_reasoning_effort="xhigh"',
         '--skip-git-repo-check',

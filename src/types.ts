@@ -13,11 +13,13 @@ export const TOOLS = {
 export type ToolName = typeof TOOLS[keyof typeof TOOLS];
 
 // Codex model constants
-export const DEFAULT_CODEX_MODEL = 'gpt-5.3-codex' as const;
+export const DEFAULT_CODEX_MODEL = 'gpt-5.4' as const;
 export const CODEX_DEFAULT_MODEL_ENV_VAR = 'CODEX_DEFAULT_MODEL' as const;
 
-// Available model options (for documentation/reference)
-export const AVAILABLE_CODEX_MODELS = [
+// Common model examples shown in tool descriptions. Validation stays free-form
+// so callers can pass any Codex CLI-supported model string.
+const DOCUMENTED_CODEX_MODELS = [
+  'gpt-5.4',
   'gpt-5.3-codex',
   'gpt-5.2-codex',
   'gpt-5.1-codex',
@@ -31,7 +33,7 @@ export const AVAILABLE_CODEX_MODELS = [
 
 // Helper function to generate model description
 export const getModelDescription = (toolType: 'codex' | 'review') => {
-  const modelList = AVAILABLE_CODEX_MODELS.join(', ');
+  const modelList = DOCUMENTED_CODEX_MODELS.join(', ');
   if (toolType === 'codex') {
     return `Specify which model to use (defaults to ${DEFAULT_CODEX_MODEL}). Options: ${modelList}`;
   }
@@ -90,7 +92,7 @@ export const SandboxMode = z.enum([
 ]);
 
 // Zod schemas for tool arguments
-export const CodexToolSchema = z.object({
+const CodexToolBaseSchema = z.object({
   prompt: z.string(),
   sessionId: z
     .string()
@@ -104,8 +106,30 @@ export const CodexToolSchema = z.object({
   reasoningEffort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh']).optional(),
   sandbox: SandboxMode.optional(),
   fullAuto: z.boolean().optional(),
+  bypassApprovals: z.boolean().optional(),
   workingDirectory: z.string().optional(),
   callbackUri: z.string().optional(),
+  timeoutMs: z.number().int().positive().optional(),
+});
+
+export const CodexToolSchema = CodexToolBaseSchema.superRefine((value, ctx) => {
+  if (value.bypassApprovals && value.sandbox) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['bypassApprovals'],
+      message:
+        'bypassApprovals cannot be combined with sandbox because it disables sandboxing entirely',
+    });
+  }
+
+  if (value.bypassApprovals && value.fullAuto) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['bypassApprovals'],
+      message:
+        'bypassApprovals cannot be combined with fullAuto because fullAuto requires sandboxed execution',
+    });
+  }
 });
 
 // Review tool schema
@@ -152,5 +176,6 @@ export type ProgressToken = string | number;
 // Context passed to tool handlers for sending progress notifications
 export interface ToolHandlerContext {
   progressToken?: ProgressToken;
+  abortSignal?: AbortSignal;
   sendProgress: (message: string, progress?: number, total?: number) => Promise<void>;
 }
