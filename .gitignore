@@ -44,3 +44,4 @@ temp/
 
 # Jest cache
 .jest/
+.codex
