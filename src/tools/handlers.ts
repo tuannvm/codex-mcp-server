@@ -413,6 +413,7 @@ export class ReviewToolHandler {
         cmdArgs.push('-C', resolvedWorkDir);
       }
 
+      cmdArgs.push('--skip-git-repo-check');
       // Add model parameter via config
       const selectedModel =
         model ||
