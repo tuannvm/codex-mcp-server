@@ -69,6 +69,24 @@ describe('Working Directory (cwd) Support', () => {
       );
     });
 
+    test('should pass skip git repo check before review subcommand', async () => {
+      await reviewHandler.execute({
+        uncommitted: true,
+      });
+
+      expect(mockedExecuteCommand).toHaveBeenCalledWith(
+        'codex',
+        [
+          '-c',
+          'model="gpt-5.3-codex"',
+          '--skip-git-repo-check',
+          'review',
+          '--uncommitted',
+        ],
+        expect.objectContaining({ cwd: undefined })
+      );
+    });
+
     test('should pass cwd to streaming execution', async () => {
       await reviewHandler.execute(
         {

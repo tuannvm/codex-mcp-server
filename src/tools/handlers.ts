@@ -420,6 +420,8 @@ export class ReviewToolHandler {
         DEFAULT_CODEX_MODEL;
       cmdArgs.push('-c', `model="${selectedModel}"`);
 
+      cmdArgs.push('--skip-git-repo-check');
+
       cmdArgs.push('review');
 
       // Add review-specific flags
