@@ -406,20 +406,21 @@ export class ReviewToolHandler {
         ? path.resolve(workingDirectory)
         : undefined;
 
-      // Build command arguments for codex review
-      const cmdArgs: string[] = [];
+      // Run review through exec so working directory and trust flags are honored.
+      const cmdArgs: string[] = ['exec'];
+
+      // Add model parameter
+      const selectedModel =
+        model ||
+        process.env[CODEX_DEFAULT_MODEL_ENV_VAR] ||
+        DEFAULT_CODEX_MODEL;
+      cmdArgs.push('--model', selectedModel);
 
       if (resolvedWorkDir) {
         cmdArgs.push('-C', resolvedWorkDir);
       }
 
-      // Add model parameter via config
-      const selectedModel =
-        model ||
-        process.env[CODEX_DEFAULT_MODEL_ENV_VAR] ||
-        DEFAULT_CODEX_MODEL;
-      cmdArgs.push('-c', `model="${selectedModel}"`);
-
+      cmdArgs.push('--skip-git-repo-check');
       cmdArgs.push('review');
 
       // Add review-specific flags

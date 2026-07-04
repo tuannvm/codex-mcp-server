@@ -44,15 +44,19 @@ describe('Working Directory (cwd) Support', () => {
         workingDirectory: '/path/to/worktree',
       });
 
-      // Should pass -C flag in args AND cwd in options
+      // Review must run through exec so -C and --skip-git-repo-check are exec flags.
       expect(mockedExecuteCommand).toHaveBeenCalledWith(
         'codex',
-        expect.arrayContaining([
+        [
+          'exec',
+          '--model',
+          'gpt-5.3-codex',
           '-C',
           '/path/to/worktree',
+          '--skip-git-repo-check',
           'review',
           '--uncommitted',
-        ]),
+        ],
         expect.objectContaining({ cwd: '/path/to/worktree' })
       );
     });
@@ -64,7 +68,14 @@ describe('Working Directory (cwd) Support', () => {
 
       expect(mockedExecuteCommand).toHaveBeenCalledWith(
         'codex',
-        expect.arrayContaining(['review', '--uncommitted']),
+        [
+          'exec',
+          '--model',
+          'gpt-5.3-codex',
+          '--skip-git-repo-check',
+          'review',
+          '--uncommitted',
+        ],
         expect.objectContaining({ cwd: undefined })
       );
     });
@@ -83,7 +94,16 @@ describe('Working Directory (cwd) Support', () => {
 
       expect(mockedExecuteCommandStreaming).toHaveBeenCalledWith(
         'codex',
-        expect.arrayContaining(['-C', '/path/to/worktree']),
+        [
+          'exec',
+          '--model',
+          'gpt-5.3-codex',
+          '-C',
+          '/path/to/worktree',
+          '--skip-git-repo-check',
+          'review',
+          '--uncommitted',
+        ],
         expect.objectContaining({ cwd: '/path/to/worktree' })
       );
     });
