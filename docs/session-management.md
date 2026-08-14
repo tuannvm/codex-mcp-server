@@ -43,7 +43,7 @@ interface ConversationTurn {
 #### Enhanced Codex Tool
 - **sessionId** (optional): Session ID for conversational context
 - **resetSession** (optional): Reset session history before processing
-- **model** (optional): Model selection (defaults to `gpt-5.2-codex`)
+- **model** (optional): Model selection (defaults to `gpt-5.6-sol`)
 - **reasoningEffort** (optional): Control reasoning depth (low/medium/high)
 - **Smart context building**: Uses native resume or fallback context
 - **Robust error handling**: Graceful degradation for various failure modes

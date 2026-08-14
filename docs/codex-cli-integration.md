@@ -71,11 +71,16 @@ This MCP server is optimized for **codex CLI v0.75.0 or later** for full feature
 - **MCP Parameter**: `workingDirectory` parameter in codex tool and review tool
 
 ### 5. Model Selection
-- **Default Model**: `gpt-5.2-codex` (optimal for agentic coding tasks)
+- **Default Model**: `gpt-5.6-sol` (GPT-5.6 flagship, optimal for agentic coding tasks)
 - **CLI Flag**: `--model <model-name>`
 - **Supported Models**:
-  - `gpt-5.2-codex` (default, specialized for agentic coding)
-  - `gpt-5.1-codex` (previous coding model)
+  - `gpt-5.6-sol` (default, GPT-5.6 flagship for reasoning and difficult coding)
+  - `gpt-5.6-terra` (balanced quality, latency, and cost)
+  - `gpt-5.6-luna` (high-throughput, lower-latency)
+  - `gpt-5.6` (family alias, routes to Sol)
+  - `gpt-5.3-codex` (previous coding model)
+  - `gpt-5.2-codex` (earlier coding model)
+  - `gpt-5.1-codex` (earlier coding model)
   - `gpt-5.1-codex-max` (enhanced coding)
   - `gpt-5-codex` (base GPT-5 coding)
   - `gpt-4o` (fast multimodal)
@@ -259,7 +264,7 @@ if (conversationIdMatch) {
    ```bash
    # Edit ~/.codex/config.toml to set preferences
    # Example:
-   # model = "gpt-5.2-codex"
+   # model = "gpt-5.6-sol"
    # model_reasoning_effort = "medium"
    ```
 
@@ -271,7 +276,7 @@ if (conversationIdMatch) {
 ## Performance Optimizations
 
 ### Smart Model Selection
-- **Default to gpt-5.2-codex**: Optimal for agentic coding without configuration
+- **Default to gpt-5.6-sol**: Optimal for agentic coding without configuration
 - **Context-Aware Suggestions**: Better model recommendations based on task type
 - **Consistent Experience**: Same model across session interactions
 
@@ -319,7 +324,7 @@ if (conversationIdMatch) {
    - Verify: Check `CODEX_HOME/auth.json` exists
 
 2. **Model Not Available**
-   - Solution: Use default `gpt-5.2-codex` or try alternative models
+   - Solution: Use default `gpt-5.6-sol` or try alternative models
    - Check: Codex CLI documentation for available models
 
 3. **Resume Functionality Not Working**

@@ -63,7 +63,7 @@ describe('Model Selection and Reasoning Effort', () => {
       [
         'exec',
         '--model',
-        'gpt-5.3-codex',
+        'gpt-5.6-sol',
         '-c',
         'model_reasoning_effort="high"',
         '--skip-git-repo-check',
@@ -141,7 +141,7 @@ describe('Model Selection and Reasoning Effort', () => {
       [
         'exec',
         '--model',
-        'gpt-5.3-codex',
+        'gpt-5.6-sol',
         '-c',
         'model_reasoning_effort="minimal"',
         '--skip-git-repo-check',
@@ -162,7 +162,7 @@ describe('Model Selection and Reasoning Effort', () => {
       [
         'exec',
         '--model',
-        'gpt-5.3-codex',
+        'gpt-5.6-sol',
         '-c',
         'model_reasoning_effort="none"',
         '--skip-git-repo-check',
@@ -183,7 +183,7 @@ describe('Model Selection and Reasoning Effort', () => {
       [
         'exec',
         '--model',
-        'gpt-5.3-codex',
+        'gpt-5.6-sol',
         '-c',
         'model_reasoning_effort="xhigh"',
         '--skip-git-repo-check',

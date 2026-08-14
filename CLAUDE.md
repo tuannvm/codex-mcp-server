@@ -120,7 +120,7 @@ Note: Config flags (`-c`) must come BEFORE the subcommand (`exec` or `resume`).
 
 ### Environment Variables
 
-- `CODEX_DEFAULT_MODEL`: Default model for codex/review tools (default: `gpt-5.3-codex`)
+- `CODEX_DEFAULT_MODEL`: Default model for codex/review tools (default: `gpt-5.6-sol`)
 - `CODEX_MCP_CALLBACK_URI`: Static MCP callback URI passed to Codex (override via tool arg)
 - `STRUCTURED_CONTENT_ENABLED`: Enable `structuredContent` in responses (default: false)
 

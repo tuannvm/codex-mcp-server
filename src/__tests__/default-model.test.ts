@@ -40,7 +40,7 @@ describe('Default Model Configuration', () => {
     delete process.env.CODEX_MCP_CALLBACK_URI;
   });
 
-  test('should use gpt-5.3-codex as default model when no model specified', async () => {
+  test('should use gpt-5.6-sol as default model when no model specified', async () => {
     await handler.execute({ prompt: 'Test prompt' });
 
     expect(mockedExecuteCommand).toHaveBeenCalledWith(
@@ -48,7 +48,7 @@ describe('Default Model Configuration', () => {
       [
         'exec',
         '--model',
-        'gpt-5.3-codex',
+        'gpt-5.6-sol',
         '--skip-git-repo-check',
         'Test prompt',
       ],
@@ -59,8 +59,8 @@ describe('Default Model Configuration', () => {
   test('should include default model in response metadata', async () => {
     const result = await handler.execute({ prompt: 'Test prompt' });
 
-    expect(result.content[0]._meta?.model).toBe('gpt-5.3-codex');
-    expect(result.structuredContent?.model).toBe('gpt-5.3-codex');
+    expect(result.content[0]._meta?.model).toBe('gpt-5.6-sol');
+    expect(result.structuredContent?.model).toBe('gpt-5.6-sol');
     expect(result._meta?.callbackUri).toBeUndefined();
   });
 
@@ -90,7 +90,7 @@ describe('Default Model Configuration', () => {
       [
         'exec',
         '--model',
-        'gpt-5.3-codex',
+        'gpt-5.6-sol',
         '--skip-git-repo-check',
         'Test prompt',
       ],
@@ -114,7 +114,7 @@ describe('Default Model Configuration', () => {
         'exec',
         '--skip-git-repo-check',
         '-c',
-        'model="gpt-5.3-codex"',
+        'model="gpt-5.6-sol"',
         'resume',
         'existing-conv-id',
         'Resume with default model',
@@ -134,7 +134,7 @@ describe('Default Model Configuration', () => {
       [
         'exec',
         '--model',
-        'gpt-5.3-codex',
+        'gpt-5.6-sol',
         '-c',
         'model_reasoning_effort="high"',
         '--skip-git-repo-check',
