@@ -107,6 +107,7 @@ Use websearch with query "React Server Components" and searchDepth "full"
 - **[API Reference](docs/api-reference.md)** — Full tool parameters and response formats
 - **[Session Management](docs/session-management.md)** — How conversations work
 - **[Codex CLI Integration](docs/codex-cli-integration.md)** — Version compatibility and CLI details
+- **[Build Remote Agent pairing](docs/gbr.md)** — Phone spectator via `gbr-agent` (`127.0.0.1:8788` / gbr-mcp)
 
 ## Environment Variables
 - `CODEX_MCP_CALLBACK_URI`: Static MCP callback URI passed to Codex when set (overridden by `callbackUri` tool arg)
