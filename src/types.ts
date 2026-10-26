@@ -15,6 +15,29 @@ export type ToolName = typeof TOOLS[keyof typeof TOOLS];
 // Codex model constants
 export const DEFAULT_CODEX_MODEL = 'gpt-5.3-codex' as const;
 export const CODEX_DEFAULT_MODEL_ENV_VAR = 'CODEX_DEFAULT_MODEL' as const;
+export const CODEX_PROVIDER_ENV_VAR = 'CODEX_PROVIDER' as const;
+export const CODEX_BASE_URL_ENV_VAR = 'CODEX_BASE_URL' as const;
+
+export const DEFAULT_CODEX_PROVIDER = 'openai' as const;
+export const MINIMAX_PROVIDER = 'minimax' as const;
+export const MINIMAX_DEFAULT_MODEL = 'MiniMax-M3.1-Flash' as const;
+
+export const MINIMAX_ENDPOINTS = {
+  global: 'https://api.minimax.io/v1',
+  china: 'https://api.minimaxi.com/v1',
+} as const;
+
+export const CODEX_PROVIDERS = {
+  openai: {
+    name: 'OpenAI',
+    envKey: 'OPENAI_API_KEY',
+  },
+  minimax: {
+    name: 'MiniMax',
+    baseUrl: MINIMAX_ENDPOINTS.global,
+    envKey: 'MINIMAX_API_KEY',
+  },
+} as const;
 
 // Available model options (for documentation/reference)
 export const AVAILABLE_CODEX_MODELS = [
@@ -27,6 +50,8 @@ export const AVAILABLE_CODEX_MODELS = [
   'gpt-4',
   'o3',
   'o4-mini',
+  'MiniMax-M3.1-Flash',
+  'MiniMax-M3',
 ] as const;
 
 // Helper function to generate model description
@@ -101,6 +126,7 @@ export const CodexToolSchema = z.object({
     .optional(),
   resetSession: z.boolean().optional(),
   model: z.string().optional(),
+  provider: z.string().optional(),
   reasoningEffort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh']).optional(),
   sandbox: SandboxMode.optional(),
   fullAuto: z.boolean().optional(),
@@ -116,6 +142,7 @@ export const ReviewToolSchema = z.object({
   commit: z.string().optional(),
   title: z.string().optional(),
   model: z.string().optional(),
+  provider: z.string().optional(),
   workingDirectory: z.string().optional(),
 });
 

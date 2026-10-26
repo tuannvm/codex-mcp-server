@@ -25,6 +25,12 @@ export const toolDefinitions: ToolDefinition[] = [
           type: 'string',
           description: getModelDescription('codex'),
         },
+        provider: {
+          type: 'string',
+          enum: ['openai', 'minimax'],
+          description:
+            'Model provider. MiniMax uses MiniMax-M3.1-Flash by default and supports global and China API endpoints.',
+        },
         reasoningEffort: {
           type: 'string',
           enum: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'],
@@ -102,6 +108,12 @@ export const toolDefinitions: ToolDefinition[] = [
         model: {
           type: 'string',
           description: getModelDescription('review'),
+        },
+        provider: {
+          type: 'string',
+          enum: ['openai', 'minimax'],
+          description:
+            'Model provider used for the review command (openai or minimax).',
         },
         workingDirectory: {
           type: 'string',
