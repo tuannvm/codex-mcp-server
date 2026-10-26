@@ -2,6 +2,12 @@ import {
   TOOLS,
   DEFAULT_CODEX_MODEL,
   CODEX_DEFAULT_MODEL_ENV_VAR,
+  CODEX_PROVIDER_ENV_VAR,
+  CODEX_BASE_URL_ENV_VAR,
+  DEFAULT_CODEX_PROVIDER,
+  MINIMAX_PROVIDER,
+  MINIMAX_DEFAULT_MODEL,
+  MINIMAX_ENDPOINTS,
   type ToolResult,
   type ToolHandlerContext,
   type CodexToolArgs,
@@ -36,6 +42,22 @@ const isStructuredContentEnabled = (): boolean => {
   return ['1', 'true', 'yes', 'on'].includes(raw.toLowerCase());
 };
 
+const providerOptions = (provider: string): string[] => {
+  if (provider !== MINIMAX_PROVIDER) return [];
+  const baseUrl =
+    process.env[CODEX_BASE_URL_ENV_VAR] || MINIMAX_ENDPOINTS.global;
+  return [
+    '-c',
+    `model_provider="${MINIMAX_PROVIDER}"`,
+    '-c',
+    `model_providers.${MINIMAX_PROVIDER}.name="MiniMax"`,
+    '-c',
+    `model_providers.${MINIMAX_PROVIDER}.base_url="${baseUrl}"`,
+    '-c',
+    `model_providers.${MINIMAX_PROVIDER}.env_key="MINIMAX_API_KEY"`,
+  ];
+};
+
 export class CodexToolHandler {
   constructor(private sessionStorage: SessionStorage) {}
 
@@ -49,6 +71,7 @@ export class CodexToolHandler {
         sessionId,
         resetSession,
         model,
+        provider,
         reasoningEffort,
         sandbox,
         fullAuto,
@@ -92,10 +115,16 @@ export class CodexToolHandler {
       }
 
       // Build command arguments with v0.75.0+ features
+      const selectedProvider =
+        provider ||
+        process.env[CODEX_PROVIDER_ENV_VAR] ||
+        DEFAULT_CODEX_PROVIDER;
       const selectedModel =
         model ||
         process.env[CODEX_DEFAULT_MODEL_ENV_VAR] ||
-        DEFAULT_CODEX_MODEL;
+        (selectedProvider === MINIMAX_PROVIDER
+          ? MINIMAX_DEFAULT_MODEL
+          : DEFAULT_CODEX_MODEL);
 
       const effectiveCallbackUri =
         callbackUri || process.env.CODEX_MCP_CALLBACK_URI;
@@ -105,7 +134,11 @@ export class CodexToolHandler {
       if (useResume && codexConversationId) {
         // Resume mode: codex exec resume has limited flags
         // All exec options (--skip-git-repo-check, -c) must come BEFORE 'resume' subcommand
-        cmdArgs = ['exec', '--skip-git-repo-check'];
+        cmdArgs = [
+          'exec',
+          ...providerOptions(selectedProvider),
+          '--skip-git-repo-check',
+        ];
 
         // Model must be set via -c config in resume mode (before subcommand)
         cmdArgs.push('-c', `model="${selectedModel}"`);
@@ -119,7 +152,7 @@ export class CodexToolHandler {
         cmdArgs.push('resume', codexConversationId, enhancedPrompt);
       } else {
         // Exec mode: supports full set of flags
-        cmdArgs = ['exec'];
+        cmdArgs = ['exec', ...providerOptions(selectedProvider)];
 
         // Add model parameter
         cmdArgs.push('--model', selectedModel);
@@ -218,6 +251,7 @@ ${result.stdout || ''}`.trim();
       const metadata: Record<string, unknown> = {
         ...(threadId && { threadId }),
         ...(selectedModel && { model: selectedModel }),
+        provider: selectedProvider,
         ...(activeSessionId && { sessionId: activeSessionId }),
         ...(effectiveCallbackUri && { callbackUri: effectiveCallbackUri }),
       };
@@ -391,6 +425,7 @@ export class ReviewToolHandler {
         commit,
         title,
         model,
+        provider,
         workingDirectory,
       }: ReviewToolArgs = ReviewToolSchema.parse(args);
 
@@ -407,17 +442,23 @@ export class ReviewToolHandler {
         : undefined;
 
       // Build command arguments for codex review
-      const cmdArgs: string[] = [];
+      const selectedProvider =
+        provider ||
+        process.env[CODEX_PROVIDER_ENV_VAR] ||
+        DEFAULT_CODEX_PROVIDER;
+      const selectedModel =
+        model ||
+        process.env[CODEX_DEFAULT_MODEL_ENV_VAR] ||
+        (selectedProvider === MINIMAX_PROVIDER
+          ? MINIMAX_DEFAULT_MODEL
+          : DEFAULT_CODEX_MODEL);
+      const cmdArgs: string[] = providerOptions(selectedProvider);
 
       if (resolvedWorkDir) {
         cmdArgs.push('-C', resolvedWorkDir);
       }
 
       // Add model parameter via config
-      const selectedModel =
-        model ||
-        process.env[CODEX_DEFAULT_MODEL_ENV_VAR] ||
-        DEFAULT_CODEX_MODEL;
       cmdArgs.push('-c', `model="${selectedModel}"`);
 
       cmdArgs.push('review');
@@ -469,6 +510,7 @@ export class ReviewToolHandler {
       // - structuredContent: For other MCP clients that properly support it
       const metadata: Record<string, unknown> = {
         model: selectedModel,
+        provider: selectedProvider,
         ...(base && { base }),
         ...(commit && { commit }),
       };
